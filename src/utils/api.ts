@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
 import { CreateServiceData, CreateCategoryData } from '../types/services';
+import { CreateBookingData, CreateTimeOffData } from '../types/calendar';
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -195,6 +196,63 @@ export const servicesAPI = {
   // Get staff
   getStaff: async () => {
     const response = await apiClient.get('/v1/companies/users');
+    return response.data;
+  },
+};
+
+// Calendar API endpoints
+export const calendarAPI = {
+  // Get all bookings
+  getBookings: async () => {
+    const response = await apiClient.get('/v1/bookings');
+    return response.data;
+  },
+
+  // Create new booking
+  createBooking: async (bookingData: CreateBookingData) => {
+    const response = await apiClient.post('/v1/bookings', bookingData);
+    return response.data;
+  },
+
+  // Update booking
+  updateBooking: async (bookingId: string, bookingData: Partial<CreateBookingData>) => {
+    const response = await apiClient.put(`/v1/bookings/${bookingId}`, bookingData);
+    return response.data;
+  },
+
+  // Update booking status
+  updateBookingStatus: async (bookingId: string, status: string) => {
+    const response = await apiClient.patch(`/v1/bookings/${bookingId}/status`, { status });
+    return response.data;
+  },
+
+  // Delete booking
+  deleteBooking: async (bookingId: string) => {
+    const response = await apiClient.delete(`/v1/bookings/${bookingId}`);
+    return response.data;
+  },
+
+  // Get all time-offs
+  getTimeOffs: async () => {
+    const response = await apiClient.get('/v1/users/time-offs');
+    return response.data;
+  },
+
+  // Create new time-off
+  createTimeOff: async (timeOffData: CreateTimeOffData) => {
+    const response = await apiClient.post('/v1/users/time-offs', timeOffData);
+    return response.data;
+  },
+
+  // Delete time-off
+  deleteTimeOff: async (timeOffId: string) => {
+    const response = await apiClient.delete(`/v1/users/time-offs/${timeOffId}`);
+    return response.data;
+  },
+
+  // Get customers
+  getCustomers: async () => {
+    const response = await apiClient.get('/v1/companies/customers');
     return response.data;
   },
 };
