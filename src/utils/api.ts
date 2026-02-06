@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
-import { Service, Category, Staff, CreateServiceData, CreateCategoryData } from '../types/services';
+import { CreateServiceData, CreateCategoryData } from '../types/services';
 
 // Create axios instance with default config
 const apiClient = axios.create({

@@ -78,7 +78,7 @@ const StaffPage: React.FC = () => {
     }
   });
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [_message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
