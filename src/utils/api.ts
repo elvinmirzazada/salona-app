@@ -226,11 +226,24 @@ export const calendarAPI = {
     return response.data;
   },
 
+  // Mark booking as no-show
+  markAsNoShow: async (bookingId: string) => {
+    const response = await apiClient.patch(`/v1/bookings/${bookingId}/no-show`);
+    return response.data;
+  },
+
+  // Mark booking as completed
+  markAsCompleted: async (bookingId: string) => {
+    const response = await apiClient.patch(`/v1/bookings/${bookingId}/complete`);
+    return response.data;
+  },
+
   // Delete booking
   deleteBooking: async (bookingId: string) => {
     const response = await apiClient.delete(`/v1/bookings/${bookingId}`);
     return response.data;
   },
+
 
   // Get all time-offs
   getTimeOffs: async () => {
@@ -241,6 +254,12 @@ export const calendarAPI = {
   // Create new time-off
   createTimeOff: async (timeOffData: CreateTimeOffData) => {
     const response = await apiClient.post('/v1/users/time-offs', timeOffData);
+    return response.data;
+  },
+
+  // Update time-off
+  updateTimeOff: async (timeOffId: string, timeOffData: any) => {
+    const response = await apiClient.patch(`/v1/users/time-offs/${timeOffId}`, timeOffData);
     return response.data;
   },
 

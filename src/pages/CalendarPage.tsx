@@ -24,7 +24,7 @@ const CalendarPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -32,9 +32,15 @@ const CalendarPage: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventPopup, setShowEventPopup] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [_showTimeOffForm, _setShowTimeOffForm] = useState(false);
+  const [showTimeOffForm, setShowTimeOffForm] = useState(false);
+  const [showSlotActionPopup, setShowSlotActionPopup] = useState(false);
+  const [slotActionPosition, setSlotActionPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [bookingStep, setBookingStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [isEditingBooking, setIsEditingBooking] = useState(false);
+  const [isEditingTimeOff, setIsEditingTimeOff] = useState(false);
+  const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
+  const [editingTimeOffId, setEditingTimeOffId] = useState<string | null>(null);
 
   // Form states
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
@@ -48,10 +54,25 @@ const CalendarPage: React.FC = () => {
   const [bookingNotes, setBookingNotes] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('new');
 
+  // Time-off form states
+  const [timeOffStaffId, setTimeOffStaffId] = useState('');
+  const [timeOffReason, setTimeOffReason] = useState('');
+
+  // Track if selected slot is in the past
+  const [isSelectedSlotPast, setIsSelectedSlotPast] = useState(false);
+
+  // Status filter state
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+
   // Load data on mount
   useEffect(() => {
     loadAllData();
   }, []);
+
+  // Refresh events when status filter changes
+  useEffect(() => {
+    loadAllData();
+  }, [statusFilter]);
 
   // Auto-clear messages
   useEffect(() => {
@@ -70,7 +91,7 @@ const CalendarPage: React.FC = () => {
 
   const loadAllData = async () => {
     try {
-      setLoading(true);
+      setDataLoading(true);
       const [bookingsRes, timeOffsRes, servicesRes, staffRes, customersRes] = await Promise.all([
         calendarAPI.getBookings(),
         calendarAPI.getTimeOffs(),
@@ -126,7 +147,7 @@ const CalendarPage: React.FC = () => {
       console.error('Failed to load data:', err);
       setError('Failed to load calendar data. Please try again.');
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -160,6 +181,11 @@ const CalendarPage: React.FC = () => {
     // Convert bookings to events
     bookingsData.forEach((booking, index) => {
       console.log(`Booking ${index}:`, booking);
+
+      // Apply status filter
+      if (statusFilter.length > 0 && !statusFilter.includes(booking.status)) {
+        return; // Skip this booking if it doesn't match the filter
+      }
 
       // Generate title from customer name or use default
       const title = booking.customer
@@ -238,13 +264,18 @@ const CalendarPage: React.FC = () => {
 
     // Convert time-offs to events
     timeOffsData.forEach((timeOff) => {
+      // Apply time-off filter
+      if (statusFilter.length > 0 && !statusFilter.includes('timeoff')) {
+        return; // Skip time-off if not in filter
+      }
+
       const title = timeOff.user
         ? `Time Off - ${timeOff.user.first_name} ${timeOff.user.last_name}`
         : 'Time Off';
 
       // Parse UTC dates and convert to local timezone
-      const utcStartString = timeOff.start_at.includes('Z') ? timeOff.start_at : timeOff.start_at + 'Z';
-      const utcEndString = timeOff.end_at.includes('Z') ? timeOff.end_at : timeOff.end_at + 'Z';
+      const utcStartString = timeOff.start_date.includes('Z') ? timeOff.start_date : timeOff.start_date + 'Z';
+      const utcEndString = timeOff.end_date.includes('Z') ? timeOff.end_date : timeOff.end_date + 'Z';
 
       const startDate = new Date(utcStartString);
       const endDate = new Date(utcEndString);
@@ -270,6 +301,19 @@ const CalendarPage: React.FC = () => {
 
   // Event click handler
   const handleEventClick = (clickInfo: EventClickArg) => {
+    // Prevent the slot action popup from showing
+    setShowSlotActionPopup(false);
+
+    // Prevent event propagation and default behavior
+    clickInfo.jsEvent.stopPropagation();
+    clickInfo.jsEvent.preventDefault();
+
+    // Clear any calendar selection
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi) {
+      calendarApi.unselect();
+    }
+
     const eventId = clickInfo.event.id;
     const calendarEvent = events.find((e) => e.id === eventId);
 
@@ -281,13 +325,40 @@ const CalendarPage: React.FC = () => {
 
   // Date select handler (for creating new bookings)
   const handleDateSelect = (selectInfo: DateSelectArg) => {
+    // Check if selected date is in the past
+    const now = new Date();
+    const selectedDate = new Date(selectInfo.start);
+    const isPast = selectedDate < now;
+
     setSelectedSlot({
       start: selectInfo.start,
       end: selectInfo.end,
     });
+
+    setIsSelectedSlotPast(isPast);
+
+    // Calculate popup position based on the click event
+    const jsEvent = selectInfo.jsEvent as MouseEvent;
+    setSlotActionPosition({
+      x: jsEvent.clientX,
+      y: jsEvent.clientY,
+    });
+
+    setShowSlotActionPopup(true);
+  };
+
+  // Handle add booking from slot action popup
+  const handleAddBooking = () => {
+    setShowSlotActionPopup(false);
     setShowBookingForm(true);
     setBookingStep(1);
     setSelectedServices([]);
+  };
+
+  // Handle add time-off from slot action popup
+  const handleAddTimeOff = () => {
+    setShowSlotActionPopup(false);
+    setShowTimeOffForm(true);
   };
 
   // Handle booking form submission
@@ -315,13 +386,24 @@ const CalendarPage: React.FC = () => {
         bookingData.customer_id = selectedCustomerId;
       }
 
-      await calendarAPI.createBooking(bookingData);
-      setSuccess('Booking created successfully');
+      if (isEditingBooking && editingBookingId) {
+        // Update existing booking
+        await calendarAPI.updateBooking(editingBookingId, bookingData);
+        setSuccess('Booking updated successfully');
+
+        // Reload all data to get updated booking
+        await loadAllData();
+      } else {
+        // Create new booking
+        await calendarAPI.createBooking(bookingData);
+        setSuccess('Booking created successfully');
+        loadAllData();
+      }
+
       closeBookingForm();
-      loadAllData();
     } catch (err) {
-      console.error('Failed to create booking:', err);
-      setError('Failed to create booking. Please try again.');
+      console.error('Failed to save booking:', err);
+      setError('Failed to save booking. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -331,13 +413,43 @@ const CalendarPage: React.FC = () => {
   const handleStatusUpdate = async (status: string) => {
     if (!selectedEvent || selectedEvent.type !== 'booking') return;
 
+    // Confirmation messages based on status
+    let confirmMessage = '';
+    if (status === 'no_show') {
+      confirmMessage = 'Are you sure you want to mark this booking as No Show?';
+    } else if (status === 'completed') {
+      confirmMessage = 'Are you sure you want to mark this booking as Completed?';
+    } else {
+      confirmMessage = `Are you sure you want to change the status to ${status}?`;
+    }
+
+    if (!confirm(confirmMessage)) return;
+
     setSubmitting(true);
     try {
       const booking = selectedEvent.originalEvent as Booking;
-      await calendarAPI.updateBookingStatus(booking.id, status);
+
+      // Use specific endpoints for no_show and completed
+      if (status === 'no_show') {
+        await calendarAPI.markAsNoShow(booking.id);
+      } else if (status === 'completed') {
+        await calendarAPI.markAsCompleted(booking.id);
+      } else {
+        // Use generic status update for other statuses
+        await calendarAPI.updateBookingStatus(booking.id, status);
+      }
+
+      // Update the booking status locally with proper typing
+      const updatedBooking: Booking = {
+        ...booking,
+        status: status as 'pending' | 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+      };
+
+      // Update the event in the calendar
+      updateEventInCalendar(selectedEvent.id, updatedBooking);
+
       setSuccess('Booking status updated successfully');
       setShowEventPopup(false);
-      loadAllData();
     } catch (err) {
       console.error('Failed to update booking status:', err);
       setError('Failed to update booking status.');
@@ -350,21 +462,125 @@ const CalendarPage: React.FC = () => {
   const handleDeleteBooking = async () => {
     if (!selectedEvent || selectedEvent.type !== 'booking') return;
 
-    if (!confirm('Are you sure you want to delete this booking?')) return;
+    const booking = selectedEvent.originalEvent as Booking;
+    const customerName = booking.customer
+      ? `${booking.customer.first_name} ${booking.customer.last_name}`
+      : 'Unknown Customer';
+
+    if (!confirm(`Are you sure you want to delete this booking for ${customerName}?\n\nThis action cannot be undone.`)) return;
 
     setSubmitting(true);
     try {
-      const booking = selectedEvent.originalEvent as Booking;
       await calendarAPI.deleteBooking(booking.id);
+
+      // Remove the event from the calendar
+      removeEventFromCalendar(selectedEvent.id);
+
       setSuccess('Booking deleted successfully');
       setShowEventPopup(false);
-      loadAllData();
     } catch (err) {
       console.error('Failed to delete booking:', err);
       setError('Failed to delete booking.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Handle time-off deletion
+  const handleDeleteTimeOff = async () => {
+    if (!selectedEvent || selectedEvent.type !== 'timeoff') return;
+
+    const timeOff = selectedEvent.originalEvent as TimeOff;
+    const staffName = timeOff.user
+      ? `${timeOff.user.first_name} ${timeOff.user.last_name}`
+      : 'Unknown Staff';
+
+    if (!confirm(`Are you sure you want to delete this time-off for ${staffName}?\n\nThis action cannot be undone.`)) return;
+
+    setSubmitting(true);
+    try {
+      await calendarAPI.deleteTimeOff(timeOff.id);
+
+      // Remove the event from the calendar
+      removeEventFromCalendar(selectedEvent.id);
+
+      setSuccess('Time-off deleted successfully');
+      setShowEventPopup(false);
+    } catch (err) {
+      console.error('Failed to delete time-off:', err);
+      setError('Failed to delete time-off.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle edit booking
+  const handleEditBooking = () => {
+    if (!selectedEvent || selectedEvent.type !== 'booking') return;
+
+    const booking = selectedEvent.originalEvent as Booking;
+
+    // Set editing mode
+    setIsEditingBooking(true);
+    setEditingBookingId(booking.id);
+
+    // Pre-fill form with existing booking data
+    setSelectedSlot({
+      start: new Date(booking.start_at),
+      end: new Date(booking.end_at),
+    });
+
+    // Pre-fill customer info
+    if (booking.customer) {
+      setSelectedCustomerId(booking.customer.id);
+      setNewCustomer({
+        firstName: booking.customer.first_name,
+        lastName: booking.customer.last_name,
+        email: booking.customer.email,
+        phone: booking.customer.phone || '',
+      });
+    }
+
+    // Pre-fill services
+    if (booking.booking_services && booking.booking_services.length > 0) {
+      const selectedServicesData = booking.booking_services.map((bs) => ({
+        serviceId: bs.service_id,
+        staffId: bs.user_id,
+      }));
+      setSelectedServices(selectedServicesData);
+    }
+
+    // Pre-fill notes
+    setBookingNotes(booking.notes || '');
+
+    // Close popup and open form
+    setShowEventPopup(false);
+    setShowBookingForm(true);
+    setBookingStep(1);
+  };
+
+  // Handle edit time-off
+  const handleEditTimeOff = () => {
+    if (!selectedEvent || selectedEvent.type !== 'timeoff') return;
+
+    const timeOff = selectedEvent.originalEvent as TimeOff;
+
+    // Set editing mode
+    setIsEditingTimeOff(true);
+    setEditingTimeOffId(timeOff.id);
+
+    // Pre-fill form with existing time-off data
+    setSelectedSlot({
+      start: new Date(timeOff.start_date),
+      end: new Date(timeOff.end_date),
+    });
+
+    setTimeOffStaffId(timeOff.user_id);
+    setTimeOffReason(timeOff.reason || '');
+
+    // Close popup and open form
+    setShowEventPopup(false);
+    setShowTimeOffForm(true);
   };
 
   // Close booking form
@@ -376,6 +592,54 @@ const CalendarPage: React.FC = () => {
     setNewCustomer({ firstName: '', lastName: '', email: '', phone: '' });
     setBookingNotes('');
     setSelectedCustomerId('new');
+    setIsEditingBooking(false);
+    setEditingBookingId(null);
+  };
+
+  // Handle time-off form submission
+  const handleCreateTimeOff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const timeOffData = {
+        start_datetime: selectedSlot!.start.toISOString(),
+        end_datetime: selectedSlot!.end.toISOString(),
+        user_id: timeOffStaffId,
+        reason: timeOffReason,
+      };
+
+      if (isEditingTimeOff && editingTimeOffId) {
+        // Update existing time-off
+        await calendarAPI.updateTimeOff(editingTimeOffId, timeOffData);
+        setSuccess('Time-off updated successfully');
+
+        // Reload all data to get updated time-off
+        await loadAllData();
+      } else {
+        // Create new time-off
+        await calendarAPI.createTimeOff(timeOffData);
+        setSuccess('Time off scheduled successfully');
+        loadAllData();
+      }
+
+      closeTimeOffForm();
+    } catch (err) {
+      console.error('Failed to save time-off:', err);
+      setError('Failed to save time-off. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Close time-off form
+  const closeTimeOffForm = () => {
+    setShowTimeOffForm(false);
+    setSelectedSlot(null);
+    setTimeOffStaffId('');
+    setTimeOffReason('');
+    setIsEditingTimeOff(false);
+    setEditingTimeOffId(null);
   };
 
   // Calculate total duration and price
@@ -406,6 +670,101 @@ const CalendarPage: React.FC = () => {
         return [...prev, { serviceId, staffId }];
       }
     });
+  };
+
+  // Toggle status filter
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilter((prev) => {
+      if (prev.includes(status)) {
+        return prev.filter((s) => s !== status);
+      } else {
+        return [...prev, status];
+      }
+    });
+  };
+
+  // Update a specific event in the calendar
+  const updateEventInCalendar = (eventId: string, updatedBooking: Booking) => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+
+    // Find the event in FullCalendar
+    const event = calendarApi.getEventById(eventId);
+    if (!event) return;
+
+    // Determine new colors based on status
+    let backgroundColor = '#f8f9fa';
+    let borderColor = '#667eea';
+    let textColor = '#2c3e50';
+
+    switch (updatedBooking.status) {
+      case 'pending':
+      case 'scheduled':
+        backgroundColor = 'rgba(251, 191, 36, 0.15)';
+        borderColor = '#F59E0B';
+        textColor = '#92400E';
+        break;
+      case 'confirmed':
+        backgroundColor = 'rgba(34, 197, 94, 0.15)';
+        borderColor = '#22C55E';
+        textColor = '#166534';
+        break;
+      case 'completed':
+        backgroundColor = 'rgba(59, 130, 246, 0.15)';
+        borderColor = '#3B82F6';
+        textColor = '#1E40AF';
+        break;
+      case 'cancelled':
+        backgroundColor = 'rgba(239, 68, 68, 0.15)';
+        borderColor = '#EF4444';
+        textColor = '#991B1B';
+        break;
+      case 'no_show':
+        backgroundColor = 'rgba(168, 85, 247, 0.15)';
+        borderColor = '#A855F7';
+        textColor = '#6B21A8';
+        break;
+      default:
+        backgroundColor = 'rgba(102, 126, 234, 0.15)';
+        borderColor = '#667eea';
+        textColor = '#4338ca';
+        break;
+    }
+
+    // Update the event's visual properties
+    event.setProp('backgroundColor', backgroundColor);
+    event.setProp('borderColor', borderColor);
+    event.setProp('textColor', textColor);
+
+    // Update the events state
+    setEvents((prevEvents) =>
+      prevEvents.map((e) =>
+        e.id === eventId
+          ? {
+              ...e,
+              backgroundColor,
+              borderColor,
+              textColor,
+              originalEvent: updatedBooking,
+            }
+          : e
+      )
+    );
+  };
+
+  // Remove a specific event from the calendar
+  const removeEventFromCalendar = (eventId: string) => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+
+    // Find and remove the event from FullCalendar
+    const event = calendarApi.getEventById(eventId);
+    if (event) {
+      event.remove();
+    }
+
+    // Update the events state
+    setEvents((prevEvents) => prevEvents.filter((e) => e.id !== eventId));
   };
 
   return (
@@ -453,47 +812,64 @@ const CalendarPage: React.FC = () => {
 
           {/* Status Legend */}
           <div className="status-legend">
-            <div className="legend-item">
-              <span className="legend-color" style={{ background: 'rgba(251, 191, 36, 0.15)', borderColor: '#F59E0B' }}></span>
-              <span className="legend-label">Pending/Scheduled</span>
-            </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${statusFilter.includes('confirmed') ? 'selected' : ''}`}
+              onClick={() => toggleStatusFilter('confirmed')}
+              style={{ cursor: 'pointer' }}
+            >
               <span className="legend-color" style={{ background: 'rgba(34, 197, 94, 0.15)', borderColor: '#22C55E' }}></span>
               <span className="legend-label">Confirmed</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${statusFilter.includes('completed') ? 'selected' : ''}`}
+              onClick={() => toggleStatusFilter('completed')}
+              style={{ cursor: 'pointer' }}
+            >
               <span className="legend-color" style={{ background: 'rgba(59, 130, 246, 0.15)', borderColor: '#3B82F6' }}></span>
               <span className="legend-label">Completed</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${statusFilter.includes('cancelled') ? 'selected' : ''}`}
+              onClick={() => toggleStatusFilter('cancelled')}
+              style={{ cursor: 'pointer' }}
+            >
               <span className="legend-color" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: '#EF4444' }}></span>
               <span className="legend-label">Cancelled</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${statusFilter.includes('no_show') ? 'selected' : ''}`}
+              onClick={() => toggleStatusFilter('no_show')}
+              style={{ cursor: 'pointer' }}
+            >
               <span className="legend-color" style={{ background: 'rgba(168, 85, 247, 0.15)', borderColor: '#A855F7' }}></span>
               <span className="legend-label">No Show</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${statusFilter.includes('timeoff') ? 'selected' : ''}`}
+              onClick={() => toggleStatusFilter('timeoff')}
+              style={{ cursor: 'pointer' }}
+            >
               <span className="legend-color" style={{ background: '#95a5a6', borderColor: '#7f8c8d' }}></span>
               <span className="legend-label">Time Off</span>
             </div>
           </div>
 
           {/* Calendar */}
-          {loading ? (
-            <div className="loading-container">
-              <div className="spinner"></div>
-            </div>
-          ) : (
-            <div className="calendar-container">
-              <FullCalendar
-                ref={calendarRef}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-                initialView="timeGridWeek"
-                headerToolbar={{
-                  left: 'prev,next today datePicker',
-                  center: 'title',
-                  right: 'dayGridMonth,timeGridWeek,timeGridDay listWeek',
+          <div className="calendar-container" style={{ position: 'relative' }}>
+            {dataLoading && (
+              <div className="calendar-loading-overlay">
+                <div className="spinner"></div>
+                <p>Loading calendar data...</p>
+              </div>
+            )}
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              initialView="timeGridWeek"
+              headerToolbar={{
+                left: 'prev,next today datePicker',
+                center: 'title',
+                  right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
                 }}
                 slotMinTime="07:00:00"
                 slotMaxTime="21:00:00"
@@ -502,6 +878,11 @@ const CalendarPage: React.FC = () => {
                 editable={true}
                 selectable={true}
                 selectMirror={true}
+                unselectAuto={true}
+                unselectCancel=".fc-event,.event-popup,.booking-form-panel,.slot-action-popup"
+                eventAllow={() => true}
+                eventStartEditable={false}
+                eventDurationEditable={false}
                 dayMaxEvents={true}
                 weekends={true}
                 timeZone="local"
@@ -544,9 +925,66 @@ const CalendarPage: React.FC = () => {
                     listWeek: 'List of bookings'
                 }}
               />
-            </div>
-          )}
+          </div>
         </main>
+
+        {/* Slot Action Popup */}
+        {showSlotActionPopup && (
+          <>
+            <div className="event-popup-overlay" onClick={() => setShowSlotActionPopup(false)}></div>
+            <div
+              className="slot-action-popup"
+              style={{
+                position: 'fixed',
+                top: `${slotActionPosition.y}px`,
+                left: `${slotActionPosition.x}px`,
+                transform: 'translate(-50%, 10px)',
+              }}
+            >
+              <div className="slot-action-popup-title">
+                <span>
+                  {selectedSlot && new Date(selectedSlot.start).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                  {isSelectedSlotPast && (
+                    <span style={{ marginLeft: '8px', fontSize: '12px', opacity: 0.8 }}>
+                      (Past Date)
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="slot-action-buttons">
+                <button
+                  className={`slot-action-button ${isSelectedSlotPast ? 'disabled' : ''}`}
+                  onClick={handleAddBooking}
+                  disabled={isSelectedSlotPast}
+                  title={isSelectedSlotPast ? 'Cannot create bookings for past dates' : 'Add Booking'}
+                >
+                  <i className="fas fa-calendar-plus"></i>
+                  <span>Add Booking</span>
+                </button>
+                <button
+                  className={`slot-action-button ${isSelectedSlotPast ? 'disabled' : ''}`}
+                  onClick={handleAddTimeOff}
+                  disabled={isSelectedSlotPast}
+                  title={isSelectedSlotPast ? 'Cannot schedule time-off for past dates' : 'Add Time Off'}
+                >
+                  <i className="fas fa-coffee"></i>
+                  <span>Add Time Off</span>
+                </button>
+              </div>
+              {isSelectedSlotPast && (
+                <div className="slot-action-message">
+                  <i className="fas fa-info-circle"></i>
+                  <span>Cannot create bookings or time-off for past dates</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Event Popup */}
         {showEventPopup && selectedEvent && (
@@ -560,21 +998,83 @@ const CalendarPage: React.FC = () => {
                 <div className="event-popup-actions">
                   {selectedEvent.type === 'booking' && (
                     <>
-                      {(selectedEvent.originalEvent as Booking).status === 'pending' && (
-                        <button onClick={() => handleStatusUpdate('confirmed')} title="Confirm booking">
-                          <i className="fas fa-check"></i>
-                        </button>
-                      )}
-                      {(selectedEvent.originalEvent as Booking).status === 'confirmed' && (
-                        <button onClick={() => handleStatusUpdate('completed')} title="Complete booking">
-                          <i className="fas fa-check-circle"></i>
-                        </button>
-                      )}
+                      {(() => {
+                        const booking = selectedEvent.originalEvent as Booking;
+                        const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+                        const isPastEvent = new Date(booking.end_at) < new Date();
+
+                        return (
+                          <>
+                            {!isPastEvent && (
+                              <button
+                                onClick={handleEditBooking}
+                                title="Edit Booking"
+                                disabled={submitting}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                            )}
+                            {booking.status === 'confirmed' && (
+                              <>
+                                <button
+                                  onClick={() => handleStatusUpdate('no_show')}
+                                  title="Mark as No Show"
+                                  disabled={submitting}
+                                >
+                                  {submitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-user-times"></i>}
+                                </button>
+                                <button
+                                  onClick={() => handleStatusUpdate('completed')}
+                                  title="Mark as Completed"
+                                  disabled={submitting}
+                                >
+                                  {submitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check-circle"></i>}
+                                </button>
+                                {isAdmin && (
+                                  <button
+                                    onClick={handleDeleteBooking}
+                                    title="Delete"
+                                    disabled={submitting}
+                                  >
+                                    {submitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-trash-alt"></i>}
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </>
+                        );
+                      })()}
                     </>
                   )}
-                  <button onClick={handleDeleteBooking} title="Delete">
-                    <i className="fas fa-trash-alt"></i>
-                  </button>
+                  {selectedEvent.type === 'timeoff' && (
+                    <>
+                      {(() => {
+                        const timeOff = selectedEvent.originalEvent as TimeOff;
+                        const isPastEvent = new Date(timeOff.end_date) < new Date();
+
+                        return (
+                          <>
+                            {!isPastEvent && (
+                              <button
+                                onClick={handleEditTimeOff}
+                                title="Edit Time Off"
+                                disabled={submitting}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                            )}
+                            <button
+                              onClick={handleDeleteTimeOff}
+                              title="Delete Time Off"
+                              disabled={submitting}
+                            >
+                              {submitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-trash-alt"></i>}
+                            </button>
+                          </>
+                        );
+                      })()}
+                    </>
+                  )}
                   <button className="event-popup-close" onClick={() => setShowEventPopup(false)}>
                     &times;
                   </button>
@@ -658,7 +1158,7 @@ const CalendarPage: React.FC = () => {
                         <>
                           <div className="event-popup-time">
                             <i className="fas fa-clock"></i>
-                            <span>{formatDateTime(timeOff.start_at)} - {formatTime(timeOff.end_at)}</span>
+                            <span>{formatDateTime(timeOff.start_date)} - {formatTime(timeOff.end_date)}</span>
                           </div>
                           {timeOff.user && (
                             <div className="event-popup-customer-detail">
@@ -686,7 +1186,7 @@ const CalendarPage: React.FC = () => {
         {showBookingForm && (
           <div className={`booking-form-panel ${showBookingForm ? 'active' : ''}`}>
             <div className="booking-form-header">
-              <h3>Add New Booking</h3>
+              <h3>{isEditingBooking ? 'Edit Booking' : 'Add New Booking'}</h3>
               <button className="close-panel-btn" onClick={closeBookingForm}>
                 &times;
               </button>
@@ -855,6 +1355,86 @@ const CalendarPage: React.FC = () => {
                       )}
                     </button>
                   </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Time Off Form Panel */}
+        {showTimeOffForm && (
+          <div className={`booking-form-panel ${showTimeOffForm ? 'active' : ''}`}>
+            <div className="booking-form-header">
+              <h3>{isEditingTimeOff ? 'Edit Time Off' : 'Schedule Time Off'}</h3>
+              <button className="close-panel-btn" onClick={closeTimeOffForm}>
+                &times;
+              </button>
+            </div>
+            <div className="booking-form-content">
+              <form onSubmit={handleCreateTimeOff}>
+                <div className="form-group time-inputs">
+                  <div>
+                    <label>Start Date & Time:</label>
+                    <input
+                      type="text"
+                      value={selectedSlot ? new Date(selectedSlot.start).toLocaleString() : ''}
+                      disabled
+                      style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                    />
+                  </div>
+                  <div>
+                    <label>End Date & Time:</label>
+                    <input
+                      type="text"
+                      value={selectedSlot ? new Date(selectedSlot.end).toLocaleString() : ''}
+                      disabled
+                      style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="time-off-staff">Staff Member: *</label>
+                  <select
+                    id="time-off-staff"
+                    value={timeOffStaffId}
+                    onChange={(e) => setTimeOffStaffId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select staff member</option>
+                    {staff.map((member) => (
+                      <option key={member.id} value={member.user_id}>
+                        {member.user?.first_name} {member.user?.last_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="time-off-reason">Reason:</label>
+                  <textarea
+                    id="time-off-reason"
+                    rows={3}
+                    value={timeOffReason}
+                    onChange={(e) => setTimeOffReason(e.target.value)}
+                    placeholder="Provide a reason for the time off (optional)"
+                  ></textarea>
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="secondary-button" onClick={closeTimeOffForm}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="primary-button" disabled={submitting}>
+                    {submitting ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i>
+                        Scheduling...
+                      </>
+                    ) : (
+                      'Schedule Time Off'
+                    )}
+                  </button>
                 </div>
               </form>
             </div>

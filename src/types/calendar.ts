@@ -38,8 +38,8 @@ export interface Booking {
 
 export interface TimeOff {
   id: string;
-  start_at: string;  // API returns start_at
-  end_at: string;    // API returns end_at
+  start_date: string;  // API returns start_date
+  end_date: string;    // API returns end_date
   user_id: string;
   reason?: string;
   user?: {
