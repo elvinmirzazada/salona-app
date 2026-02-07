@@ -51,24 +51,25 @@ export interface TimeOff {
 }
 
 export interface CreateBookingData {
-  start_datetime: string;
-  end_datetime: string;
-  services: Array<{
-    service_id: string;
-    user_id: string;
-  }>;
-  customer_id?: string;
-  customer_first_name?: string;
-  customer_last_name?: string;
-  customer_email?: string;
-  customer_phone?: string;
-  description?: string;
+  start_time: string;
   notes?: string;
+  services: Array<{
+    category_service_id: string;
+    user_id: string;
+    notes?: string;
+  }>;
+  customer_info: {
+    id?: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+  };
 }
 
 export interface CreateTimeOffData {
-  start_datetime: string;
-  end_datetime: string;
+  start_date: string;
+  end_date: string;
   user_id: string;
   reason?: string;
 }

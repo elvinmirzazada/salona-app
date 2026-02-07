@@ -22,6 +22,7 @@ const CalendarPage: React.FC = () => {
   const [_bookings, setBookings] = useState<Booking[]>([]);
   const [_timeOffs, setTimeOffs] = useState<TimeOff[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -34,7 +35,7 @@ const CalendarPage: React.FC = () => {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showTimeOffForm, setShowTimeOffForm] = useState(false);
   const [showSlotActionPopup, setShowSlotActionPopup] = useState(false);
-  const [slotActionPosition, setSlotActionPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [slotActionPosition, setSlotActionPosition] = useState<{ x: number; y: number; openAbove?: boolean }>({ x: 0, y: 0 });
   const [bookingStep, setBookingStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [isEditingBooking, setIsEditingBooking] = useState(false);
@@ -57,12 +58,26 @@ const CalendarPage: React.FC = () => {
   // Time-off form states
   const [timeOffStaffId, setTimeOffStaffId] = useState('');
   const [timeOffReason, setTimeOffReason] = useState('');
+  const [timeOffStartDate, setTimeOffStartDate] = useState('');
+  const [timeOffStartTime, setTimeOffStartTime] = useState('');
+  const [timeOffEndDate, setTimeOffEndDate] = useState('');
+  const [timeOffEndTime, setTimeOffEndTime] = useState('');
 
   // Track if selected slot is in the past
   const [isSelectedSlotPast, setIsSelectedSlotPast] = useState(false);
 
   // Status filter state
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
+
+  // Service search state
+  const [serviceSearch, setServiceSearch] = useState('');
+
+  // Start date/time state for booking form
+  const [bookingStartDate, setBookingStartDate] = useState('');
+  const [bookingStartTime, setBookingStartTime] = useState('');
+
+  // Selected master/staff for booking
+  const [selectedMasterId, setSelectedMasterId] = useState('');
 
   // Load data on mount
   useEffect(() => {
@@ -89,6 +104,46 @@ const CalendarPage: React.FC = () => {
     }
   }, [error]);
 
+  // Reload only bookings and time-offs data and refresh calendar
+  const reloadCalendarData = async () => {
+    try {
+      const [bookingsRes, timeOffsRes] = await Promise.all([
+        calendarAPI.getBookings(),
+        calendarAPI.getTimeOffs(),
+      ]);
+
+      // Check for API errors
+      if (!bookingsRes.success) {
+        setError(bookingsRes.message || 'Failed to load bookings.');
+        return;
+      }
+      if (!timeOffsRes.success) {
+        setError(timeOffsRes.message || 'Failed to load time-offs.');
+        return;
+      }
+
+      const bookingsData = bookingsRes.data || [];
+      const timeOffsData = timeOffsRes.data || [];
+
+      setBookings(bookingsData);
+      setTimeOffs(timeOffsData);
+
+      // Convert to calendar events and update calendar
+      const calendarEvents = convertToCalendarEvents(bookingsData, timeOffsData);
+      setEvents(calendarEvents);
+
+      // Refresh FullCalendar view
+      const calendarApi = calendarRef.current?.getApi();
+      if (calendarApi) {
+        calendarApi.removeAllEvents();
+        calendarEvents.forEach(event => calendarApi.addEvent(event));
+      }
+    } catch (err: any) {
+      console.error('Failed to reload calendar data:', err);
+      setError(err?.response?.data?.message || err?.message || 'Failed to reload calendar data.');
+    }
+  };
+
   const loadAllData = async () => {
     try {
       setDataLoading(true);
@@ -103,6 +158,33 @@ const CalendarPage: React.FC = () => {
       console.log('Bookings API Response:', bookingsRes);
       console.log('Time Offs API Response:', timeOffsRes);
 
+      // Check for API errors
+      if (!bookingsRes.success) {
+        setError(bookingsRes.message || 'Failed to load bookings.');
+        setDataLoading(false);
+        return;
+      }
+      if (!timeOffsRes.success) {
+        setError(timeOffsRes.message || 'Failed to load time-offs.');
+        setDataLoading(false);
+        return;
+      }
+      if (!servicesRes.success) {
+        setError(servicesRes.message || 'Failed to load services.');
+        setDataLoading(false);
+        return;
+      }
+      if (!staffRes.success) {
+        setError(staffRes.message || 'Failed to load staff.');
+        setDataLoading(false);
+        return;
+      }
+      if (!customersRes.success) {
+        setError(customersRes.message || 'Failed to load customers.');
+        setDataLoading(false);
+        return;
+      }
+
       const bookingsData = bookingsRes.data || [];
       const timeOffsData = timeOffsRes.data || [];
 
@@ -113,6 +195,9 @@ const CalendarPage: React.FC = () => {
       setTimeOffs(timeOffsData);
       setCustomers(customersRes.data || []);
       setStaff(staffRes.data || []);
+
+      // Store categories
+      setCategories(servicesRes.data || []);
 
       // Process services from categories
       const servicesData: Service[] = [];
@@ -143,9 +228,9 @@ const CalendarPage: React.FC = () => {
       // Convert to calendar events
       const calendarEvents = convertToCalendarEvents(bookingsData, timeOffsData);
       setEvents(calendarEvents);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load data:', err);
-      setError('Failed to load calendar data. Please try again.');
+      setError(err?.response?.data?.message || err?.message || 'Failed to load calendar data. Please try again.');
     } finally {
       setDataLoading(false);
     }
@@ -339,9 +424,22 @@ const CalendarPage: React.FC = () => {
 
     // Calculate popup position based on the click event
     const jsEvent = selectInfo.jsEvent as MouseEvent;
+    const clickY = jsEvent.clientY;
+    const clickX = jsEvent.clientX;
+
+    // Estimate popup height (approximate based on content)
+    const popupHeight = isPast ? 200 : 150; // Larger if past date due to message
+    const windowHeight = window.innerHeight;
+    const spaceBelow = windowHeight - clickY;
+    const spaceAbove = clickY;
+
+    // Determine if popup should open above or below
+    const shouldOpenAbove = spaceBelow < popupHeight && spaceAbove > spaceBelow;
+
     setSlotActionPosition({
-      x: jsEvent.clientX,
-      y: jsEvent.clientY,
+      x: clickX,
+      y: clickY,
+      openAbove: shouldOpenAbove,
     });
 
     setShowSlotActionPopup(true);
@@ -353,12 +451,32 @@ const CalendarPage: React.FC = () => {
     setShowBookingForm(true);
     setBookingStep(1);
     setSelectedServices([]);
+
+    // Populate start date and time from selected slot
+    if (selectedSlot) {
+      const startDate = new Date(selectedSlot.start);
+      const dateStr = startDate.toISOString().split('T')[0];
+      const timeStr = startDate.toTimeString().slice(0, 5);
+      setBookingStartDate(dateStr);
+      setBookingStartTime(timeStr);
+    }
   };
 
   // Handle add time-off from slot action popup
   const handleAddTimeOff = () => {
     setShowSlotActionPopup(false);
     setShowTimeOffForm(true);
+
+    // Populate start and end date/time from selected slot
+    if (selectedSlot) {
+      const startDate = new Date(selectedSlot.start);
+      const endDate = new Date(selectedSlot.end);
+
+      setTimeOffStartDate(startDate.toISOString().split('T')[0]);
+      setTimeOffStartTime(startDate.toTimeString().slice(0, 5));
+      setTimeOffEndDate(endDate.toISOString().split('T')[0]);
+      setTimeOffEndTime(endDate.toTimeString().slice(0, 5));
+    }
   };
 
   // Handle booking form submission
@@ -368,42 +486,105 @@ const CalendarPage: React.FC = () => {
 
     try {
       const bookingData: CreateBookingData = {
-        start_datetime: selectedSlot!.start.toISOString(),
-        end_datetime: selectedSlot!.end.toISOString(),
-        services: selectedServices.map((s) => ({
-          service_id: s.serviceId,
-          user_id: s.staffId,
-        })),
+        start_time: selectedSlot!.start.toISOString(),
         notes: bookingNotes,
+        services: selectedServices.map((s) => ({
+          category_service_id: s.serviceId,
+          user_id: selectedMasterId, // Use selected master for all services
+          notes: '', // Can add per-service notes if needed
+        })),
+        customer_info: {
+          first_name: selectedCustomerId === 'new' ? newCustomer.firstName : customers.find(c => c.id === selectedCustomerId)?.first_name || '',
+          last_name: selectedCustomerId === 'new' ? newCustomer.lastName : customers.find(c => c.id === selectedCustomerId)?.last_name || '',
+          email: selectedCustomerId === 'new' ? newCustomer.email : customers.find(c => c.id === selectedCustomerId)?.email || '',
+          phone: selectedCustomerId === 'new' ? newCustomer.phone : customers.find(c => c.id === selectedCustomerId)?.phone || '',
+        },
       };
 
-      if (selectedCustomerId === 'new') {
-        bookingData.customer_first_name = newCustomer.firstName;
-        bookingData.customer_last_name = newCustomer.lastName;
-        bookingData.customer_email = newCustomer.email;
-        bookingData.customer_phone = newCustomer.phone;
-      } else {
-        bookingData.customer_id = selectedCustomerId;
+      // Add customer id if existing customer selected
+      if (selectedCustomerId !== 'new') {
+        bookingData.customer_info.id = selectedCustomerId;
       }
 
       if (isEditingBooking && editingBookingId) {
         // Update existing booking
-        await calendarAPI.updateBooking(editingBookingId, bookingData);
+        const response = await calendarAPI.updateBooking(editingBookingId, bookingData);
+
+        // Check for API error
+        if (!response.success) {
+          setError(response.message || 'Failed to update booking.');
+          setSubmitting(false);
+          return;
+        }
+
         setSuccess('Booking updated successfully');
 
-        // Reload all data to get updated booking
-        await loadAllData();
+        // Reload only bookings and time-offs data and refresh calendar
+        await reloadCalendarData();
       } else {
         // Create new booking
-        await calendarAPI.createBooking(bookingData);
+        const response = await calendarAPI.createBooking(bookingData);
+
+        // Check for API error
+        if (!response.success) {
+          setError(response.message || 'Failed to create booking.');
+          setSubmitting(false);
+          return;
+        }
+
         setSuccess('Booking created successfully');
-        loadAllData();
+
+        // Add new booking event directly to calendar
+        if (response.data) {
+          const newBooking = response.data;
+          const customerName = newBooking.customer
+            ? `${newBooking.customer.first_name} ${newBooking.customer.last_name}`.trim()
+            : bookingData.customer_info.first_name + ' ' + bookingData.customer_info.last_name;
+
+          // Determine colors based on status
+          let backgroundColor = 'rgba(251, 191, 36, 0.15)';
+          let borderColor = '#F59E0B';
+          let textColor = '#92400E';
+
+          if (newBooking.status === 'confirmed') {
+            backgroundColor = 'rgba(34, 197, 94, 0.15)';
+            borderColor = '#22C55E';
+            textColor = '#166534';
+          }
+
+          // Use local start from selectedSlot, but end from calculated form value
+          const localStart = selectedSlot!.start.toISOString();
+          // Calculate end time from start date/time + service durations
+          const endDateTime = calculateEndDateTime();
+          const localEnd = endDateTime ? endDateTime.toISOString() : selectedSlot!.end.toISOString();
+
+          const newEvent: CalendarEvent = {
+            id: `booking-${newBooking.id}`,
+            title: customerName,
+            start: localStart,
+            end: localEnd,
+            backgroundColor,
+            borderColor,
+            textColor,
+            type: 'booking',
+            originalEvent: newBooking,
+          };
+
+          // Add to events state
+          setEvents(prevEvents => [...prevEvents, newEvent]);
+
+          // Add to FullCalendar
+          const calendarApi = calendarRef.current?.getApi();
+          if (calendarApi) {
+            calendarApi.addEvent(newEvent);
+          }
+        }
       }
 
       closeBookingForm();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save booking:', err);
-      setError('Failed to save booking. Please try again.');
+      setError(err?.response?.data?.message || err?.message || 'Failed to save booking. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -429,14 +610,22 @@ const CalendarPage: React.FC = () => {
     try {
       const booking = selectedEvent.originalEvent as Booking;
 
+      let response;
       // Use specific endpoints for no_show and completed
       if (status === 'no_show') {
-        await calendarAPI.markAsNoShow(booking.id);
+        response = await calendarAPI.markAsNoShow(booking.id);
       } else if (status === 'completed') {
-        await calendarAPI.markAsCompleted(booking.id);
+        response = await calendarAPI.markAsCompleted(booking.id);
       } else {
         // Use generic status update for other statuses
-        await calendarAPI.updateBookingStatus(booking.id, status);
+        response = await calendarAPI.updateBookingStatus(booking.id, status);
+      }
+
+      // Check for API error
+      if (!response.success) {
+        setError(response.message || 'Failed to update booking status.');
+        setSubmitting(false);
+        return;
       }
 
       // Update the booking status locally with proper typing
@@ -450,9 +639,9 @@ const CalendarPage: React.FC = () => {
 
       setSuccess('Booking status updated successfully');
       setShowEventPopup(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update booking status:', err);
-      setError('Failed to update booking status.');
+      setError(err?.response?.data?.message || err?.message || 'Failed to update booking status.');
     } finally {
       setSubmitting(false);
     }
@@ -471,16 +660,23 @@ const CalendarPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await calendarAPI.deleteBooking(booking.id);
+      const response = await calendarAPI.deleteBooking(booking.id);
+
+      // Check for API error
+      if (!response.success) {
+        setError(response.message || 'Failed to delete booking.');
+        setSubmitting(false);
+        return;
+      }
 
       // Remove the event from the calendar
       removeEventFromCalendar(selectedEvent.id);
 
       setSuccess('Booking deleted successfully');
       setShowEventPopup(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete booking:', err);
-      setError('Failed to delete booking.');
+      setError(err?.response?.data?.message || err?.message || 'Failed to delete booking.');
     } finally {
       setSubmitting(false);
     }
@@ -499,16 +695,23 @@ const CalendarPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await calendarAPI.deleteTimeOff(timeOff.id);
+      const response = await calendarAPI.deleteTimeOff(timeOff.id);
+
+      // Check for API error
+      if (!response.success) {
+        setError(response.message || 'Failed to delete time-off.');
+        setSubmitting(false);
+        return;
+      }
 
       // Remove the event from the calendar
       removeEventFromCalendar(selectedEvent.id);
 
       setSuccess('Time-off deleted successfully');
       setShowEventPopup(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete time-off:', err);
-      setError('Failed to delete time-off.');
+      setError(err?.response?.data?.message || err?.message || 'Failed to delete time-off.');
     } finally {
       setSubmitting(false);
     }
@@ -530,6 +733,13 @@ const CalendarPage: React.FC = () => {
       end: new Date(booking.end_at),
     });
 
+    // Populate start date and time
+    const startDate = new Date(booking.start_at);
+    const dateStr = startDate.toISOString().split('T')[0];
+    const timeStr = startDate.toTimeString().slice(0, 5);
+    setBookingStartDate(dateStr);
+    setBookingStartTime(timeStr);
+
     // Pre-fill customer info
     if (booking.customer) {
       setSelectedCustomerId(booking.customer.id);
@@ -548,6 +758,11 @@ const CalendarPage: React.FC = () => {
         staffId: bs.user_id,
       }));
       setSelectedServices(selectedServicesData);
+
+      // Set the master from the first service's staff (assuming same master for all services)
+      if (booking.booking_services[0]?.user_id) {
+        setSelectedMasterId(booking.booking_services[0].user_id);
+      }
     }
 
     // Pre-fill notes
@@ -570,10 +785,18 @@ const CalendarPage: React.FC = () => {
     setEditingTimeOffId(timeOff.id);
 
     // Pre-fill form with existing time-off data
+    const startDate = new Date(timeOff.start_date);
+    const endDate = new Date(timeOff.end_date);
+
     setSelectedSlot({
-      start: new Date(timeOff.start_date),
-      end: new Date(timeOff.end_date),
+      start: startDate,
+      end: endDate,
     });
+
+    setTimeOffStartDate(startDate.toISOString().split('T')[0]);
+    setTimeOffStartTime(startDate.toTimeString().slice(0, 5));
+    setTimeOffEndDate(endDate.toISOString().split('T')[0]);
+    setTimeOffEndTime(endDate.toTimeString().slice(0, 5));
 
     setTimeOffStaffId(timeOff.user_id);
     setTimeOffReason(timeOff.reason || '');
@@ -594,6 +817,10 @@ const CalendarPage: React.FC = () => {
     setSelectedCustomerId('new');
     setIsEditingBooking(false);
     setEditingBookingId(null);
+    setServiceSearch('');
+    setBookingStartDate('');
+    setBookingStartTime('');
+    setSelectedMasterId('');
   };
 
   // Handle time-off form submission
@@ -602,31 +829,86 @@ const CalendarPage: React.FC = () => {
     setSubmitting(true);
 
     try {
+      // Construct datetime from date and time fields
+      const startDateTime = new Date(`${timeOffStartDate}T${timeOffStartTime}`);
+      const endDateTime = new Date(`${timeOffEndDate}T${timeOffEndTime}`);
+
       const timeOffData = {
-        start_datetime: selectedSlot!.start.toISOString(),
-        end_datetime: selectedSlot!.end.toISOString(),
+        start_date: startDateTime.toISOString(),
+        end_date: endDateTime.toISOString(),
         user_id: timeOffStaffId,
         reason: timeOffReason,
       };
 
       if (isEditingTimeOff && editingTimeOffId) {
         // Update existing time-off
-        await calendarAPI.updateTimeOff(editingTimeOffId, timeOffData);
+        const response = await calendarAPI.updateTimeOff(editingTimeOffId, timeOffData);
+
+        // Check for API error
+        if (!response.success) {
+          setError(response.message || 'Failed to update time-off.');
+          setSubmitting(false);
+          return;
+        }
+
         setSuccess('Time-off updated successfully');
 
-        // Reload all data to get updated time-off
-        await loadAllData();
+        // Reload only bookings and time-offs data and refresh calendar
+        await reloadCalendarData();
       } else {
         // Create new time-off
-        await calendarAPI.createTimeOff(timeOffData);
+        const response = await calendarAPI.createTimeOff(timeOffData);
+
+        // Check for API error
+        if (!response.success) {
+          setError(response.message || 'Failed to schedule time-off.');
+          setSubmitting(false);
+          return;
+        }
+
         setSuccess('Time off scheduled successfully');
-        loadAllData();
+
+        // Add new time-off event directly to calendar
+        if (response.data) {
+          const newTimeOff = response.data;
+          const staffMember = staff.find(s => s.user_id === timeOffStaffId);
+          const title = staffMember?.user
+            ? `Time Off - ${staffMember.user.first_name} ${staffMember.user.last_name}`
+            : 'Time Off';
+
+          // Use local start from selectedSlot, but end from form end date/time fields
+          const localStart = selectedSlot!.start.toISOString();
+          // Use end date/time from form fields
+          const endDateTime = new Date(`${timeOffEndDate}T${timeOffEndTime}`);
+          const localEnd = endDateTime.toISOString();
+
+          const newEvent: CalendarEvent = {
+            id: `timeoff-${newTimeOff.id}`,
+            title: title,
+            start: localStart,
+            end: localEnd,
+            backgroundColor: '#95a5a6',
+            borderColor: '#7f8c8d',
+            textColor: 'white',
+            type: 'timeoff',
+            originalEvent: newTimeOff,
+          };
+
+          // Add to events state
+          setEvents(prevEvents => [...prevEvents, newEvent]);
+
+          // Add to FullCalendar
+          const calendarApi = calendarRef.current?.getApi();
+          if (calendarApi) {
+            calendarApi.addEvent(newEvent);
+          }
+        }
       }
 
       closeTimeOffForm();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save time-off:', err);
-      setError('Failed to save time-off. Please try again.');
+      setError(err?.response?.data?.message || err?.message || 'Failed to save time-off. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -640,6 +922,10 @@ const CalendarPage: React.FC = () => {
     setTimeOffReason('');
     setIsEditingTimeOff(false);
     setEditingTimeOffId(null);
+    setTimeOffStartDate('');
+    setTimeOffStartTime('');
+    setTimeOffEndDate('');
+    setTimeOffEndTime('');
   };
 
   // Calculate total duration and price
@@ -659,6 +945,53 @@ const CalendarPage: React.FC = () => {
   };
 
   const { totalDuration, totalPrice } = calculateTotals();
+
+  // Calculate end date/time based on start date/time and selected services duration
+  const calculateEndDateTime = () => {
+    if (!bookingStartDate || !bookingStartTime) return null;
+
+    const startDateTime = new Date(`${bookingStartDate}T${bookingStartTime}`);
+    const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60000); // Add minutes
+
+    return endDateTime;
+  };
+
+  // Handle start date/time change
+  const handleStartDateTimeChange = (date: string, time: string) => {
+    setBookingStartDate(date);
+    setBookingStartTime(time);
+
+    if (date && time) {
+      const startDateTime = new Date(`${date}T${time}`);
+      const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60000);
+
+      setSelectedSlot({
+        start: startDateTime,
+        end: endDateTime,
+      });
+    }
+  };
+
+  // Filter services by search term and group by category
+  const getGroupedAndFilteredServices = () => {
+    const searchLower = serviceSearch.toLowerCase();
+    const filtered = services.filter(service =>
+      service.name.toLowerCase().includes(searchLower)
+    );
+
+    // Group by category
+    const grouped: { [key: string]: Service[] } = {};
+
+    filtered.forEach(service => {
+      const categoryId = service.category_id || 'uncategorized';
+      if (!grouped[categoryId]) {
+        grouped[categoryId] = [];
+      }
+      grouped[categoryId].push(service);
+    });
+
+    return grouped;
+  };
 
   // Toggle service selection
   const toggleService = (serviceId: string, staffId: string) => {
@@ -936,9 +1269,10 @@ const CalendarPage: React.FC = () => {
               className="slot-action-popup"
               style={{
                 position: 'fixed',
-                top: `${slotActionPosition.y}px`,
+                top: slotActionPosition.openAbove ? 'auto' : `${slotActionPosition.y}px`,
+                bottom: slotActionPosition.openAbove ? `${window.innerHeight - slotActionPosition.y}px` : 'auto',
                 left: `${slotActionPosition.x}px`,
-                transform: 'translate(-50%, 10px)',
+                transform: slotActionPosition.openAbove ? 'translate(-50%, -10px)' : 'translate(-50%, 10px)',
               }}
             >
               <div className="slot-action-popup-title">
@@ -1206,27 +1540,108 @@ const CalendarPage: React.FC = () => {
               <form onSubmit={handleCreateBooking}>
                 {/* Step 1: Service Selection */}
                 <div className={`booking-step-content ${bookingStep === 1 ? 'active' : ''}`}>
+                  {/* Date and Time Fields */}
+                  <div className="form-group-row">
+                    <div className="form-group">
+                      <label>Start Date: *</label>
+                      <input
+                        type="date"
+                        value={bookingStartDate}
+                        onChange={(e) => handleStartDateTimeChange(e.target.value, bookingStartTime)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group form-group-compact">
+                      <label>Start Time: *</label>
+                      <input
+                        type="time"
+                        value={bookingStartTime}
+                        onChange={(e) => handleStartDateTimeChange(bookingStartDate, e.target.value)}
+                        required
+                        className="compact-time-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* End Date and Time (Read-only, auto-calculated) */}
+                  <div className="form-group-row">
+                    <div className="form-group">
+                      <label>End Date:</label>
+                      <input
+                        type="text"
+                        value={calculateEndDateTime()?.toLocaleDateString() || '—'}
+                        disabled
+                        style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                      />
+                    </div>
+                    <div className="form-group form-group-compact">
+                      <label>End Time:</label>
+                      <input
+                        type="text"
+                        value={calculateEndDateTime()?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) || '—'}
+                        disabled
+                        style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                        className="compact-time-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Service Search */}
+                  <div className="form-group">
+                    <label>Search Services:</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        placeholder="Search by service name..."
+                        value={serviceSearch}
+                        onChange={(e) => setServiceSearch(e.target.value)}
+                        style={{ paddingLeft: '35px' }}
+                      />
+                      <i className="fas fa-search" style={{
+                        position: 'absolute',
+                        left: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#9ca3af'
+                      }}></i>
+                    </div>
+                  </div>
+
+                  {/* Services Grouped by Category */}
                   <div className="form-group">
                     <label>Select Services:</label>
                     <div className="custom-service-list">
-                      {services.map((service) => (
-                        <div key={service.id} className="service-option">
-                          <input
-                            type="checkbox"
-                            checked={selectedServices.some((s) => s.serviceId === service.id)}
-                            onChange={() => {
-                              const defaultStaff = service.service_staff[0]?.user_id || staff[0]?.user_id || '';
-                              toggleService(service.id, defaultStaff);
-                            }}
-                          />
-                          <div className="service-info">
-                            <div className="service-option-name">{service.name}</div>
-                            <div className="service-option-details">
-                              {service.duration} min • € {((service.discount_price || service.price) / 100).toFixed(2)}
-                            </div>
+                      {Object.entries(getGroupedAndFilteredServices()).map(([categoryId, categoryServices]) => {
+                        // Find category name from services data
+                        const categoryName = categories.find(cat => cat.id === categoryId)?.name || 'Other Services';
+
+                        return (
+                          <div key={categoryId} className="service-category-group">
+                            <div className="category-header">{categoryName}</div>
+                            {categoryServices.map((service) => (
+                              <div key={service.id} className="service-option">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedServices.some((s) => s.serviceId === service.id)}
+                                  onChange={() => {
+                                    const defaultStaff = service.service_staff[0]?.user_id || staff[0]?.user_id || '';
+                                    toggleService(service.id, defaultStaff);
+                                  }}
+                                />
+                                <div className="service-info">
+                                  <div className="service-option-name">{service.name}</div>
+                                  <div className="service-option-details">
+                                    {service.duration} min • € {((service.discount_price || service.price) / 100).toFixed(2)}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
+                      {Object.keys(getGroupedAndFilteredServices()).length === 0 && (
+                        <div className="empty-selection-message">No services found</div>
+                      )}
                     </div>
                   </div>
 
@@ -1254,7 +1669,7 @@ const CalendarPage: React.FC = () => {
                       </div>
                       <div>
                         <span>Total Price:</span>
-                        <span>{totalPrice.toFixed(2)}</span>
+                        <span>€ {totalPrice.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -1275,7 +1690,7 @@ const CalendarPage: React.FC = () => {
                 {/* Step 2: Customer Information */}
                 <div className={`booking-step-content ${bookingStep === 2 ? 'active' : ''}`}>
                   <div className="form-group">
-                    <label htmlFor="booking-customer">Customer:</label>
+                    <label htmlFor="booking-customer">Customer: *</label>
                     <select
                       id="booking-customer"
                       value={selectedCustomerId}
@@ -1294,7 +1709,7 @@ const CalendarPage: React.FC = () => {
                   {selectedCustomerId === 'new' && (
                     <div>
                       <div className="form-group">
-                        <label>First Name:</label>
+                        <label>First Name: *</label>
                         <input
                           type="text"
                           value={newCustomer.firstName}
@@ -1303,7 +1718,7 @@ const CalendarPage: React.FC = () => {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Last Name:</label>
+                        <label>Last Name: *</label>
                         <input
                           type="text"
                           value={newCustomer.lastName}
@@ -1312,7 +1727,7 @@ const CalendarPage: React.FC = () => {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Email:</label>
+                        <label>Email: *</label>
                         <input
                           type="email"
                           value={newCustomer.email}
@@ -1330,6 +1745,24 @@ const CalendarPage: React.FC = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Master/Staff Selection */}
+                  <div className="form-group">
+                    <label htmlFor="booking-master">Master (Staff): *</label>
+                    <select
+                      id="booking-master"
+                      value={selectedMasterId}
+                      onChange={(e) => setSelectedMasterId(e.target.value)}
+                      required
+                    >
+                      <option value="">Select a master</option>
+                      {staff.map((member) => (
+                        <option key={member.id} value={member.user_id}>
+                          {member.user?.first_name} {member.user?.last_name} {member.user?.position ? `- ${member.user.position}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <div className="form-group">
                     <label>Notes:</label>
@@ -1372,23 +1805,48 @@ const CalendarPage: React.FC = () => {
             </div>
             <div className="booking-form-content">
               <form onSubmit={handleCreateTimeOff}>
-                <div className="form-group time-inputs">
-                  <div>
-                    <label>Start Date & Time:</label>
+                {/* Start Date and Time */}
+                <div className="form-group-row">
+                  <div className="form-group">
+                    <label>Start Date: *</label>
                     <input
-                      type="text"
-                      value={selectedSlot ? new Date(selectedSlot.start).toLocaleString() : ''}
-                      disabled
-                      style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                      type="date"
+                      value={timeOffStartDate}
+                      onChange={(e) => setTimeOffStartDate(e.target.value)}
+                      required
                     />
                   </div>
-                  <div>
-                    <label>End Date & Time:</label>
+                  <div className="form-group form-group-compact">
+                    <label>Start Time: *</label>
                     <input
-                      type="text"
-                      value={selectedSlot ? new Date(selectedSlot.end).toLocaleString() : ''}
-                      disabled
-                      style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                      type="time"
+                      value={timeOffStartTime}
+                      onChange={(e) => setTimeOffStartTime(e.target.value)}
+                      required
+                      className="compact-time-input"
+                    />
+                  </div>
+                </div>
+
+                {/* End Date and Time */}
+                <div className="form-group-row">
+                  <div className="form-group">
+                    <label>End Date: *</label>
+                    <input
+                      type="date"
+                      value={timeOffEndDate}
+                      onChange={(e) => setTimeOffEndDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group form-group-compact">
+                    <label>End Time: *</label>
+                    <input
+                      type="time"
+                      value={timeOffEndTime}
+                      onChange={(e) => setTimeOffEndTime(e.target.value)}
+                      required
+                      className="compact-time-input"
                     />
                   </div>
                 </div>

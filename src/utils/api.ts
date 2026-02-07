@@ -210,7 +210,7 @@ export const calendarAPI = {
 
   // Create new booking
   createBooking: async (bookingData: CreateBookingData) => {
-    const response = await apiClient.post('/v1/bookings', bookingData);
+    const response = await apiClient.post('/v1/bookings/users/create_booking', bookingData);
     return response.data;
   },
 
