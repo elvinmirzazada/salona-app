@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import DashboardCharts from '../components/DashboardCharts';
 import { useUser } from '../contexts/UserContext';
 import { useDashboardReport, useInvalidateReport } from '../hooks/useDashboardReport';
@@ -188,6 +189,7 @@ const DashboardPage: React.FC = () => {
                   <h1 className="dashboard-title">Dashboard</h1>
                   <p className="dashboard-subtitle">Welcome back! Here's what's happening with your business.</p>
                 </div>
+                <UserProfile user={user} />
               </div>
 
               {/* Quick Actions Bar */}

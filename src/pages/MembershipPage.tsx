@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/membership.css';
@@ -182,8 +183,11 @@ const MembershipPage: React.FC = () => {
       <div className="page-with-sidebar">
         <div className="membership-page">
           <div className="page-header">
-            <h1>Membership Plans</h1>
-            <p>Manage your subscription and billing</p>
+            <div>
+              <h1>Membership Plans</h1>
+              <p>Manage your subscription and billing</p>
+            </div>
+            <UserProfile user={user} />
           </div>
 
           <div className="plans-header">

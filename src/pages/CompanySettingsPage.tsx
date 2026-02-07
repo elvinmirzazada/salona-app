@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/company-settings.css';
@@ -46,7 +47,6 @@ const CompanySettingsPage: React.FC = () => {
 
   // Company data
   const [hasCompany, setHasCompany] = useState(false);
-  // ...existing code...
   const [company, setCompany] = useState<Company | null>(null);
   const [emails, setEmails] = useState<Email[]>([{ email: '', type: 'primary' }]);
   const [phones, setPhones] = useState<Phone[]>([{ phone: '', type: 'primary' }]);
@@ -474,6 +474,7 @@ const CompanySettingsPage: React.FC = () => {
               </button>
               <h2 className="page-title">Company Settings</h2>
             </div>
+            <UserProfile user={user} />
           </header>
 
           {message && (
@@ -887,4 +888,3 @@ const CompanySettingsPage: React.FC = () => {
 };
 
 export default CompanySettingsPage;
-

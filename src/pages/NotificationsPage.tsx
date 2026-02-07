@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/notifications.css';
@@ -462,8 +463,11 @@ const NotificationsPage: React.FC = () => {
       <div className="page-with-sidebar">
         <div className="notifications-page">
           <div className="page-header">
-            <h1>Notifications</h1>
-            <p>View and manage your notifications</p>
+            <div>
+              <h1>Notifications</h1>
+              <p>View and manage your notifications</p>
+            </div>
+            <UserProfile user={user} />
           </div>
 
           {successMessage && (

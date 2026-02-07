@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/categories.css';
@@ -253,11 +254,9 @@ const CategoriesPage: React.FC = () => {
           {/* Header */}
           <div className="categories-header">
             <div className="categories-header-left">
-              <button className="back-button" onClick={() => navigate('/dashboard')}>
-                <i className="fas fa-arrow-left"></i>
-              </button>
               <h1 className="page-title">Categories</h1>
             </div>
+            <UserProfile user={user} />
           </div>
 
           {/* Message Display */}

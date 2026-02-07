@@ -30,9 +30,22 @@
 }
 
 .header-text,
-.header-actions {
+.header-actions,
+.header-right {
   position: relative;
   z-index: 2;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .services-title {

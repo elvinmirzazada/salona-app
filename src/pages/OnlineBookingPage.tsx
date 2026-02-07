@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/online-booking.css';
@@ -93,8 +94,11 @@ const OnlineBookingPage: React.FC = () => {
         <div className="page-with-sidebar">
           <div className="online-booking-page">
             <div className="page-header">
-              <h1>Online Booking</h1>
-              <p>You need to create a company first to use online booking.</p>
+              <div>
+                <h1>Online Booking</h1>
+                <p>You need to create a company first to use online booking.</p>
+              </div>
+              <UserProfile user={user} />
             </div>
           </div>
         </div>
@@ -108,8 +112,11 @@ const OnlineBookingPage: React.FC = () => {
       <div className="page-with-sidebar">
         <div className="online-booking-page">
           <div className="page-header">
-            <h1>Online Booking</h1>
-            <p>Share your booking link with customers to let them book appointments directly</p>
+            <div>
+              <h1>Online Booking</h1>
+              <p>Share your booking link with customers to let them book appointments directly</p>
+            </div>
+            <UserProfile user={user} />
           </div>
 
           <div className="booking-card">

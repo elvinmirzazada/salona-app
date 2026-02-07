@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/customers.css';
@@ -237,6 +238,7 @@ const CustomersPage: React.FC = () => {
             <div className="customers-header-left">
               <h1 className="page-title">Customers</h1>
             </div>
+            <UserProfile user={user} />
           </div>
 
           {!user?.company_id ? (

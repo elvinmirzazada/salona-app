@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { servicesAPI } from '../utils/api';
 import { Service, Category, Staff, CreateServiceData, CreateCategoryData } from '../types/services';
@@ -377,16 +378,19 @@ const ServicesPage: React.FC = () => {
                   </h2>
                   <p className="services-subtitle">Create, edit, and organize your business services</p>
                 </div>
-                <div className="header-actions">
-                  {(user?.role === 'owner' || user?.role === 'admin') && (
-                    <button
-                      className="add-service-btn"
-                      onClick={() => openServiceModal()}
-                    >
-                      <i className="fas fa-plus-circle"></i>
-                      <span>Add New Service</span>
-                    </button>
-                  )}
+                <div className="header-right">
+                  <div className="header-actions">
+                    {(user?.role === 'owner' || user?.role === 'admin') && (
+                      <button
+                        className="add-service-btn"
+                        onClick={() => openServiceModal()}
+                      >
+                        <i className="fas fa-plus-circle"></i>
+                        <span>Add New Service</span>
+                      </button>
+                    )}
+                  </div>
+                  <UserProfile user={user} />
                 </div>
               </div>
             </div>

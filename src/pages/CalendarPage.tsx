@@ -5,6 +5,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import UserProfile from '../components/UserProfile';
 import listPlugin from '@fullcalendar/list';
 import { EventClickArg, DateSelectArg } from '@fullcalendar/core';
 import { calendarAPI, servicesAPI } from '../utils/api';
@@ -447,6 +448,7 @@ const CalendarPage: React.FC = () => {
         <main className="calendar-page">
           <header className="calendar-header">
             <h2 className="page-title">Calendar</h2>
+            <UserProfile user={user} />
           </header>
 
           {/* Status Legend */}

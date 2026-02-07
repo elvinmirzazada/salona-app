@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/profile.css';
@@ -258,15 +259,17 @@ const ProfilePage: React.FC = () => {
               </button>
               <h2 className="page-title">Profile</h2>
             </div>
-            {!globalUser?.company_id && (globalUser?.role === 'admin' || globalUser?.role === 'owner') && (
-              <button
-                className="btn-primary"
-                onClick={() => navigate('/company-settings')}
-                style={{ marginLeft: 'auto' }}
-              >
-                <i className="fas fa-plus"></i> Create Company
-              </button>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
+              {!globalUser?.company_id && (globalUser?.role === 'admin' || globalUser?.role === 'owner') && (
+                <button
+                  className="btn-primary"
+                  onClick={() => navigate('/company-settings')}
+                >
+                  <i className="fas fa-plus"></i> Create Company
+                </button>
+              )}
+              <UserProfile user={globalUser} />
+            </div>
           </header>
 
           {message && (

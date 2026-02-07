@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
 import '../styles/telegram-bot.css';
@@ -120,8 +121,11 @@ const TelegramBotPage: React.FC = () => {
         <div className="page-with-sidebar">
           <div className="telegram-bot-page">
             <div className="page-header">
-              <h1>Telegram Bot</h1>
-              <p>You need to create a company first to use Telegram bot integration.</p>
+              <div>
+                <h1>Telegram Bot</h1>
+                <p>You need to create a company first to use Telegram bot integration.</p>
+              </div>
+              <UserProfile user={user} />
             </div>
           </div>
         </div>
@@ -135,8 +139,11 @@ const TelegramBotPage: React.FC = () => {
       <div className="page-with-sidebar">
         <div className="telegram-bot-page">
           <div className="page-header">
-            <h1>Telegram Bot</h1>
-            <p>Connect your Telegram bot to receive booking notifications</p>
+            <div>
+              <h1>Telegram Bot</h1>
+              <p>Connect your Telegram bot to receive booking notifications</p>
+            </div>
+            <UserProfile user={user} />
           </div>
 
           {message && (
