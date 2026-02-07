@@ -54,13 +54,19 @@ export interface ServiceStaff {
 export interface Service {
   id: string;
   name: string;
+  name_en?: string;
+  name_ee?: string;
+  name_ru?: string;
   description?: string;
   additional_info?: string;
+  additional_info_en?: string;
+  additional_info_ee?: string;
+  additional_info_ru?: string;
   category_id: string;
   category?: Category;
   duration: number;
   price: number;
-  discount_price?: number;
+  discount_price: number;
   status: string;
   buffer_before: number;
   buffer_after: number;
@@ -72,10 +78,15 @@ export interface Service {
 
 export interface CreateServiceData {
   name: string;
+  name_en?: string;
+  name_ee?: string;
+  name_ru?: string;
   duration: number;
   price: number;
   discount_price?: number;
-  additional_info?: string;
+  additional_info_en?: string;
+  additional_info_ee?: string;
+  additional_info_ru?: string;
   status: string;
   buffer_before: number;
   buffer_after: number;

@@ -63,6 +63,17 @@ const ServicesPage: React.FC = () => {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
+  const [activeLanguageTab, setActiveLanguageTab] = useState<'en' | 'ee' | 'ru'>('en');
+
+  // Language-specific form values
+  const [languageFormValues, setLanguageFormValues] = useState({
+    name_en: '',
+    name_ee: '',
+    name_ru: '',
+    description_en: '',
+    description_ee: '',
+    description_ru: '',
+  });
 
   // Load data on component mount
   useEffect(() => {
@@ -115,11 +126,17 @@ const ServicesPage: React.FC = () => {
               servicesData.push({
                 id: service.id,
                 name: service.name,
+                name_en: service.name_en || '',
+                name_ee: service.name_ee || '',
+                name_ru: service.name_ru || '',
                 duration: service.duration,
                 price: service.price,
                 discount_price: service.discount_price,
                 status: service.status,
                 additional_info: service.additional_info || '',
+                additional_info_en: service.additional_info_en || '',
+                additional_info_ee: service.additional_info_ee || '',
+                additional_info_ru: service.additional_info_ru || '',
                 buffer_before: service.buffer_before || 0,
                 buffer_after: service.buffer_after || 0,
                 category_id: category.id, // Link to parent category
@@ -164,16 +181,42 @@ const ServicesPage: React.FC = () => {
     if (service) {
       setImagePreview(service.image_url || null);
       setSelectedStaff(service.service_staff?.map(s => s.user_id) || []);
+      setLanguageFormValues({
+        name_en: service.name_en || '',
+        name_ee: service.name_ee || '',
+        name_ru: service.name_ru || '',
+        description_en: service.additional_info_en || '',
+        description_ee: service.additional_info_ee || '',
+        description_ru: service.additional_info_ru || '',
+      });
     } else {
       setImagePreview(null);
       setSelectedStaff([]);
+      setLanguageFormValues({
+        name_en: '',
+        name_ee: '',
+        name_ru: '',
+        description_en: '',
+        description_ee: '',
+        description_ru: '',
+      });
     }
+
+    setActiveLanguageTab('en');
   };
 
   const closeServiceModal = () => {
     setServiceModal({ isOpen: false, service: null, isEditing: false });
     setImagePreview(null);
     setSelectedStaff([]);
+    setLanguageFormValues({
+      name_en: '',
+      name_ee: '',
+      name_ru: '',
+      description_en: '',
+      description_ee: '',
+      description_ru: '',
+    });
     if (serviceFormRef.current) {
       serviceFormRef.current.reset();
     }
@@ -186,14 +229,22 @@ const ServicesPage: React.FC = () => {
 
     const formData = new FormData(e.currentTarget);
 
+    const discountPriceValue = formData.get('service-discount-price') as string;
+    const discountPrice = discountPriceValue && parseFloat(discountPriceValue) > 0
+      ? Math.round(parseFloat(discountPriceValue))
+      : undefined;
+
     const serviceData: CreateServiceData = {
       name: formData.get('service-name') as string,
+      name_en: languageFormValues.name_en,
+      name_ee: languageFormValues.name_ee,
+      name_ru: languageFormValues.name_ru,
       duration: parseInt(formData.get('service-duration') as string),
-      price: parseFloat(formData.get('service-price') as string),
-      discount_price: formData.get('service-discount-price')
-        ? parseFloat(formData.get('service-discount-price') as string)
-        : 0,
-      additional_info: formData.get('service-description') as string || '',
+      price: Math.round(parseFloat(formData.get('service-price') as string)),
+      ...(discountPrice && { discount_price: discountPrice }),
+      additional_info_en: languageFormValues.description_en,
+      additional_info_ee: languageFormValues.description_ee,
+      additional_info_ru: languageFormValues.description_ru,
       status: 'active',
       buffer_before: 0,
       buffer_after: 0,
@@ -451,14 +502,14 @@ const ServicesPage: React.FC = () => {
                           <td>{service.duration} min</td>
                           <td>
                             <div>
-                              € {service.price}
-                              {service.discount_price && service.discount_price > 0 && (
+                              € {(service.price / 100).toFixed(2)}
+                              {service.discount_price !== 0 && (
                                 <div style={{
                                   fontSize: '12px',
                                   color: '#10b981',
                                   fontWeight: 500
                                 }}>
-                                  Discount: € {service.discount_price}
+                                  Discount: € {(service.discount_price / 100).toFixed(2)}
                                 </div>
                               )}
                             </div>
@@ -578,7 +629,7 @@ const ServicesPage: React.FC = () => {
                           name="service-price"
                           min="0"
                           step="0.01"
-                          defaultValue={serviceModal.service?.price || ''}
+                          defaultValue={serviceModal.service?.price ? (serviceModal.service.price / 100).toFixed(2) : ''}
                           required
                         />
                       </div>
@@ -595,19 +646,122 @@ const ServicesPage: React.FC = () => {
                         name="service-discount-price"
                         min="0"
                         step="0.01"
-                        defaultValue={serviceModal.service?.discount_price || ''}
+                        defaultValue={serviceModal.service?.discount_price ? (serviceModal.service.discount_price / 100).toFixed(2) : ''}
                       />
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label htmlFor="service-description">Description</label>
-                    <textarea
-                      id="service-description"
-                      name="service-description"
-                      rows={3}
-                      defaultValue={serviceModal.service?.additional_info || ''}
-                    ></textarea>
+
+                  {/* Language Tabs Section */}
+                  <div className="language-section">
+                    <div className="language-section-title">Translations (Optional)</div>
+                    <div className="language-tabs">
+                      <button
+                        type="button"
+                        className={`language-tab ${activeLanguageTab === 'en' ? 'active' : ''}`}
+                        onClick={() => setActiveLanguageTab('en')}
+                      >
+                        🇬🇧 English
+                      </button>
+                      <button
+                        type="button"
+                        className={`language-tab ${activeLanguageTab === 'ee' ? 'active' : ''}`}
+                        onClick={() => setActiveLanguageTab('ee')}
+                      >
+                        🇪🇪 Estonian
+                      </button>
+                      <button
+                        type="button"
+                        className={`language-tab ${activeLanguageTab === 'ru' ? 'active' : ''}`}
+                        onClick={() => setActiveLanguageTab('ru')}
+                      >
+                        🇷🇺 Russian
+                      </button>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="tab-content">
+                      {activeLanguageTab === 'en' && (
+                        <>
+                          <div className="form-group">
+                            <label htmlFor="service-name-en">Service Name (English)</label>
+                            <input
+                              type="text"
+                              id="service-name-en"
+                              name="service-name-en"
+                              value={languageFormValues.name_en}
+                              onChange={(e) => setLanguageFormValues(prev => ({ ...prev, name_en: e.target.value }))}
+                              placeholder="Enter English name"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="service-description-en">Description (English)</label>
+                            <textarea
+                              id="service-description-en"
+                              name="service-description-en"
+                              rows={3}
+                              value={languageFormValues.description_en}
+                              onChange={(e) => setLanguageFormValues(prev => ({ ...prev, description_en: e.target.value }))}
+                              placeholder="Enter English description (optional)"
+                            ></textarea>
+                          </div>
+                        </>
+                      )}
+
+                      {activeLanguageTab === 'ee' && (
+                        <>
+                          <div className="form-group">
+                            <label htmlFor="service-name-ee">Service Name (Estonian)</label>
+                            <input
+                              type="text"
+                              id="service-name-ee"
+                              name="service-name-ee"
+                              value={languageFormValues.name_ee}
+                              onChange={(e) => setLanguageFormValues(prev => ({ ...prev, name_ee: e.target.value }))}
+                              placeholder="Enter Estonian name"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="service-description-ee">Description (Estonian)</label>
+                            <textarea
+                              id="service-description-ee"
+                              name="service-description-ee"
+                              rows={3}
+                              value={languageFormValues.description_ee}
+                              onChange={(e) => setLanguageFormValues(prev => ({ ...prev, description_ee: e.target.value }))}
+                              placeholder="Enter Estonian description (optional)"
+                            ></textarea>
+                          </div>
+                        </>
+                      )}
+
+                      {activeLanguageTab === 'ru' && (
+                        <>
+                          <div className="form-group">
+                            <label htmlFor="service-name-ru">Service Name (Russian)</label>
+                            <input
+                              type="text"
+                              id="service-name-ru"
+                              name="service-name-ru"
+                              value={languageFormValues.name_ru}
+                              onChange={(e) => setLanguageFormValues(prev => ({ ...prev, name_ru: e.target.value }))}
+                              placeholder="Enter Russian name"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="service-description-ru">Description (Russian)</label>
+                            <textarea
+                              id="service-description-ru"
+                              name="service-description-ru"
+                              rows={3}
+                              value={languageFormValues.description_ru}
+                              onChange={(e) => setLanguageFormValues(prev => ({ ...prev, description_ru: e.target.value }))}
+                              placeholder="Enter Russian description (optional)"
+                            ></textarea>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <div className="form-group">

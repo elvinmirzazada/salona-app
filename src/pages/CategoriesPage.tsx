@@ -9,7 +9,12 @@ import '../styles/categories.css';
 interface Category {
   id: string;
   name: string;
-  description?: string;
+  name_en?: string;
+  name_ee?: string;
+  name_ru?: string;
+  description_en?: string;
+  description_ee?: string;
+  description_ru?: string;
   services_count?: number;
   created_at: string;
   updated_at: string;
@@ -17,7 +22,12 @@ interface Category {
 
 interface CategoryFormData {
   name: string;
-  description: string;
+  name_en: string;
+  name_ee: string;
+  name_ru: string;
+  description_en: string;
+  description_ee: string;
+  description_ru: string;
 }
 
 const CategoriesPage: React.FC = () => {
@@ -32,11 +42,17 @@ const CategoriesPage: React.FC = () => {
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
-    description: ''
+    name_en: '',
+    name_ee: '',
+    name_ru: '',
+    description_en: '',
+    description_ee: '',
+    description_ru: ''
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<'en' | 'ee' | 'ru'>('en');
 
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
@@ -84,7 +100,12 @@ const CategoriesPage: React.FC = () => {
       {
         id: '1',
         name: 'Hair Services',
-        description: 'All hair cutting, styling, and treatment services',
+        name_en: 'Hair Services',
+        name_ee: 'Juukseteenused',
+        name_ru: 'Услуги для волос',
+        description_en: 'All hair cutting, styling, and treatment services',
+        description_ee: 'Kõik juukselõikuse, stiilingu ja hoolduse teenused',
+        description_ru: 'Все услуги по стрижке, укладке и уходу за волосами',
         services_count: 8,
         created_at: '2025-06-15',
         updated_at: '2025-12-01'
@@ -92,7 +113,12 @@ const CategoriesPage: React.FC = () => {
       {
         id: '2',
         name: 'Nail Services',
-        description: 'Manicures, pedicures, and nail art services',
+        name_en: 'Nail Services',
+        name_ee: 'Küüneteenused',
+        name_ru: 'Маникюрные услуги',
+        description_en: 'Manicures, pedicures, and nail art services',
+        description_ee: 'Maniküür, pediküür ja küünekunsti teenused',
+        description_ru: 'Маникюр, педикюр и услуги нейл-арта',
         services_count: 5,
         created_at: '2025-06-20',
         updated_at: '2025-11-15'
@@ -100,7 +126,12 @@ const CategoriesPage: React.FC = () => {
       {
         id: '3',
         name: 'Facial & Skin Care',
-        description: 'Facial treatments, cleansing, and skincare services',
+        name_en: 'Facial & Skin Care',
+        name_ee: 'Näohooldus',
+        name_ru: 'Уход за лицом и кожей',
+        description_en: 'Facial treatments, cleansing, and skincare services',
+        description_ee: 'Näohooldus, puhastus ja nahahoolduse teenused',
+        description_ru: 'Процедуры для лица, очищение и уход за кожей',
         services_count: 12,
         created_at: '2025-07-01',
         updated_at: '2026-01-10'
@@ -108,7 +139,12 @@ const CategoriesPage: React.FC = () => {
       {
         id: '4',
         name: 'Massage Therapy',
-        description: 'Relaxation and therapeutic massage services',
+        name_en: 'Massage Therapy',
+        name_ee: 'Massaažiteraapia',
+        name_ru: 'Массажная терапия',
+        description_en: 'Relaxation and therapeutic massage services',
+        description_ee: 'Lõõgastus- ja terapeutilise massaaži teenused',
+        description_ru: 'Расслабляющий и лечебный массаж',
         services_count: 6,
         created_at: '2025-07-15',
         updated_at: '2025-12-20'
@@ -116,7 +152,12 @@ const CategoriesPage: React.FC = () => {
       {
         id: '5',
         name: 'Spa Packages',
-        description: 'Combination spa packages and premium treatments',
+        name_en: 'Spa Packages',
+        name_ee: 'SPA paketid',
+        name_ru: 'СПА пакеты',
+        description_en: 'Combination spa packages and premium treatments',
+        description_ee: 'Kombineeritud SPA paketid ja premium teenused',
+        description_ru: 'Комбинированные СПА пакеты и премиум услуги',
         services_count: 3,
         created_at: '2025-08-01',
         updated_at: '2026-01-05'
@@ -129,8 +170,14 @@ const CategoriesPage: React.FC = () => {
     setEditingCategory(null);
     setFormData({
       name: '',
-      description: ''
+      name_en: '',
+      name_ee: '',
+      name_ru: '',
+      description_en: '',
+      description_ee: '',
+      description_ru: ''
     });
+    setActiveTab('en');
     setShowModal(true);
   };
 
@@ -139,8 +186,14 @@ const CategoriesPage: React.FC = () => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      description: category.description || ''
+      name_en: category.name_en || '',
+      name_ee: category.name_ee || '',
+      name_ru: category.name_ru || '',
+      description_en: category.description_en || '',
+      description_ee: category.description_ee || '',
+      description_ru: category.description_ru || ''
     });
+    setActiveTab('en');
     setShowModal(true);
   };
 
@@ -173,22 +226,32 @@ const CategoriesPage: React.FC = () => {
         },
         body: JSON.stringify({
           name: formData.name.trim(),
-          description: formData.description.trim()
+          name_en: formData.name_en.trim(),
+          name_ee: formData.name_ee.trim(),
+          name_ru: formData.name_ru.trim(),
+          description_en: formData.description_en.trim(),
+          description_ee: formData.description_ee.trim(),
+          description_ru: formData.description_ru.trim()
         }),
         credentials: 'include'
       });
 
       if (response.ok) {
-        showMessage('success', `Category ${modalMode === 'edit' ? 'updated' : 'created'} successfully!`);
-        setShowModal(false);
-        fetchCategories();
+        const data = await response.json();
+        if (data.success) {
+          showMessage('success', `Category ${modalMode === 'edit' ? 'updated' : 'created'} successfully!`);
+          setShowModal(false);
+          fetchCategories();
+        } else {
+          showMessage('error', data.message || `Failed to ${modalMode === 'edit' ? 'update' : 'create'} category`);
+        }
       } else {
         const errorData = await response.json();
         showMessage('error', errorData.message || `Failed to ${modalMode === 'edit' ? 'update' : 'create'} category`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving category:', error);
-      showMessage('error', `Failed to ${modalMode === 'edit' ? 'update' : 'create'} category`);
+      showMessage('error', error?.response?.data?.message || error?.message || `Failed to ${modalMode === 'edit' ? 'update' : 'create'} category`);
     } finally {
       setSaving(false);
     }
@@ -206,17 +269,22 @@ const CategoriesPage: React.FC = () => {
       });
 
       if (response.ok) {
-        showMessage('success', 'Category deleted successfully!');
-        setShowDeleteModal(false);
-        setDeletingCategory(null);
-        fetchCategories();
+        const data = await response.json();
+        if (data.success) {
+          showMessage('success', 'Category deleted successfully!');
+          setShowDeleteModal(false);
+          setDeletingCategory(null);
+          fetchCategories();
+        } else {
+          showMessage('error', data.message || 'Failed to delete category');
+        }
       } else {
         const errorData = await response.json();
         showMessage('error', errorData.message || 'Failed to delete category');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting category:', error);
-      showMessage('error', 'Failed to delete category');
+      showMessage('error', error?.response?.data?.message || error?.message || 'Failed to delete category');
     } finally {
       setDeleting(false);
     }
@@ -331,7 +399,7 @@ const CategoriesPage: React.FC = () => {
                           </td>
                           <td>
                             <div className="category-details">
-                              <p>{category.description || 'No description provided'}</p>
+                              <p>{category.description_en || 'No description provided'}</p>
                             </div>
                           </td>
                           <td>
@@ -395,8 +463,9 @@ const CategoriesPage: React.FC = () => {
                 </div>
                 <div className="modal-body">
                   <form onSubmit={handleSubmit}>
+                    {/* Default Category Name - Always Visible */}
                     <div className="form-group">
-                      <label className="form-label" htmlFor="category-name">Category Name</label>
+                      <label className="form-label" htmlFor="category-name">Category Name *</label>
                       <input
                         type="text"
                         id="category-name"
@@ -408,16 +477,116 @@ const CategoriesPage: React.FC = () => {
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="category-description">Description</label>
-                      <textarea
-                        id="category-description"
-                        className="form-textarea"
-                        value={formData.description}
-                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                        rows={3}
-                        placeholder="Enter category description (optional)"
-                      />
+                    {/* Language Tabs */}
+                    <div className="language-section">
+                      <div className="language-section-title">Translations (Optional)</div>
+                      <div className="language-tabs">
+                        <button
+                          type="button"
+                          className={`language-tab ${activeTab === 'en' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('en')}
+                        >
+                          🇬🇧 English
+                        </button>
+                        <button
+                          type="button"
+                          className={`language-tab ${activeTab === 'ee' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('ee')}
+                        >
+                          🇪🇪 Estonian
+                        </button>
+                        <button
+                          type="button"
+                          className={`language-tab ${activeTab === 'ru' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('ru')}
+                        >
+                          🇷🇺 Russian
+                        </button>
+                      </div>
+
+                      {/* Tab Content */}
+                      <div className="tab-content">
+                        {activeTab === 'en' && (
+                          <>
+                            <div className="form-group">
+                              <label className="form-label" htmlFor="category-name-en">Category Name (English)</label>
+                              <input
+                                type="text"
+                                id="category-name-en"
+                                className="form-input"
+                                value={formData.name_en}
+                                onChange={(e) => setFormData(prev => ({ ...prev, name_en: e.target.value }))}
+                                placeholder="Enter English name"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label" htmlFor="category-description-en">Description (English)</label>
+                              <textarea
+                                id="category-description-en"
+                                className="form-textarea"
+                                value={formData.description_en}
+                                onChange={(e) => setFormData(prev => ({ ...prev, description_en: e.target.value }))}
+                                rows={3}
+                                placeholder="Enter English description (optional)"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {activeTab === 'ee' && (
+                          <>
+                            <div className="form-group">
+                              <label className="form-label" htmlFor="category-name-ee">Category Name (Estonian)</label>
+                              <input
+                                type="text"
+                                id="category-name-ee"
+                                className="form-input"
+                                value={formData.name_ee}
+                                onChange={(e) => setFormData(prev => ({ ...prev, name_ee: e.target.value }))}
+                                placeholder="Enter Estonian name"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label" htmlFor="category-description-ee">Description (Estonian)</label>
+                              <textarea
+                                id="category-description-ee"
+                                className="form-textarea"
+                                value={formData.description_ee}
+                                onChange={(e) => setFormData(prev => ({ ...prev, description_ee: e.target.value }))}
+                                rows={3}
+                                placeholder="Enter Estonian description (optional)"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {activeTab === 'ru' && (
+                          <>
+                            <div className="form-group">
+                              <label className="form-label" htmlFor="category-name-ru">Category Name (Russian)</label>
+                              <input
+                                type="text"
+                                id="category-name-ru"
+                                className="form-input"
+                                value={formData.name_ru}
+                                onChange={(e) => setFormData(prev => ({ ...prev, name_ru: e.target.value }))}
+                                placeholder="Enter Russian name"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label" htmlFor="category-description-ru">Description (Russian)</label>
+                              <textarea
+                                id="category-description-ru"
+                                className="form-textarea"
+                                value={formData.description_ru}
+                                onChange={(e) => setFormData(prev => ({ ...prev, description_ru: e.target.value }))}
+                                rows={3}
+                                placeholder="Enter Russian description (optional)"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     <div className="form-actions">
