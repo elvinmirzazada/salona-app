@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import '../styles/public-booking.css';
 
 interface Service {
@@ -67,6 +67,7 @@ interface BookingState {
 
 const PublicBookingPage: React.FC = () => {
   const { companySlug } = useParams<{ companySlug: string }>();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
@@ -433,12 +434,16 @@ const PublicBookingPage: React.FC = () => {
         throw new Error(data.message || 'Failed to create booking');
       }
 
-      setSuccess('Booking created successfully! You will receive a confirmation email shortly.');
-
-      // Reset form after successful booking
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
+      // Redirect to confirmation page with booking ID
+      const bookingId = data.data?.id;
+      if (bookingId) {
+        navigate(`/booking/${companySlug}/confirmation?booking_id=${bookingId}`);
+      } else {
+        setSuccess('Booking created successfully! You will receive a confirmation email shortly.');
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      }
 
     } catch (err: any) {
       console.error('Failed to create booking:', err);

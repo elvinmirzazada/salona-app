@@ -25,6 +25,7 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import PublicBookingPage from './pages/PublicBookingPage';
 import BookingPrivacyPage from './pages/BookingPrivacyPage';
 import BookingTermsPage from './pages/BookingTermsPage';
+import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import './styles/global.css';
 import './styles/navigation.css';
 
@@ -58,6 +59,7 @@ const App: React.FC = () => {
             
             {/* Public Booking - No Authentication Required */}
             <Route path="/booking/:companySlug" element={<PublicBookingPage />} />
+            <Route path="/booking/:companySlug/confirmation" element={<BookingConfirmationPage />} />
             <Route path="/booking-privacy" element={<BookingPrivacyPage />} />
             <Route path="/booking-terms" element={<BookingTermsPage />} />
 
