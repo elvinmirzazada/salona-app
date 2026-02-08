@@ -45,7 +45,7 @@ const OnlineBookingPage: React.FC = () => {
           // Use window.location to get the current domain
           const currentDomain = window.location.origin;
           const slug = data.data.slug || '';
-          const url = slug ? `${currentDomain}/book/${slug}` : '';
+          const url = slug ? `${currentDomain}/booking/${slug}` : '';
           setBookingUrl(url);
         }
       }

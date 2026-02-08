@@ -16,6 +16,8 @@ import '../styles/calendar.css';
 const CalendarPage: React.FC = () => {
   const { user, unreadNotificationsCount } = useUser();
   const calendarRef = useRef<FullCalendar>(null);
+  const initialLoadDone = useRef(false);
+  const isLoadingData = useRef(false);
 
   // State management
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -79,14 +81,19 @@ const CalendarPage: React.FC = () => {
   // Selected master/staff for booking
   const [selectedMasterId, setSelectedMasterId] = useState('');
 
-  // Load data on mount
-  useEffect(() => {
-    loadAllData();
-  }, []);
+  // Load data on mount - removed as datesSet will be called on initial render
+  // useEffect(() => {
+  //   loadAllData();
+  // }, []);
 
-  // Refresh events when status filter changes
+  // Refresh events when status filter changes (client-side filtering only)
   useEffect(() => {
-    loadAllData();
+    if (initialLoadDone.current && _bookings.length > 0) {
+      console.log('Status filter changed, re-filtering events client-side');
+      // Just re-convert events with the new filter applied
+      const calendarEvents = convertToCalendarEvents(_bookings, _timeOffs);
+      setEvents(calendarEvents);
+    }
   }, [statusFilter]);
 
   // Auto-clear messages
@@ -144,95 +151,134 @@ const CalendarPage: React.FC = () => {
     }
   };
 
-  const loadAllData = async () => {
+  const loadAllData = async (startDate?: string, endDate?: string, loadOnlyBookings: boolean = false) => {
+    // Prevent concurrent calls
+    if (isLoadingData.current) {
+      console.log('Already loading data, skipping duplicate call');
+      return;
+    }
+
     try {
+      isLoadingData.current = true;
       setDataLoading(true);
-      const [bookingsRes, timeOffsRes, servicesRes, staffRes, customersRes] = await Promise.all([
-        calendarAPI.getBookings(),
-        calendarAPI.getTimeOffs(),
-        servicesAPI.getServices(),
-        servicesAPI.getStaff(),
-        calendarAPI.getCustomers(),
-      ]);
 
-      console.log('Bookings API Response:', bookingsRes);
-      console.log('Time Offs API Response:', timeOffsRes);
+      if (loadOnlyBookings) {
+        // When navigating weeks, only reload bookings, time-offs, and customers
+        const [bookingsRes, timeOffsRes, customersRes] = await Promise.all([
+          calendarAPI.getBookings(startDate, endDate),
+          calendarAPI.getTimeOffs(),
+          calendarAPI.getCustomers(),
+        ]);
 
-      // Check for API errors
-      if (!bookingsRes.success) {
-        setError(bookingsRes.message || 'Failed to load bookings.');
-        setDataLoading(false);
-        return;
-      }
-      if (!timeOffsRes.success) {
-        setError(timeOffsRes.message || 'Failed to load time-offs.');
-        setDataLoading(false);
-        return;
-      }
-      if (!servicesRes.success) {
-        setError(servicesRes.message || 'Failed to load services.');
-        setDataLoading(false);
-        return;
-      }
-      if (!staffRes.success) {
-        setError(staffRes.message || 'Failed to load staff.');
-        setDataLoading(false);
-        return;
-      }
-      if (!customersRes.success) {
-        setError(customersRes.message || 'Failed to load customers.');
-        setDataLoading(false);
-        return;
-      }
+        // Check for API errors
+        if (!bookingsRes.success) {
+          setError(bookingsRes.message || 'Failed to load bookings.');
+          return;
+        }
+        if (!timeOffsRes.success) {
+          setError(timeOffsRes.message || 'Failed to load time-offs.');
+          return;
+        }
+        if (!customersRes.success) {
+          setError(customersRes.message || 'Failed to load customers.');
+          return;
+        }
 
-      const bookingsData = bookingsRes.data || [];
-      const timeOffsData = timeOffsRes.data || [];
+        const bookingsData = bookingsRes.data || [];
+        const timeOffsData = timeOffsRes.data || [];
 
-      console.log('Bookings Data:', bookingsData);
-      console.log('Time Offs Data:', timeOffsData);
+        console.log('Bookings Data:', bookingsData);
+        console.log('Time Offs Data:', timeOffsData);
 
-      setBookings(bookingsData);
-      setTimeOffs(timeOffsData);
-      setCustomers(customersRes.data || []);
-      setStaff(staffRes.data || []);
+        setBookings(bookingsData);
+        setTimeOffs(timeOffsData);
+        setCustomers(customersRes.data || []);
 
-      // Store categories
-      setCategories(servicesRes.data || []);
+        // Convert to calendar events
+        const calendarEvents = convertToCalendarEvents(bookingsData, timeOffsData);
+        setEvents(calendarEvents);
+      } else {
+        // Initial load - load everything
+        const [bookingsRes, timeOffsRes, servicesRes, staffRes, customersRes] = await Promise.all([
+          calendarAPI.getBookings(startDate, endDate),
+          calendarAPI.getTimeOffs(),
+          servicesAPI.getServices(),
+          servicesAPI.getStaff(),
+          calendarAPI.getCustomers(),
+        ]);
 
-      // Process services from categories
-      const servicesData: Service[] = [];
-      if (servicesRes.data && Array.isArray(servicesRes.data)) {
-        servicesRes.data.forEach((category: any) => {
-          if (category.services && Array.isArray(category.services)) {
-            category.services.forEach((service: any) => {
-              servicesData.push({
-                id: service.id,
-                name: service.name,
-                duration: service.duration,
-                price: service.price,
-                discount_price: service.discount_price,
-                status: service.status,
-                additional_info: service.additional_info || '',
-                buffer_before: service.buffer_before || 0,
-                buffer_after: service.buffer_after || 0,
-                category_id: category.id,
-                image_url: service.image_url,
-                service_staff: service.service_staff || [],
+        // Check for API errors
+        if (!bookingsRes.success) {
+          setError(bookingsRes.message || 'Failed to load bookings.');
+          return;
+        }
+        if (!timeOffsRes.success) {
+          setError(timeOffsRes.message || 'Failed to load time-offs.');
+          return;
+        }
+        if (!servicesRes.success) {
+          setError(servicesRes.message || 'Failed to load services.');
+          return;
+        }
+        if (!staffRes.success) {
+          setError(staffRes.message || 'Failed to load staff.');
+          return;
+        }
+        if (!customersRes.success) {
+          setError(customersRes.message || 'Failed to load customers.');
+          return;
+        }
+
+        const bookingsData = bookingsRes.data || [];
+        const timeOffsData = timeOffsRes.data || [];
+
+        console.log('Bookings Data:', bookingsData);
+        console.log('Time Offs Data:', timeOffsData);
+
+        setBookings(bookingsData);
+        setTimeOffs(timeOffsData);
+        setCustomers(customersRes.data || []);
+        setStaff(staffRes.data || []);
+
+        // Store categories
+        setCategories(servicesRes.data || []);
+
+        // Process services from categories
+        const servicesData: Service[] = [];
+        if (servicesRes.data && Array.isArray(servicesRes.data)) {
+          servicesRes.data.forEach((category: any) => {
+            if (category.services && Array.isArray(category.services)) {
+              category.services.forEach((service: any) => {
+                servicesData.push({
+                  id: service.id,
+                  name: service.name,
+                  duration: service.duration,
+                  price: service.price,
+                  discount_price: service.discount_price,
+                  status: service.status,
+                  additional_info: service.additional_info || '',
+                  buffer_before: service.buffer_before || 0,
+                  buffer_after: service.buffer_after || 0,
+                  category_id: category.id,
+                  image_url: service.image_url,
+                  service_staff: service.service_staff || [],
+                });
               });
-            });
-          }
-        });
-      }
-      setServices(servicesData);
+            }
+          });
+        }
+        setServices(servicesData);
 
-      // Convert to calendar events
-      const calendarEvents = convertToCalendarEvents(bookingsData, timeOffsData);
-      setEvents(calendarEvents);
+        // Convert to calendar events
+        const calendarEvents = convertToCalendarEvents(bookingsData, timeOffsData);
+        setEvents(calendarEvents);
+      }
     } catch (err: any) {
       console.error('Failed to load data:', err);
       setError(err?.response?.data?.message || err?.message || 'Failed to load calendar data. Please try again.');
     } finally {
       setDataLoading(false);
+      isLoadingData.current = false;
     }
   };
 
@@ -256,6 +302,65 @@ const CalendarPage: React.FC = () => {
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  // Handle calendar view change (prev/next week)
+  const handleDatesSet = (dateInfo: any) => {
+    console.log('Calendar dates changed:', dateInfo);
+    console.log('View type:', dateInfo.view.type);
+    console.log('Start:', dateInfo.start);
+    console.log('End:', dateInfo.end);
+    console.log('Initial load done:', initialLoadDone.current);
+
+    // Get the actual visible date range based on view type
+    let startDate: Date;
+    let endDate: Date;
+
+    if (dateInfo.view.type === 'timeGridWeek' || dateInfo.view.type === 'listWeek') {
+      // For week view: get Monday to Sunday of the visible week
+      // FullCalendar's start is already the first visible day (Monday if firstDay is set to 1)
+      startDate = new Date(dateInfo.start);
+
+      // End should be 6 days after start (Monday + 6 = Sunday)
+      endDate = new Date(dateInfo.start);
+      endDate.setDate(endDate.getDate() + 6);
+    } else if (dateInfo.view.type === 'timeGridDay') {
+      // For day view: just the single day
+      startDate = new Date(dateInfo.start);
+      endDate = new Date(dateInfo.start);
+    } else if (dateInfo.view.type === 'dayGridMonth') {
+      // For month view: get the full month range
+      startDate = new Date(dateInfo.start);
+      endDate = new Date(dateInfo.end);
+      endDate.setDate(endDate.getDate() - 1);
+    } else {
+      // Default: use the provided range
+      startDate = new Date(dateInfo.start);
+      endDate = new Date(dateInfo.end);
+      endDate.setDate(endDate.getDate() - 1);
+    }
+
+    // Format dates for API call (YYYY-MM-DD) - no UTC conversion needed
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const startDateStr = formatDate(startDate);
+    const endDateStr = formatDate(endDate);
+
+    console.log(`Loading bookings for: ${startDateStr} to ${endDateStr}`);
+
+    // Load data for the new date range
+    const isInitialLoad = !initialLoadDone.current;
+    loadAllData(startDateStr, endDateStr, !isInitialLoad);
+
+    // Mark initial load as done
+    if (!initialLoadDone.current) {
+      initialLoadDone.current = true;
+    }
   };
 
   const convertToCalendarEvents = (bookingsData: Booking[], timeOffsData: TimeOff[]): CalendarEvent[] => {
@@ -1219,11 +1324,12 @@ const CalendarPage: React.FC = () => {
                 dayMaxEvents={true}
                 weekends={true}
                 timeZone="local"
-                nowIndicator={true}
-                events={events}
-                eventClick={handleEventClick}
-                select={handleDateSelect}
-                height="auto"
+              nowIndicator={true}
+              events={events}
+              eventClick={handleEventClick}
+              select={handleDateSelect}
+              datesSet={handleDatesSet}
+              height="auto"
                 businessHours={{
                     daysOfWeek: [1, 2, 3, 4, 5], // Mon–Fri
                     startTime: `07:00:00`,

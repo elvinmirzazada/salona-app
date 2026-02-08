@@ -122,9 +122,26 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
-    // Only fetch on initial mount
-    if (!isInitialized) {
+    // Check if current path is a public route that should skip authentication
+    const isPublicRoute = () => {
+      const pathname = window.location.pathname;
+      const publicPaths = [
+        '/booking/',
+        '/terms-of-service',
+        '/privacy-policy',
+      ];
+
+      // Check if pathname starts with any public path
+      return publicPaths.some(path => pathname.startsWith(path));
+    };
+
+    // Only fetch on initial mount and skip for public routes
+    if (!isInitialized && !isPublicRoute()) {
       fetchUserData();
+    } else if (!isInitialized && isPublicRoute()) {
+      // For public routes, just mark as initialized without fetching user
+      setLoading(false);
+      setIsInitialized(true);
     }
   }, [isInitialized]);
 

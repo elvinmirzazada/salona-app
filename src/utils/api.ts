@@ -203,8 +203,11 @@ export const servicesAPI = {
 // Calendar API endpoints
 export const calendarAPI = {
   // Get all bookings
-  getBookings: async () => {
-    const response = await apiClient.get('/v1/bookings');
+  getBookings: async (startDate?: string, endDate?: string) => {
+    const params: any = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    const response = await apiClient.get('/v1/bookings', { params });
     return response.data;
   },
 

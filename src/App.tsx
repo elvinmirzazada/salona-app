@@ -22,6 +22,9 @@ import ProfilePage from './pages/ProfilePage';
 import CompanySettingsPage from './pages/CompanySettingsPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import PublicBookingPage from './pages/PublicBookingPage';
+import BookingPrivacyPage from './pages/BookingPrivacyPage';
+import BookingTermsPage from './pages/BookingTermsPage';
 import './styles/global.css';
 import './styles/navigation.css';
 
@@ -52,6 +55,11 @@ const App: React.FC = () => {
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/terms-of-service" element={<TermsOfServicePage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            
+            {/* Public Booking - No Authentication Required */}
+            <Route path="/booking/:companySlug" element={<PublicBookingPage />} />
+            <Route path="/booking-privacy" element={<BookingPrivacyPage />} />
+            <Route path="/booking-terms" element={<BookingTermsPage />} />
 
             {/* Protected Routes - Require Authentication */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
