@@ -44,6 +44,9 @@ const CompanySettingsPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('company-details');
   const isLoadingRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string>('');
 
   // Company data
   const [hasCompany, setHasCompany] = useState(false);
@@ -81,6 +84,7 @@ const CompanySettingsPage: React.FC = () => {
           setCompanyName(companyData.data.name || '');
           setCompanyType(companyData.data.type || '');
           setCompanyLogoUrl(companyData.data.logo_url || '');
+          setLogoPreview(companyData.data.logo_url || '');
           setCompanyWebsite(companyData.data.website || '');
           setCompanyDescription(companyData.data.description || '');
           setCompanyTeamSize(companyData.data.team_size || 1);
@@ -151,6 +155,111 @@ const CompanySettingsPage: React.FC = () => {
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showMessage('error', 'Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage('error', 'Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API_BASE_URL}/v1/companies/logo`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        showMessage('success', 'Company logo uploaded successfully!');
+
+        // Update the logo URL and preview
+        if (data.data && data.data.logo_url) {
+          setCompanyLogoUrl(data.data.logo_url);
+          setLogoPreview(data.data.logo_url);
+
+          // Update company state
+          if (company) {
+            setCompany({ ...company, logo_url: data.data.logo_url });
+          }
+        }
+      } else {
+        showMessage('error', data.message || 'Failed to upload logo');
+      }
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      showMessage('error', 'Error uploading logo');
+    } finally {
+      setUploadingLogo(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleLogoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!confirm('Are you sure you want to remove the company logo?')) {
+      return;
+    }
+
+    try {
+      setUploadingLogo(true);
+
+      // You can implement a DELETE endpoint or just update the company with empty logo_url
+      const response = await fetch(`${API_BASE_URL}/v1/companies`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: companyName,
+          type: companyType,
+          logo_url: '',
+          website: companyWebsite,
+          description: companyDescription,
+          team_size: companyTeamSize
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        showMessage('success', 'Company logo removed successfully!');
+        setCompanyLogoUrl('');
+        setLogoPreview('');
+        if (company) {
+          setCompany({ ...company, logo_url: '' });
+        }
+      } else {
+        showMessage('error', data.message || 'Failed to remove logo');
+      }
+    } catch (error) {
+      console.error('Error removing logo:', error);
+      showMessage('error', 'Error removing logo');
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const handleCreateCompany = async (e: React.FormEvent) => {
@@ -516,14 +625,60 @@ const CompanySettingsPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="company-logo-url">Company Logo URL</label>
-                      <input
-                        type="url"
-                        id="company-logo-url"
-                        value={companyLogoUrl}
-                        onChange={(e) => setCompanyLogoUrl(e.target.value)}
-                        placeholder="https://example.com/logo.png"
-                      />
+                      <label>Company Logo</label>
+                      <div className="logo-upload-container">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          style={{ display: 'none' }}
+                        />
+
+                        {logoPreview ? (
+                          <div className="logo-preview-wrapper">
+                            <img src={logoPreview} alt="Company Logo" className="logo-preview" />
+                            <div className="logo-actions">
+                              <button
+                                type="button"
+                                className="btn-secondary btn-sm"
+                                onClick={handleLogoClick}
+                                disabled={uploadingLogo}
+                              >
+                                <i className="fas fa-sync-alt"></i> Change
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-danger btn-sm"
+                                onClick={handleRemoveLogo}
+                                disabled={uploadingLogo}
+                              >
+                                <i className="fas fa-trash-alt"></i> Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-upload-logo"
+                            onClick={handleLogoClick}
+                            disabled={uploadingLogo}
+                          >
+                            {uploadingLogo ? (
+                              <>
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>Uploading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <i className="fas fa-cloud-upload-alt"></i>
+                                <span>Upload Company Logo</span>
+                                <small>PNG, JPG or WEBP (Max 5MB)</small>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="form-group">
@@ -625,14 +780,60 @@ const CompanySettingsPage: React.FC = () => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="details-company-logo-url">Company Logo URL</label>
-                            <input
-                              type="url"
-                              id="details-company-logo-url"
-                              value={companyLogoUrl}
-                              onChange={(e) => setCompanyLogoUrl(e.target.value)}
-                              placeholder="https://example.com/logo.png"
-                            />
+                            <label>Company Logo</label>
+                            <div className="logo-upload-container">
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleLogoUpload}
+                                style={{ display: 'none' }}
+                              />
+
+                              {logoPreview ? (
+                                <div className="logo-preview-wrapper">
+                                  <img src={logoPreview} alt="Company Logo" className="logo-preview" />
+                                  <div className="logo-actions">
+                                    <button
+                                      type="button"
+                                      className="btn-secondary btn-sm"
+                                      onClick={handleLogoClick}
+                                      disabled={uploadingLogo}
+                                    >
+                                      <i className="fas fa-sync-alt"></i> Change
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn-danger btn-sm"
+                                      onClick={handleRemoveLogo}
+                                      disabled={uploadingLogo}
+                                    >
+                                      <i className="fas fa-trash-alt"></i> Remove
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="btn-upload-logo"
+                                  onClick={handleLogoClick}
+                                  disabled={uploadingLogo}
+                                >
+                                  {uploadingLogo ? (
+                                    <>
+                                      <i className="fas fa-spinner fa-spin"></i>
+                                      <span>Uploading...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <i className="fas fa-cloud-upload-alt"></i>
+                                      <span>Upload Company Logo</span>
+                                      <small>PNG, JPG or WEBP (Max 5MB)</small>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
 
                           <div className="form-group">
