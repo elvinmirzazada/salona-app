@@ -164,7 +164,7 @@ const BookingConfirmationPage: React.FC = () => {
   if (loading) {
     return (
       <div className="confirmation-container">
-        <div className="loading-spinner">
+        <div className="confirmation-loading-spinner">
           <i className="fas fa-spinner fa-spin"></i>
         </div>
       </div>
@@ -175,11 +175,11 @@ const BookingConfirmationPage: React.FC = () => {
     return (
       <div className="confirmation-container">
         <div className="confirmation-card">
-          <div className="error-icon">⚠️</div>
+          <div className="confirmation-error-icon">⚠️</div>
           <h1>Unable to Load Confirmation</h1>
           <p>{error || 'Booking details not found'}</p>
           <div className="action-buttons">
-            <a href={`/booking/${companySlug}`} className="btn btn-primary">
+            <a href={`/booking/${companySlug}`} className="confirmation-btn confirmation-btn-primary">
               <span>🏠</span>
               <span>Back to Booking</span>
             </a>
@@ -322,11 +322,11 @@ const BookingConfirmationPage: React.FC = () => {
           </div>
 
           <div className="action-buttons">
-            <a href={`/booking/${companySlug}`} className="btn btn-primary">
+            <a href={`/booking/${companySlug}`} className="confirmation-btn confirmation-btn-primary">
               <span>🏠</span>
               <span>Back to Home</span>
             </a>
-            <button onClick={() => window.print()} className="btn btn-secondary">
+            <button onClick={() => window.print()} className="confirmation-btn confirmation-btn-secondary">
               <span>🖨️</span>
               <span>Print Confirmation</span>
             </button>

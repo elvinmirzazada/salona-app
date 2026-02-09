@@ -539,13 +539,13 @@ const PublicBookingPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="loading-overlay">
-        <div className="loading-spinner">
-          <div className="spinner-ring"></div>
-          <div className="spinner-ring"></div>
-          <div className="spinner-ring"></div>
+      <div className="public-booking-loading-overlay">
+        <div className="public-booking-loading-spinner">
+          <div className="public-booking-spinner-ring"></div>
+          <div className="public-booking-spinner-ring"></div>
+          <div className="public-booking-spinner-ring"></div>
         </div>
-        <p className="loading-text">Loading your booking experience...</p>
+        <p className="public-booking-loading-text">Loading your booking experience...</p>
       </div>
     );
   }

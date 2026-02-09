@@ -33,22 +33,61 @@ const NotificationsPage: React.FC = () => {
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [loadingBookingDetails, setLoadingBookingDetails] = useState(false);
   const [markingAllAsRead, setMarkingAllAsRead] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     if (!userLoading) {
+      loadTotalCount();
       loadNotifications();
     }
   }, [userLoading]);
 
   useEffect(() => {
-    filterNotifications();
-    setCurrentPage(1); // Reset to first page when filter changes
-  }, [currentFilter, notifications]);
+    if (!userLoading) {
+      loadNotifications();
+    }
+  }, [currentFilter, currentPage, itemsPerPage]);
+
+  const loadTotalCount = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/notifications/all-count`, {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data && typeof data.data.all_count === 'number') {
+          setTotalCount(data.data.all_count);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading total notification count:', error);
+    }
+  };
 
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/v1/notifications`, {
+
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        per_page: itemsPerPage.toString()
+      });
+
+      // Add filter parameter based on current filter
+      if (currentFilter !== 'all') {
+        if (currentFilter === 'unread') {
+          params.append('status', 'unread');
+        } else if (currentFilter === 'booking') {
+          params.append('type', 'booking,booking_created');
+        } else {
+          params.append('type', currentFilter);
+        }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/v1/notifications?${params.toString()}`, {
         credentials: 'include'
       });
 
@@ -56,6 +95,12 @@ const NotificationsPage: React.FC = () => {
         const data = await response.json();
         if (data.success && data.data) {
           setNotifications(data.data);
+          setFilteredNotifications(data.data);
+
+          // Update pagination info from API response
+          if (data.pagination) {
+            setTotalPages(data.pagination.total_pages || Math.ceil(data.pagination.total / itemsPerPage));
+          }
         }
       }
     } catch (error) {
@@ -65,26 +110,6 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
-  const filterNotifications = () => {
-    let filtered = [...notifications];
-
-    switch (currentFilter) {
-      case 'unread':
-        filtered = filtered.filter(n => n.status !== 'read');
-        break;
-      case 'general':
-        filtered = filtered.filter(n => n.type === 'general');
-        break;
-      case 'booking':
-        filtered = filtered.filter(n => n.type === 'booking' || n.type === 'booking_created');
-        break;
-      case 'payment':
-        filtered = filtered.filter(n => n.type === 'payment');
-        break;
-    }
-
-    setFilteredNotifications(filtered);
-  };
 
   const markAsRead = async (notificationId: string) => {
     setMarkingAsRead(notificationId);
@@ -101,6 +126,8 @@ const NotificationsPage: React.FC = () => {
         showSuccessMessage('Notification marked as read');
         // Refresh notification count in UserContext
         await refreshNotificationsCount();
+        // Reload notifications to get updated data
+        await loadNotifications();
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -132,10 +159,11 @@ const NotificationsPage: React.FC = () => {
       });
 
       if (response.ok) {
-        setNotifications(notifications.map(n => ({ ...n, status: 'read' })));
         showSuccessMessage('All notifications marked as read');
         // Refresh notification count in UserContext
         await refreshNotificationsCount();
+        // Reload notifications to get updated data
+        await loadNotifications();
       }
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -161,10 +189,12 @@ const NotificationsPage: React.FC = () => {
       });
 
       if (response.ok) {
-        setNotifications(notifications.filter(n => n.id !== notificationId));
         showSuccessMessage('Notification deleted successfully');
         // Refresh notification count in UserContext
         await refreshNotificationsCount();
+        // Reload total count and notifications
+        await loadTotalCount();
+        await loadNotifications();
       }
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -422,13 +452,12 @@ const NotificationsPage: React.FC = () => {
     };
   };
 
-  const totalCount = notifications.length;
+  // Use filteredNotifications directly from API since API handles pagination
+  const currentNotifications = filteredNotifications;
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+  // Calculate start and end indices for display purposes
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentNotifications = filteredNotifications.slice(startIndex, endIndex);
+  const endIndex = startIndex + filteredNotifications.length;
 
   // Pagination handlers
   const handlePageChange = (page: number) => {
@@ -697,7 +726,7 @@ const NotificationsPage: React.FC = () => {
                       <span>entries</span>
                     </div>
                     <div className="showing-info">
-                      Showing {startIndex + 1} to {Math.min(endIndex, filteredNotifications.length)} of {filteredNotifications.length} notifications
+                      Showing {startIndex + 1} to {endIndex} of {totalCount} notifications
                     </div>
                   </div>
 
