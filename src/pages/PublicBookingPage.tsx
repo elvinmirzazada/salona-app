@@ -72,6 +72,7 @@ const PublicBookingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -131,6 +132,19 @@ const PublicBookingPage: React.FC = () => {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
+      let fetchedCompanyName = '';
+
+      // Fetch company data (including logo)
+      const companyRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/companies/slug/${companySlug}`);
+
+      if (companyRes.ok) {
+        const companyData = await companyRes.json();
+        if (companyData.success && companyData.data) {
+          fetchedCompanyName = companyData.data.name || '';
+          setCompanyName(fetchedCompanyName || 'Salon');
+          setCompanyLogoUrl(companyData.data.logo_url || '');
+        }
+      }
 
       // Fetch services/categories - public endpoint, no auth required
       const servicesRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/public/companies/${companySlug}/services`);
@@ -141,7 +155,10 @@ const PublicBookingPage: React.FC = () => {
 
       if (servicesData.success) {
         setCategories(servicesData.data || []);
-        setCompanyName(servicesData.company_name || 'Salon');
+        // Fallback to company name from services endpoint if not already set
+        if (!fetchedCompanyName && servicesData.company_name) {
+          setCompanyName(servicesData.company_name || 'Salon');
+        }
       }
 
       // Fetch staff - public endpoint, no auth required
@@ -559,43 +576,46 @@ const PublicBookingPage: React.FC = () => {
         <div className="background-shape shape-3"></div>
       </div>
 
-      {/* Company Badge */}
-      <div className="company-badge animate-fade-in">
-        <div className="company-badge-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <div className="company-badge-content">
-          <h1 className="company-badge-name">{companyName}</h1>
-          <p className="company-badge-subtitle">Book your appointment</p>
-        </div>
-      </div>
-
       {/* Progress Indicator */}
       <div className="progress-container">
-        <div className="progress-wrapper">
-          <div className="progress-steps">
-            <div className="progress-line">
-              <div className="progress-line-fill" style={{ width: `${progressPercentage}%` }}></div>
+        <div className="progress-inner">
+          {/* Company Badge - Left Side */}
+          <div className="company-badge animate-fade-in">
+            <div className="company-badge-icon">
+              {companyLogoUrl ? (
+                <img src={companyLogoUrl} alt={companyName} className="company-logo-img" />
+              ) : (
+                <i className="fas fa-store"></i>
+              )}
             </div>
-            <div className={`progress-step ${bookingState.currentStep >= 1 ? 'active' : ''}`} onClick={() => goToStep(1)}>
-              <div className="progress-step-circle">1</div>
-              <div className="progress-step-label">Services</div>
+            <div className="company-badge-content">
+              <h1 className="company-badge-name">{companyName}</h1>
+              <p className="company-badge-subtitle">Book your appointment</p>
             </div>
-            <div className={`progress-step ${bookingState.currentStep >= 2 ? 'active' : ''}`}>
-              <div className="progress-step-circle">2</div>
-              <div className="progress-step-label">Professional</div>
-            </div>
-            <div className={`progress-step ${bookingState.currentStep >= 3 ? 'active' : ''}`}>
-              <div className="progress-step-circle">3</div>
-              <div className="progress-step-label">Date & Time</div>
-            </div>
-            <div className={`progress-step ${bookingState.currentStep >= 4 ? 'active' : ''}`}>
-              <div className="progress-step-circle">4</div>
-              <div className="progress-step-label">Your Details</div>
+          </div>
+
+          {/* Progress Steps - Right Side */}
+          <div className="progress-wrapper">
+            <div className="progress-steps">
+              <div className="progress-line">
+                <div className="progress-line-fill" style={{ width: `${progressPercentage}%` }}></div>
+              </div>
+              <div className={`progress-step ${bookingState.currentStep >= 1 ? 'active' : ''}`} onClick={() => goToStep(1)}>
+                <div className="progress-step-circle">1</div>
+                <div className="progress-step-label">Services</div>
+              </div>
+              <div className={`progress-step ${bookingState.currentStep >= 2 ? 'active' : ''}`}>
+                <div className="progress-step-circle">2</div>
+                <div className="progress-step-label">Professional</div>
+              </div>
+              <div className={`progress-step ${bookingState.currentStep >= 3 ? 'active' : ''}`}>
+                <div className="progress-step-circle">3</div>
+                <div className="progress-step-label">Date & Time</div>
+              </div>
+              <div className={`progress-step ${bookingState.currentStep >= 4 ? 'active' : ''}`}>
+                <div className="progress-step-circle">4</div>
+                <div className="progress-step-label">Your Details</div>
+              </div>
             </div>
           </div>
         </div>
@@ -697,17 +717,17 @@ const PublicBookingPage: React.FC = () => {
                 </div>
 
                 <div className="step-navigation">
-                  <button className="nav-button" disabled>
-                    <span className="nav-button-icon">←</span>
+                  <button className="booking-nav-button" disabled>
+                    <i className="fas fa-arrow-left booking-nav-button-icon"></i>
                     <span>Previous</span>
                   </button>
                   <button
-                    className="nav-button primary"
+                    className="booking-nav-button primary"
                     onClick={() => goToStep(2)}
                     disabled={!canGoToNextStep()}
                   >
                     <span>Next: Choose Professional</span>
-                    <span className="nav-button-icon">→</span>
+                    <i className="fas fa-arrow-right booking-nav-button-icon"></i>
                   </button>
                 </div>
               </div>
@@ -784,17 +804,17 @@ const PublicBookingPage: React.FC = () => {
                 </div>
 
                 <div className="step-navigation">
-                  <button className="nav-button" onClick={() => goToStep(1)}>
-                    <span className="nav-button-icon">←</span>
+                  <button className="booking-nav-button" onClick={() => goToStep(1)}>
+                    <i className="fas fa-arrow-left booking-nav-button-icon"></i>
                     <span>Previous</span>
                   </button>
                   <button
-                    className="nav-button primary"
+                    className="booking-nav-button primary"
                     onClick={() => goToStep(3)}
                     disabled={!canGoToNextStep()}
                   >
                     <span>Next: Pick Date & Time</span>
-                    <span className="nav-button-icon">→</span>
+                    <i className="fas fa-arrow-right booking-nav-button-icon"></i>
                   </button>
                 </div>
               </div>
@@ -915,17 +935,17 @@ const PublicBookingPage: React.FC = () => {
                 </div>
 
                 <div className="step-navigation">
-                  <button className="nav-button" onClick={() => goToStep(2)}>
-                    <span className="nav-button-icon">←</span>
+                  <button className="booking-nav-button" onClick={() => goToStep(2)}>
+                    <i className="fas fa-arrow-left booking-nav-button-icon"></i>
                     <span>Previous</span>
                   </button>
                   <button
-                    className="nav-button primary"
+                    className="booking-nav-button primary"
                     onClick={() => goToStep(4)}
                     disabled={!canGoToNextStep()}
                   >
                     <span>Next: Your Details</span>
-                    <span className="nav-button-icon">→</span>
+                    <i className="fas fa-arrow-right booking-nav-button-icon"></i>
                   </button>
                 </div>
               </div>
@@ -1090,24 +1110,25 @@ const PublicBookingPage: React.FC = () => {
                 </div>
 
                 <div className="step-navigation">
-                  <button className="nav-button" onClick={() => goToStep(3)}>
-                    <span className="nav-button-icon">←</span>
+                  <button className="booking-nav-button" onClick={() => goToStep(3)}>
+                    <i className="fas fa-arrow-left booking-nav-button-icon"></i>
                     <span>Previous</span>
                   </button>
                   <button
-                    className="nav-button primary"
+                    type="submit"
+                    className="booking-nav-button primary"
                     onClick={handleSubmitBooking}
                     disabled={submitting || !bookingState.termsAgreed}
                   >
                     {submitting ? (
                       <>
-                        <i className="fas fa-spinner fa-spin"></i>
-                        <span>Booking...</span>
+                        <i className="fas fa-spinner fa-spin booking-nav-button-icon"></i>
+                        <span>Creating Booking...</span>
                       </>
                     ) : (
                       <>
                         <span>Complete Booking</span>
-                        <span className="nav-button-icon">✓</span>
+                        <i className="fas fa-check booking-nav-button-icon"></i>
                       </>
                     )}
                   </button>
