@@ -4,7 +4,18 @@ import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { servicesAPI } from '../utils/api';
 import { Service, Category, Staff, CreateServiceData, CreateCategoryData } from '../types/services';
+
 import '../styles/services.css';
+
+interface HierarchicalCategory {
+  id: string;
+  name: string;
+  description?: string;
+  parent_category_id?: string | null;
+  has_subcategories?: boolean;
+  services_count?: number;
+  subcategories?: HierarchicalCategory[];
+}
 
 interface ServiceModalData {
   isOpen: boolean;
@@ -30,7 +41,8 @@ const ServicesPage: React.FC = () => {
 
   // State management
   const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<HierarchicalCategory[]>([]);
+  const [flatCategories, setFlatCategories] = useState<HierarchicalCategory[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +76,9 @@ const ServicesPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
   const [activeLanguageTab, setActiveLanguageTab] = useState<'en' | 'ee' | 'ru'>('en');
+  const [categorySearchTerm, setCategorySearchTerm] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
   // Language-specific form values
   const [languageFormValues, setLanguageFormValues] = useState({
@@ -95,6 +110,21 @@ const ServicesPage: React.FC = () => {
     }
   }, [error]);
 
+  // Handle clicking outside dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.category-search-wrapper') && !target.closest('.btn-icon-text')) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    if (showCategoryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showCategoryDropdown]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -104,24 +134,37 @@ const ServicesPage: React.FC = () => {
         servicesAPI.getStaff(),
       ]);
 
-      // Use categories from the dedicated categories endpoint
-      const categoriesData: Category[] = [];
+      // Process categories from the dedicated categories endpoint
+      const flatCategoriesData: HierarchicalCategory[] = [];
       if (categoriesRes.data && Array.isArray(categoriesRes.data)) {
         categoriesRes.data.forEach((category: any) => {
-          categoriesData.push({
+          flatCategoriesData.push({
             id: category.id,
             name: category.name,
             description: category.description || '',
+            parent_category_id: category.parent_category_id,
+            has_subcategories: category.has_subcategories,
+            services_count: category.services_count,
           });
         });
       }
 
-      // Process services from the services endpoint response
+      // Build hierarchical structure
+      const hierarchicalCategories = buildCategoryHierarchy(flatCategoriesData);
+
+      // Keep both flat and hierarchical versions
+      setFlatCategories(flatCategoriesData);
+      setCategories(hierarchicalCategories);
+
+      // Process services from the NEW nested architecture
+      // Categories can have either services OR subcategories
       const servicesData: Service[] = [];
-      if (servicesRes.data && Array.isArray(servicesRes.data)) {
-        servicesRes.data.forEach((category: any) => {
-          // Add services from this category to services array
-          if (category.services && Array.isArray(category.services)) {
+
+      // Recursive function to extract services from nested structure
+      const extractServices = (categories: any[]) => {
+        categories.forEach((category: any) => {
+          // If category has services, add them
+          if (category.services && Array.isArray(category.services) && category.services.length > 0) {
             category.services.forEach((service: any) => {
               servicesData.push({
                 id: service.id,
@@ -131,7 +174,7 @@ const ServicesPage: React.FC = () => {
                 name_ru: service.name_ru || '',
                 duration: service.duration,
                 price: service.price,
-                discount_price: service.discount_price,
+                discount_price: service.discount_price || 0,
                 status: service.status,
                 additional_info: service.additional_info || '',
                 additional_info_en: service.additional_info_en || '',
@@ -139,7 +182,7 @@ const ServicesPage: React.FC = () => {
                 additional_info_ru: service.additional_info_ru || '',
                 buffer_before: service.buffer_before || 0,
                 buffer_after: service.buffer_after || 0,
-                category_id: category.id, // Link to parent category
+                category_id: category.id,
                 image_url: service.image_url,
                 service_staff: service.service_staff?.map((ss: any) => ({
                   id: ss.id,
@@ -152,13 +195,18 @@ const ServicesPage: React.FC = () => {
               });
             });
           }
+
+          // If category has subcategories, recursively process them
+          if (category.subcategories && Array.isArray(category.subcategories) && category.subcategories.length > 0) {
+            extractServices(category.subcategories);
+          }
         });
+      };
+
+      if (servicesRes.data && Array.isArray(servicesRes.data)) {
+        extractServices(servicesRes.data);
       }
 
-      // console.log('Loaded categories:', categoriesData);
-      // console.log('Loaded services:', servicesData);
-
-      setCategories(categoriesData);
       setServices(servicesData);
       setStaff(staffRes.data || []);
     } catch (err) {
@@ -168,6 +216,34 @@ const ServicesPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Build hierarchical category structure
+  const buildCategoryHierarchy = (flatCategories: HierarchicalCategory[]): HierarchicalCategory[] => {
+    const categoryMap = new Map<string, HierarchicalCategory>();
+    const rootCategories: HierarchicalCategory[] = [];
+
+    // First pass: create map of all categories
+    flatCategories.forEach(cat => {
+      categoryMap.set(cat.id, { ...cat, subcategories: [] });
+    });
+
+    // Second pass: build hierarchy
+    flatCategories.forEach(cat => {
+      const category = categoryMap.get(cat.id)!;
+      if (cat.parent_category_id) {
+        const parent = categoryMap.get(cat.parent_category_id);
+        if (parent) {
+          parent.subcategories = parent.subcategories || [];
+          parent.subcategories.push(category);
+        }
+      } else {
+        rootCategories.push(category);
+      }
+    });
+
+    return rootCategories;
+  };
+
 
   // Service operations
   const openServiceModal = (service: Service | null = null) => {
@@ -181,6 +257,8 @@ const ServicesPage: React.FC = () => {
     if (service) {
       setImagePreview(service.image_url || null);
       setSelectedStaff(service.service_staff?.map(s => s.user_id) || []);
+      setSelectedCategoryId(service.category_id);
+      setCategorySearchTerm(getCategoryDisplayForInput(service.category_id));
       setLanguageFormValues({
         name_en: service.name_en || '',
         name_ee: service.name_ee || '',
@@ -192,6 +270,8 @@ const ServicesPage: React.FC = () => {
     } else {
       setImagePreview(null);
       setSelectedStaff([]);
+      setSelectedCategoryId('');
+      setCategorySearchTerm('');
       setLanguageFormValues({
         name_en: '',
         name_ee: '',
@@ -209,6 +289,9 @@ const ServicesPage: React.FC = () => {
     setServiceModal({ isOpen: false, service: null, isEditing: false });
     setImagePreview(null);
     setSelectedStaff([]);
+    setSelectedCategoryId('');
+    setCategorySearchTerm('');
+    setShowCategoryDropdown(false);
     setLanguageFormValues({
       name_en: '',
       name_ee: '',
@@ -248,7 +331,7 @@ const ServicesPage: React.FC = () => {
       status: 'active',
       buffer_before: 0,
       buffer_after: 0,
-      category_id: formData.get('service-category') as string,
+      category_id: selectedCategoryId,
       staff_ids: selectedStaff,
     };
 
@@ -298,6 +381,12 @@ const ServicesPage: React.FC = () => {
       name: formData.get('category-name') as string,
       description: formData.get('category-description') as string || '',
     };
+
+    // Add parent_category_id if selected
+    const parentCategoryId = formData.get('parent-category') as string;
+    if (parentCategoryId) {
+      (categoryData as any).parent_category_id = parentCategoryId;
+    }
 
     try {
       if (categoryModal.isEditing && categoryModal.category) {
@@ -373,10 +462,91 @@ const ServicesPage: React.FC = () => {
     );
   };
 
-  // Get category name
-  const getCategoryName = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name || 'Uncategorized';
+  // Get category name with hierarchy display
+  const getCategoryName = (categoryId: string): string => {
+    const category = flatCategories.find(c => c.id === categoryId);
+    if (!category) return 'Uncategorized';
+
+    // If it has a parent, show the hierarchy
+    if (category.parent_category_id) {
+      const parent = flatCategories.find(c => c.id === category.parent_category_id);
+      if (parent) {
+        return `${parent.name} → ${category.name}`;
+      }
+    }
+
+    return category.name;
+  };
+
+  // Get category display name for dropdown (with indentation)
+  const getCategoryDisplayName = (category: HierarchicalCategory, level: number = 0): string => {
+    const indent = '  '.repeat(level);
+    return `${indent}${category.name}`;
+  };
+
+  // Get filtered categories based on search term
+  const getFilteredSelectableCategories = (): { category: HierarchicalCategory; displayName: string; level: number }[] => {
+    const selectableCategories: { category: HierarchicalCategory; displayName: string; level: number }[] = [];
+
+    const collectSelectableCategories = (categories: HierarchicalCategory[], level: number = 0) => {
+      categories.forEach(category => {
+        // Only show categories that can accept services (no subcategories)
+        if (!category.has_subcategories && (!category.subcategories || category.subcategories.length === 0)) {
+          const displayName = getCategoryDisplayName(category, level);
+
+          // Filter based on search term
+          if (!categorySearchTerm ||
+              category.name.toLowerCase().includes(categorySearchTerm.toLowerCase()) ||
+              displayName.toLowerCase().includes(categorySearchTerm.toLowerCase())) {
+            selectableCategories.push({ category, displayName, level });
+          }
+        }
+
+        // Recursively collect from subcategories
+        if (category.subcategories && category.subcategories.length > 0) {
+          collectSelectableCategories(category.subcategories, level + 1);
+        }
+      });
+    };
+
+    collectSelectableCategories(categories);
+    return selectableCategories;
+  };
+
+  // Handle category selection
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    const category = flatCategories.find(c => c.id === categoryId);
+    if (category) {
+      setCategorySearchTerm(getCategoryName(categoryId));
+    }
+    setShowCategoryDropdown(false);
+  };
+
+  // Get category name for display in input field
+  const getCategoryDisplayForInput = (categoryId: string): string => {
+    return getCategoryName(categoryId);
+  };
+
+  // Get the full path of a category (e.g., "Hair Services → Hair Cuts")
+  const getCategoryPath = (categoryId: string): string => {
+    const category = flatCategories.find(c => c.id === categoryId);
+    if (!category) return '';
+
+    const path: string[] = [];
+    let currentCategory: HierarchicalCategory | undefined = category;
+
+    // Build path from child to parent
+    while (currentCategory) {
+      path.unshift(currentCategory.name);
+      if (currentCategory.parent_category_id) {
+        currentCategory = flatCategories.find(c => c.id === currentCategory!.parent_category_id);
+      } else {
+        currentCategory = undefined;
+      }
+    }
+
+    return path.join(' → ');
   };
 
 
@@ -581,23 +751,70 @@ const ServicesPage: React.FC = () => {
                   <div className="form-group">
                     <label htmlFor="service-category">Category</label>
                     <div className="category-input-group">
-                      <select
-                        id="service-category"
-                        name="service-category"
-                        defaultValue={serviceModal.service?.category_id || ''}
-                        required
-                      >
-                        <option value="">Select a category</option>
-                        {categories.map(category => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="category-search-wrapper">
+                        <input
+                          type="text"
+                          id="service-category"
+                          name="service-category"
+                          value={categorySearchTerm}
+                          onChange={(e) => {
+                            setCategorySearchTerm(e.target.value);
+                            setShowCategoryDropdown(true);
+                          }}
+                          onFocus={() => setShowCategoryDropdown(true)}
+                          placeholder="Search and select a category"
+                          required
+                          autoComplete="off"
+                        />
+                        <i className="fas fa-search category-search-icon"></i>
+
+                        {/* Hidden input to store the actual category ID for form submission */}
+                        <input
+                          type="hidden"
+                          name="service-category-id"
+                          value={selectedCategoryId}
+                        />
+
+                        {showCategoryDropdown && (
+                          <div className="category-dropdown">
+                            {getFilteredSelectableCategories().length === 0 ? (
+                              <div className="category-dropdown-item no-results">
+                                No categories found
+                              </div>
+                            ) : (
+                              getFilteredSelectableCategories().map(({ category, level }) => (
+                                <div
+                                  key={category.id}
+                                  className={`category-dropdown-item ${selectedCategoryId === category.id ? 'selected' : ''}`}
+                                  onClick={() => handleCategorySelect(category.id)}
+                                  style={{ paddingLeft: `${8 + level * 12}px` }}
+                                >
+                                  <div className="category-item-content">
+                                    <span className="category-name">{category.name}</span>
+                                    {category.parent_category_id && (
+                                      <span className="category-path">
+                                        {getCategoryPath(category.id)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {level > 0 && (
+                                    <span className="category-level-badge">
+                                      Level {level + 1}
+                                    </span>
+                                  )}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <button
                         type="button"
                         className="btn-icon-text"
-                        onClick={() => openCategoryModal()}
+                        onClick={() => {
+                          setShowCategoryDropdown(false);
+                          openCategoryModal();
+                        }}
                         title="Create new category"
                       >
                         <i className="fas fa-plus"></i>
@@ -889,6 +1106,25 @@ const ServicesPage: React.FC = () => {
                       defaultValue={categoryModal.category?.name || ''}
                       required
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="parent-category">Parent Category (Optional)</label>
+                    <select
+                      id="parent-category"
+                      name="parent-category"
+                      defaultValue={''}
+                    >
+                      <option value="">None (Main Category)</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <small style={{ fontSize: '0.75rem', color: '#6b7280', fontStyle: 'italic' }}>
+                      Select a parent category to create a subcategory
+                    </small>
                   </div>
 
                   <div className="form-group">
