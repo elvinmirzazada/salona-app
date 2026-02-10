@@ -131,36 +131,54 @@ export const servicesAPI = {
 
   // Create new service
   createService: async (serviceData: CreateServiceData, imageFile?: File) => {
-    const formData = new FormData();
-    formData.append('service_in', JSON.stringify(serviceData));
+    try {
+      const formData = new FormData();
+      formData.append('service_in', JSON.stringify(serviceData));
 
-    if (imageFile) {
-      formData.append('image', imageFile);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const response = await apiClient.post('/v1/services', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      // If the server returned an error response with JSON, return that
+      if (error.response && error.response.data) {
+        return error.response.data;
+      }
+      // Otherwise, re-throw the error
+      throw error;
     }
-
-    const response = await apiClient.post('/v1/services', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
   },
 
   // Update service
   updateService: async (serviceId: string, serviceData: CreateServiceData, imageFile?: File) => {
-    const formData = new FormData();
-    formData.append('service_in', JSON.stringify(serviceData));
+    try {
+      const formData = new FormData();
+      formData.append('service_in', JSON.stringify(serviceData));
 
-    if (imageFile) {
-      formData.append('image', imageFile);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const response = await apiClient.put(`/v1/services/service/${serviceId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      // If the server returned an error response with JSON, return that
+      if (error.response && error.response.data) {
+        return error.response.data;
+      }
+      // Otherwise, re-throw the error
+      throw error;
     }
-
-    const response = await apiClient.put(`/v1/services/service/${serviceId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
   },
 
   // Delete service

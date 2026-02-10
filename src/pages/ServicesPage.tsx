@@ -79,6 +79,7 @@ const ServicesPage: React.FC = () => {
   const [categorySearchTerm, setCategorySearchTerm] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [imageRemoved, setImageRemoved] = useState(false);
 
   // Language-specific form values
   const [languageFormValues, setLanguageFormValues] = useState({
@@ -259,6 +260,7 @@ const ServicesPage: React.FC = () => {
       setSelectedStaff(service.service_staff?.map(s => s.user_id) || []);
       setSelectedCategoryId(service.category_id);
       setCategorySearchTerm(getCategoryDisplayForInput(service.category_id));
+      setImageRemoved(false);
       setLanguageFormValues({
         name_en: service.name_en || '',
         name_ee: service.name_ee || '',
@@ -272,6 +274,7 @@ const ServicesPage: React.FC = () => {
       setSelectedStaff([]);
       setSelectedCategoryId('');
       setCategorySearchTerm('');
+      setImageRemoved(false);
       setLanguageFormValues({
         name_en: '',
         name_ee: '',
@@ -292,6 +295,7 @@ const ServicesPage: React.FC = () => {
     setSelectedCategoryId('');
     setCategorySearchTerm('');
     setShowCategoryDropdown(false);
+    setImageRemoved(false);
     setLanguageFormValues({
       name_en: '',
       name_ee: '',
@@ -333,24 +337,49 @@ const ServicesPage: React.FC = () => {
       buffer_after: 0,
       category_id: selectedCategoryId,
       staff_ids: selectedStaff,
+      ...(serviceModal.isEditing && imageRemoved && { remove_image: true }),
     };
 
     const imageFile = imageInputRef.current?.files?.[0];
 
     try {
+      let response;
       if (serviceModal.isEditing && serviceModal.service) {
-        await servicesAPI.updateService(serviceModal.service.id, serviceData, imageFile);
-        setSuccess('Service updated successfully');
+        response = await servicesAPI.updateService(serviceModal.service.id, serviceData, imageFile);
       } else {
-        await servicesAPI.createService(serviceData, imageFile);
-        setSuccess('Service created successfully');
+        response = await servicesAPI.createService(serviceData, imageFile);
       }
 
+      // Check if the response indicates success
+      if (!response || response.success === false) {
+        // API returned an error response
+        const errorMessage = response?.message || (serviceModal.isEditing ? 'Failed to update service' : 'Failed to create service');
+        setError(errorMessage);
+        return;
+      }
+
+      // Only show success if the operation actually succeeded
+      setSuccess(serviceModal.isEditing ? 'Service updated successfully' : 'Service created successfully');
       closeServiceModal();
       loadData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save service:', err);
-      setError(serviceModal.isEditing ? 'Failed to update service' : 'Failed to create service');
+
+      // Try to extract error message from the response
+      let errorMessage = serviceModal.isEditing ? 'Failed to update service' : 'Failed to create service';
+
+      // Check if the error response contains JSON with error details
+      if (err.response && err.response.data) {
+        if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.data.success === false && err.response.data.message) {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -448,6 +477,7 @@ const ServicesPage: React.FC = () => {
 
   const removeImage = () => {
     setImagePreview(null);
+    setImageRemoved(true);
     if (imageInputRef.current) {
       imageInputRef.current.value = '';
     }
@@ -727,7 +757,14 @@ const ServicesPage: React.FC = () => {
 
         {/* Service Modal */}
         {serviceModal.isOpen && (
-          <div className="modal-overlay" onClick={closeServiceModal}>
+          <div
+            className="modal-overlay"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                closeServiceModal();
+              }
+            }}
+          >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>{serviceModal.isEditing ? 'Edit Service' : 'Add Service'}</h2>
@@ -1087,7 +1124,14 @@ const ServicesPage: React.FC = () => {
 
         {/* Category Modal */}
         {categoryModal.isOpen && (
-          <div className="modal-overlay" onClick={closeCategoryModal}>
+          <div
+            className="modal-overlay"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                closeCategoryModal();
+              }
+            }}
+          >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>{categoryModal.isEditing ? 'Edit Category' : 'Add Category'}</h2>
@@ -1153,7 +1197,14 @@ const ServicesPage: React.FC = () => {
 
         {/* Delete Confirmation Modal */}
         {deleteModal.isOpen && (
-          <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div
+            className="modal-overlay"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                closeDeleteModal();
+              }
+            }}
+          >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>Delete {deleteModal.type === 'service' ? 'Service' : 'Category'}</h2>

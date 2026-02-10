@@ -508,7 +508,14 @@ const CategoriesPage: React.FC = () => {
 
           {/* Add/Edit Category Modal */}
           {showModal && (
-            <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
+            <div
+              className="modal-overlay"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowModal(false);
+                }
+              }}
+            >
               <div className="modal-content">
                 <div className="modal-header">
                   <h3 className="modal-title">
@@ -688,7 +695,14 @@ const CategoriesPage: React.FC = () => {
 
           {/* Delete Category Modal */}
           {showDeleteModal && deletingCategory && (
-            <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowDeleteModal(false)}>
+            <div
+              className="modal-overlay"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowDeleteModal(false);
+                }
+              }}
+            >
               <div className="modal-content">
                 <div className="modal-header">
                   <h3 className="modal-title">Delete Category</h3>
