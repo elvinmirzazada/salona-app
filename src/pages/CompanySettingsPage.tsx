@@ -228,8 +228,8 @@ const CompanySettingsPage: React.FC = () => {
       setUploadingLogo(true);
 
       // You can implement a DELETE endpoint or just update the company with empty logo_url
-      const response = await fetch(`${API_BASE_URL}/v1/companies`, {
-        method: 'PATCH',
+      const response = await fetch(`${API_BASE_URL}/v1/companies/logo`, {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
