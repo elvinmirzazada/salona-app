@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { useClearCache } from '../hooks/useClearCache';
 import { authAPI } from '../utils/api';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 import '../styles/sidebar.css';
 
 interface User {
@@ -29,6 +30,20 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
 
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
   const isActive = user?.company_id && user?.role_status === 'active';
+
+  // Fetch company settings
+  const { data: companyData } = useCompanySettings();
+  const company = companyData?.data;
+
+  // Generate company initials from name
+  const getCompanyInitials = (name: string): string => {
+    if (!name) return 'CO';
+    const words = name.trim().split(' ');
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return (words[0][0] + words[1][0]).toUpperCase();
+  };
 
   // Check if current path matches menu item
   const isActivePath = (path: string) => {
@@ -95,6 +110,12 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
     }
   }, [location.pathname]);
 
+  // Determine which logo to show
+  const showCompanyBranding = company && user?.company_id;
+  const companyName = company?.name || '';
+  const companyLogo = company?.logo_url;
+  const companyInitials = getCompanyInitials(companyName);
+
   return (
     <>
       {/* Mobile Toggle Button */}
@@ -139,13 +160,36 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
         aria-label="Sidebar"
       >
         <div className="sidebar-inner">
-          {/* Logo Header */}
+          {/* Logo Header - Dynamic based on company */}
           <Link
             to={isAdmin ? '/dashboard' : '/calendar'}
             className="sidebar-logo"
+            title={showCompanyBranding ? companyName : 'Salona'}
           >
-            <img src="/salona-icon.png" alt="Salona" className="sidebar-logo-icon" />
-            <span className="sidebar-logo-text">Salona</span>
+            {showCompanyBranding ? (
+              <>
+                {companyLogo ? (
+                  <img
+                    src={companyLogo}
+                    alt={companyName}
+                    className="sidebar-company-logo-img"
+                  />
+                ) : (
+                  <div className="sidebar-company-logo-initials">
+                    {companyInitials}
+                  </div>
+                )}
+                <div className="sidebar-company-info">
+                  <span className="sidebar-company-name">{companyName}</span>
+                  <span className="sidebar-company-subtitle">Management System</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <img src="/salona-icon.png" alt="Salona" className="sidebar-logo-icon" />
+                <span className="sidebar-logo-text">Salona</span>
+              </>
+            )}
           </Link>
 
           {/* Main Navigation */}

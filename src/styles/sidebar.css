@@ -400,3 +400,93 @@ body:has(#sidebar) .fullscreen-expanded {
   width: 100% !important;
 }
 
+/* Company Logo Styles */
+#sidebar .sidebar-company-logo-img {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-right: 0.75rem;
+}
+
+#sidebar .sidebar-company-logo-initials {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-right: 0.75rem;
+}
+
+#sidebar .sidebar-company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1;
+}
+
+#sidebar .sidebar-company-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+#sidebar .sidebar-company-subtitle {
+  font-size: 0.6875rem;
+  color: #D1D5DB;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.75;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Hover effects for company logo */
+#sidebar .sidebar-logo:hover .sidebar-company-name {
+  color: #8B5CF6;
+}
+
+#sidebar .sidebar-logo:hover .sidebar-company-logo-img {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#sidebar .sidebar-logo:hover .sidebar-company-logo-initials {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments for company logo */
+@media (max-width: 768px) {
+  #sidebar .sidebar-company-logo-img,
+  #sidebar .sidebar-company-logo-initials {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  #sidebar .sidebar-company-name {
+    font-size: 0.875rem;
+  }
+
+  #sidebar .sidebar-company-subtitle {
+    font-size: 0.625rem;
+  }
+}
+
