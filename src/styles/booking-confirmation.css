@@ -269,7 +269,7 @@
   margin-bottom: 20px;
 }
 
-.service-card {
+.confirmation-page .service-card {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -279,22 +279,22 @@
   margin-bottom: 8px;
 }
 
-.service-card:last-child {
+.confirmation-page .service-card:last-child {
   margin-bottom: 0;
 }
 
-.service-info {
+.confirmation-page .service-info {
   flex: 1;
 }
 
-.service-name {
+.confirmation-page .service-name {
   font-size: 0.875rem;
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 4px;
 }
 
-.service-meta {
+.confirmation-page .service-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -302,21 +302,21 @@
   color: #64748b;
 }
 
-.service-duration {
+.confirmation-page .service-duration {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.service-duration i {
+.confirmation-page .service-duration i {
   color: #667eea;
 }
 
-.service-staff {
+.confirmation-page .service-staff {
   font-style: italic;
 }
 
-.service-price {
+.confirmation-page .service-price {
   font-size: 0.875rem;
   font-weight: 700;
   color: #059669;
@@ -609,7 +609,7 @@
     min-width: auto;
   }
 
-  .service-card {
+  .confirmation-page .service-card {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
