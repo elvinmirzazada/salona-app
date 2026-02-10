@@ -13,6 +13,20 @@ interface Service {
   discount_price?: number;
   image_url?: string;
   category_id: string;
+  service_staff?: Array<{
+    id: string;
+    service_id: string;
+    user_id: string;
+    user?: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone?: string;
+      languages?: string;
+      position?: string;
+      profile_photo_url?: string;
+    };
+  }>;
 }
 
 interface Category {
@@ -632,13 +646,37 @@ const PublicBookingPage: React.FC = () => {
       .filter((cat): cat is Category => cat !== null);
   };
 
+  // Get staff assigned to selected services
+  const getStaffForSelectedServices = (): Staff[] => {
+    if (bookingState.selectedServices.size === 0) {
+      return [];
+    }
+
+    const selectedServicesList = getSelectedServices();
+    const staffIds = new Set<string>();
+
+    // Collect all unique staff IDs from selected services
+    selectedServicesList.forEach(service => {
+      const serviceStaff = service.service_staff || [];
+      serviceStaff.forEach(staffMember => {
+        staffIds.add(staffMember.user_id);
+      });
+    });
+
+    // Filter available staff to only include those assigned to selected services
+    return staff.filter(member => staffIds.has(member.user_id));
+  };
+
   // Filter staff by search query
   const getFilteredStaff = () => {
-    if (!staffSearchQuery.trim()) return staff;
+    // First, get only staff assigned to selected services
+    const relevantStaff = getStaffForSelectedServices();
+
+    if (!staffSearchQuery.trim()) return relevantStaff;
 
     const query = staffSearchQuery.toLowerCase();
 
-    return staff.filter(s =>
+    return relevantStaff.filter(s =>
       s.user.first_name.toLowerCase().includes(query) ||
       s.user.last_name.toLowerCase().includes(query) ||
       s.user.position?.toLowerCase().includes(query)
