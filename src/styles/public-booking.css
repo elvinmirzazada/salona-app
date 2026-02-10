@@ -406,22 +406,97 @@
 
 /* Services Grid */
 .public-booking-page .service-category {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.public-booking-page .category-name {
+.public-booking-page .category-header-wrapper {
+  margin-bottom: 12px;
+}
+
+.public-booking-page .category-name-clickable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  transition: all 0.2s ease;
+}
+
+.public-booking-page .category-name-clickable:hover {
+  color: #667eea;
+}
+
+.public-booking-page .category-expand-icon {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.public-booking-page .category-name-text {
   font-size: 0.938rem;
   font-weight: 600;
   color: #2d3748;
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #e2e8f0;
+  margin: 0;
+  flex: 1;
+}
+
+.public-booking-page .subcategory-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #e5e7eb;
+  color: #6b7280;
+  border-radius: 12px;
+  font-size: 0.688rem;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.public-booking-page .services-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 12px;
+  font-size: 0.688rem;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.public-booking-page .subcategories-container {
+  margin-top: 12px;
+  border-left: 2px solid #f3f4f6;
+  padding-left: 12px;
+}
+
+.public-booking-page .service-category.level-0 .category-name-text {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.public-booking-page .service-category.level-1 .category-name-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.public-booking-page .service-category.level-2 .category-name-text {
+  font-size: 0.813rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.public-booking-page .services-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .public-booking-page .services-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
+  margin-top: 8px;
 }
 
 .public-booking-page .service-card {
@@ -509,19 +584,20 @@
 /* Staff Grid */
 .public-booking-page .staff-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .public-booking-page .staff-card {
   border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 20px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   background: white;
+  min-height: 180px;
 }
 
 .public-booking-page .staff-card:hover {
@@ -536,10 +612,10 @@
 }
 
 .public-booking-page .staff-avatar {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  margin: 0 auto 10px;
+  margin: 0 auto 12px;
   overflow: hidden;
 }
 
@@ -557,21 +633,60 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
 .public-booking-page .staff-name {
-  font-size: 0.875rem;
+  font-size: 0.938rem;
   font-weight: 600;
   color: #2d3748;
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
 }
 
 .public-booking-page .staff-position {
-  font-size: 0.75rem;
+  font-size: 0.813rem;
   color: #718096;
-  margin: 0;
+  margin: 0 0 8px 0;
+}
+
+.public-booking-page .staff-languages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.688rem;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+.public-booking-page .staff-languages i {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.public-booking-page .languages-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.public-booking-page .language-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 8px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.public-booking-page .staff-card.selected .language-tag {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
 }
 
 .public-booking-page .staff-selected-badge {

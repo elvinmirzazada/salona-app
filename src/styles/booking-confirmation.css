@@ -1,9 +1,9 @@
-/* Booking Confirmation Page Styles */
+/* Booking Confirmation Page Styles - Modern Design */
 
 .confirmation-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px;
+  padding: 20px;
   position: relative;
   overflow: hidden;
 }
@@ -20,10 +20,11 @@
 
 .confetti {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   top: -10px;
   opacity: 0;
+  border-radius: 50%;
   animation: confetti-fall 5s linear forwards;
 }
 
@@ -41,47 +42,40 @@
 }
 
 .confirmation-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
+}
+
+/* Hero Section */
+.confirmation-hero {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: slideUp 0.8s ease-out;
 }
 
 .success-icon-wrapper {
   display: flex;
   justify-content: center;
   margin-bottom: 30px;
-  animation: scaleIn 0.5s ease-out;
-}
-
-@keyframes scaleIn {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  animation: scaleIn 0.6s ease-out;
 }
 
 .success-icon {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .success-icon svg {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
 }
 
 .checkmark-circle {
@@ -109,12 +103,18 @@
   }
 }
 
-.confirmation-card {
-  background: white;
-  border-radius: 20px;
-  padding: 50px 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.6s ease-out 0.2s both;
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -129,90 +129,103 @@
 }
 
 .confirmation-title {
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   font-weight: 700;
-  text-align: center;
-  color: #1f2937;
-  margin: 0 0 15px 0;
-  font-family: 'Playfair Display', serif;
+  color: white;
+  margin: 0 0 16px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .confirmation-subtitle {
-  text-align: center;
-  color: #6b7280;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 20px 0;
   line-height: 1.6;
-  margin: 0 0 40px 0;
 }
 
-.confirmation-subtitle strong {
-  color: #667eea;
+.confirmation-id {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+  backdrop-filter: blur(10px);
+}
+
+.confirmation-id span {
+  font-weight: 700;
+}
+
+/* Content Grid */
+.confirmation-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+/* Card Styles */
+.confirmation-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.6s ease-out 0.2s both;
+}
+
+.card-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.card-header h2 {
+  font-size: 1.25rem;
   font-weight: 600;
-}
-
-.booking-details {
-  background: #f9fafb;
-  border-radius: 12px;
-  padding: 30px;
-  margin-bottom: 30px;
-}
-
-.detail-row {
-  display: flex;
-  padding: 20px 0;
-  border-bottom: 1px solid #e5e7eb;
-  gap: 20px;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-label {
-  flex: 0 0 150px;
-  font-weight: 600;
-  color: #4b5563;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 0.95rem;
-}
-
-.detail-label-icon {
-  font-size: 1.2rem;
-}
-
-.detail-value {
-  flex: 1;
-  color: #1f2937;
-  font-size: 1rem;
-}
-
-.service-list {
-  list-style: none;
-  padding: 0;
+  color: #1e293b;
   margin: 0;
 }
 
-.service-item {
-  padding: 12px 0;
-  border-bottom: 1px dashed #e5e7eb;
+/* Booking Details */
+.booking-summary {
+  margin-bottom: 32px;
 }
 
-.service-item:last-child {
+.summary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.summary-item:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
-.service-name {
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 4px;
+.summary-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  min-width: 120px;
+  flex-shrink: 0;
 }
 
-.service-meta {
-  color: #6b7280;
-  font-size: 0.9rem;
+.summary-label i {
+  color: #667eea;
+  width: 16px;
+}
+
+.summary-value {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
 }
 
 .datetime-display {
@@ -223,77 +236,253 @@
 
 .datetime-display .date {
   font-weight: 600;
-  color: #1f2937;
+  color: #1e293b;
 }
 
 .datetime-display .time {
-  color: #6b7280;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
 }
 
-.total-price {
-  font-size: 1.8rem !important;
-  color: #667eea !important;
+.professional-tag {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+/* Services Section */
+.services-section h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+}
+
+.services-list {
+  margin-bottom: 20px;
+}
+
+.service-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.service-card:last-child {
+  margin-bottom: 0;
+}
+
+.service-info {
+  flex: 1;
+}
+
+.service-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.service-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.service-duration {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.service-duration i {
+  color: #667eea;
+}
+
+.service-staff {
+  font-style: italic;
+}
+
+.service-price {
+  font-size: 0.875rem;
   font-weight: 700;
+  color: #059669;
+  text-align: right;
+}
+
+.total-section {
+  border-top: 2px solid #e2e8f0;
+  padding-top: 16px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.total-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+/* Location Card */
+.location-card {
+  height: fit-content;
 }
 
 .venue-info {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-  border-radius: 12px;
-  padding: 25px;
-  margin-bottom: 30px;
-  border: 2px solid rgba(102, 126, 234, 0.2);
+  margin-bottom: 24px;
 }
 
-.venue-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 15px;
+.venue-name {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 12px;
 }
 
-.venue-title-icon {
-  font-size: 1.4rem;
+.venue-name i {
+  color: #667eea;
 }
 
 .venue-address {
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
-.venue-address-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  color: #4b5563;
-  font-size: 1rem;
-}
-
-.address-icon {
-  font-size: 1.1rem;
-  width: 24px;
-  text-align: center;
-}
-
-.additional-info {
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
-  border-radius: 8px;
-  padding: 20px 25px;
-  margin-bottom: 30px;
-}
-
-.info-title {
-  font-weight: 600;
-  color: #92400e;
-  margin-bottom: 12px;
+.address-line {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1.05rem;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.address-line i {
+  color: #667eea;
+  width: 16px;
+}
+
+.contact-info {
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.phone-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #667eea;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.phone-link:hover {
+  color: #4f46e5;
+}
+
+.phone-link i {
+  width: 16px;
+}
+
+/* Google Maps */
+.map-container {
+  margin-bottom: 24px;
+}
+
+.map-header {
+  margin-bottom: 12px;
+}
+
+.map-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+}
+
+.map-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.directions-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.directions-btn:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.directions-btn i {
+  font-size: 0.875rem;
+}
+
+/* Info Section */
+.info-section {
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.info-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+}
+
+.info-section h4 i {
+  color: #667eea;
 }
 
 .info-list {
@@ -303,121 +492,130 @@
 }
 
 .info-list li {
-  padding: 8px 0;
-  color: #78350f;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  position: relative;
-  padding-left: 20px;
-}
-
-.info-list li::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: #f59e0b;
-  font-weight: bold;
-}
-
-.action-buttons {
   display: flex;
-  gap: 15px;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.info-list li i {
+  color: #667eea;
+  width: 14px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* Action Buttons */
+.confirmation-actions {
+  display: flex;
   justify-content: center;
-  flex-wrap: wrap;
+  gap: 16px;
+  animation: slideUp 0.6s ease-out 0.4s both;
 }
 
 .confirmation-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 28px;
-  border-radius: 10px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.875rem;
   font-weight: 600;
-  font-size: 1rem;
   text-decoration: none;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
 }
 
 .confirmation-btn-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
 }
 
 .confirmation-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
 .confirmation-btn-secondary {
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
 }
 
 .confirmation-btn-secondary:hover {
-  background: #f3f4f6;
-  transform: translateY(-2px);
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
 }
 
-.confirmation-error-icon {
-  font-size: 5rem;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
+/* Loading and Error States */
 .confirmation-loading-spinner {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
-  font-size: 3rem;
+  height: 200px;
+  font-size: 2rem;
   color: white;
 }
 
-.confirmation-loading-spinner i {
-  animation: confirmation-spin 1s linear infinite;
-}
-
-@keyframes confirmation-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.confirmation-error-icon {
+  font-size: 4rem;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .confirmation-page {
-    padding: 20px 15px;
+@media (max-width: 1024px) {
+  .confirmation-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 
-  .confirmation-card {
-    padding: 30px 20px;
+  .confirmation-container {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .confirmation-page {
+    padding: 16px;
   }
 
   .confirmation-title {
-    font-size: 2rem;
+    font-size: 1.875rem;
   }
 
   .confirmation-subtitle {
     font-size: 1rem;
   }
 
-  .detail-row {
+  .confirmation-card {
+    padding: 20px;
+  }
+
+  .summary-item {
     flex-direction: column;
     gap: 8px;
+    align-items: flex-start;
   }
 
-  .detail-label {
-    flex: none;
+  .summary-label {
+    min-width: auto;
   }
 
-  .action-buttons {
+  .service-card {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .confirmation-actions {
     flex-direction: column;
   }
 
@@ -425,25 +623,50 @@
     width: 100%;
     justify-content: center;
   }
+}
 
-  .total-price {
-    font-size: 1.5rem !important;
+@media (max-width: 480px) {
+  .confirmation-actions {
+    gap: 12px;
+  }
+
+  .map-wrapper iframe {
+    height: 200px;
   }
 }
 
+/* Print Styles */
 @media print {
   .confirmation-page {
     background: white;
+    padding: 20px;
   }
 
   .confetti-container,
-  .action-buttons {
-    display: none !important;
+  .confirmation-actions,
+  .map-container {
+    display: none;
+  }
+
+  .confirmation-content {
+    grid-template-columns: 1fr;
   }
 
   .confirmation-card {
     box-shadow: none;
-    padding: 20px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .confirmation-hero {
+    color: #1e293b;
+  }
+
+  .confirmation-title {
+    color: #1e293b;
+    text-shadow: none;
+  }
+
+  .confirmation-subtitle {
+    color: #64748b;
   }
 }
-

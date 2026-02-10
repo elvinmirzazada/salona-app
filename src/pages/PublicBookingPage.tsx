@@ -18,7 +18,10 @@ interface Service {
 interface Category {
   id: string;
   name: string;
+  description?: string;
   services: Service[];
+  parent_category_id?: string | null;
+  subcategories?: Category[];
 }
 
 interface Staff {
@@ -29,6 +32,7 @@ interface Staff {
     last_name: string;
     position?: string;
     profile_photo_url?: string;
+    languages?: string;
   };
 }
 
@@ -81,6 +85,7 @@ const PublicBookingPage: React.FC = () => {
   const [calendarDays, setCalendarDays] = useState<Date[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [staffSearchQuery, setStaffSearchQuery] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const [bookingState, setBookingState] = useState<BookingState>({
     currentStep: 1,
@@ -154,7 +159,25 @@ const PublicBookingPage: React.FC = () => {
       const servicesData = await servicesRes.json();
 
       if (servicesData.success) {
-        setCategories(servicesData.data || []);
+        // Recursively process categories and assign category_id to services
+        const processCategory = (category: any): Category => {
+          const processedCategory: Category = {
+            id: category.id,
+            name: category.name,
+            description: category.description,
+            services: (category.services || []).map((service: any) => ({
+              ...service,
+              category_id: category.id,
+            })),
+            parent_category_id: category.parent_category_id,
+            subcategories: (category.subcategories || []).map((subcat: any) => processCategory(subcat)),
+          };
+          return processedCategory;
+        };
+
+        const processedCategories = (servicesData.data || []).map((cat: any) => processCategory(cat));
+        setCategories(processedCategories);
+
         // Fallback to company name from services endpoint if not already set
         if (!fetchedCompanyName && servicesData.company_name) {
           setCompanyName(servicesData.company_name || 'Salon');
@@ -341,6 +364,39 @@ const PublicBookingPage: React.FC = () => {
     }));
   };
 
+  // Toggle category expansion
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  // Check if category has any services (directly or in subcategories)
+  const categoryHasServices = (category: Category): boolean => {
+    if (category.services && category.services.length > 0) return true;
+    if (category.subcategories && category.subcategories.length > 0) {
+      return category.subcategories.some(subcat => categoryHasServices(subcat));
+    }
+    return false;
+  };
+
+  // Recursively collect all services from category and its subcategories
+  const getAllServicesFromCategory = (category: Category): Service[] => {
+    let services: Service[] = [...category.services];
+    if (category.subcategories) {
+      category.subcategories.forEach(subcat => {
+        services = [...services, ...getAllServicesFromCategory(subcat)];
+      });
+    }
+    return services;
+  };
+
   const selectStaff = (staffId: string) => {
     setBookingState(prev => ({
       ...prev,
@@ -474,31 +530,45 @@ const PublicBookingPage: React.FC = () => {
   const calculateTotal = () => {
     let total = 0;
 
-    categories.forEach(category => {
-      category.services.forEach(service => {
-        if (bookingState.selectedServices.has(service.id)) {
-          const price = service.discount_price && service.discount_price > 0
-            ? service.discount_price
-            : service.price;
-          total += price;
+    const collectServices = (cats: Category[]) => {
+      cats.forEach(category => {
+        category.services.forEach(service => {
+          if (bookingState.selectedServices.has(service.id)) {
+            const price = service.discount_price && service.discount_price > 0
+              ? service.discount_price
+              : service.price;
+            total += price;
+          }
+        });
+
+        if (category.subcategories) {
+          collectServices(category.subcategories);
         }
       });
-    });
+    };
 
+    collectServices(categories);
     return total / 100; // Convert from cents to euros
   };
 
   const getSelectedServices = () => {
     const selected: Service[] = [];
 
-    categories.forEach(category => {
-      category.services.forEach(service => {
-        if (bookingState.selectedServices.has(service.id)) {
-          selected.push(service);
+    const collectServices = (cats: Category[]) => {
+      cats.forEach(category => {
+        category.services.forEach(service => {
+          if (bookingState.selectedServices.has(service.id)) {
+            selected.push(service);
+          }
+        });
+
+        if (category.subcategories) {
+          collectServices(category.subcategories);
         }
       });
-    });
+    };
 
+    collectServices(categories);
     return selected;
   };
 
@@ -522,21 +592,44 @@ const PublicBookingPage: React.FC = () => {
     return dayData ? dayData.time_slots.length > 0 && dayData.time_slots.some(slot => slot.is_available) : false;
   };
 
-  // Filter services by search query
-  const getFilteredCategories = () => {
-    if (!searchQuery.trim()) return categories;
+  // Filter services by search query (maintains hierarchy)
+  const getFilteredCategories = (): Category[] => {
+    if (!searchQuery.trim()) {
+      // Return only categories that have services (directly or in subcategories)
+      return categories.filter(cat => categoryHasServices(cat));
+    }
 
     const query = searchQuery.toLowerCase();
 
-    return categories.map(category => ({
-      ...category,
-      services: category.services.filter(service =>
+    const filterCategory = (category: Category): Category | null => {
+      // Filter services in this category
+      const filteredServices = category.services.filter(service =>
         service.name.toLowerCase().includes(query) ||
         service.name_en?.toLowerCase().includes(query) ||
         service.name_ee?.toLowerCase().includes(query) ||
         service.name_ru?.toLowerCase().includes(query)
-      ),
-    })).filter(category => category.services.length > 0);
+      );
+
+      // Filter subcategories recursively
+      const filteredSubcategories = (category.subcategories || [])
+        .map(subcat => filterCategory(subcat))
+        .filter((subcat): subcat is Category => subcat !== null);
+
+      // Return category if it has matching services or matching subcategories
+      if (filteredServices.length > 0 || filteredSubcategories.length > 0) {
+        return {
+          ...category,
+          services: filteredServices,
+          subcategories: filteredSubcategories,
+        };
+      }
+
+      return null;
+    };
+
+    return categories
+      .map(cat => filterCategory(cat))
+      .filter((cat): cat is Category => cat !== null);
   };
 
   // Filter staff by search query
@@ -553,6 +646,110 @@ const PublicBookingPage: React.FC = () => {
   };
 
   const progressPercentage = (bookingState.currentStep - 1) * 33.33;
+
+  // Recursive component to render category and its subcategories
+  const renderCategory = (category: Category, level: number = 0): React.ReactElement => {
+    const hasServices = category.services && category.services.length > 0;
+    const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+    const isExpanded = expandedCategories.has(category.id);
+
+    // Don't render categories without any services in them or their subcategories
+    if (!categoryHasServices(category)) {
+      return <></>;
+    }
+
+    return (
+      <div key={category.id} className={`service-category level-${level}`}>
+        <div className="category-header-wrapper">
+          <div
+            className="category-name-clickable"
+            onClick={() => toggleCategory(category.id)}
+            style={{
+              cursor: 'pointer',
+              paddingLeft: `${level * 16}px`
+            }}
+          >
+            {/* Always show expand/collapse icon for consistency */}
+            <i className={`fas fa-chevron-${isExpanded ? 'down' : 'right'} category-expand-icon`}></i>
+            <h3 className="category-name-text">{category.name}</h3>
+            {hasSubcategories ? (
+              <span className="subcategory-badge">
+                {category.subcategories!.filter(s => categoryHasServices(s)).length} subcategories
+              </span>
+            ) : hasServices ? (
+              <span className="services-count-badge">
+                {category.services.length} service{category.services.length !== 1 ? 's' : ''}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Render services if this category has them and is expanded */}
+        {hasServices && isExpanded && (
+          <div className="services-grid" style={{ marginLeft: `${level * 16}px` }}>
+            {category.services.map(service => {
+              const isSelected = bookingState.selectedServices.has(service.id);
+              const price = service.discount_price && service.discount_price > 0
+                ? service.discount_price
+                : service.price;
+              const hasDiscount = service.discount_price && service.discount_price > 0 && service.discount_price < service.price;
+
+              return (
+                <div
+                  key={service.id}
+                  className={`service-card ${isSelected ? 'selected' : ''}`}
+                  onClick={() => toggleService(service.id)}
+                >
+                  {service.image_url ? (
+                    <div className="service-image">
+                      <img src={service.image_url} alt={service.name} />
+                    </div>
+                  ) : (
+                    <div className="service-image service-image-placeholder">
+                      <i className="fas fa-cut"></i>
+                    </div>
+                  )}
+
+                  <div className="service-info">
+                    <h4 className="service-name">{service.name}</h4>
+                    <div className="service-meta">
+                      <div className="service-duration">
+                        <i className="fas fa-clock"></i>
+                        <span>{service.duration} min</span>
+                      </div>
+                      <div className="service-price">
+                        {hasDiscount ? (
+                          <>
+                            <span className="original-price">€{(service.price / 100).toFixed(2)}</span>
+                            <span className="current-price">€{(price / 100).toFixed(2)}</span>
+                          </>
+                        ) : (
+                          <span className="current-price">€{(service.price / 100).toFixed(2)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isSelected && (
+                    <div className="service-selected-badge">
+                      <i className="fas fa-check"></i>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Render subcategories if expanded */}
+        {hasSubcategories && isExpanded && (
+          <div className="subcategories-container">
+            {category.subcategories!.map(subcat => renderCategory(subcat, level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -671,42 +868,9 @@ const PublicBookingPage: React.FC = () => {
 
                 {/* Services by Category */}
                 <div className="step-content">
-                  {getFilteredCategories().map(category => (
-                    <div key={category.id} className="service-category">
-                      <h3 className="category-name">{category.name}</h3>
-                      <div className="services-grid">
-                        {category.services.map(service => (
-                          <div
-                            key={service.id}
-                            className={`service-card ${bookingState.selectedServices.has(service.id) ? 'selected' : ''}`}
-                            onClick={() => toggleService(service.id)}
-                          >
-                            {service.image_url && (
-                              <div className="service-image">
-                                <img src={service.image_url} alt={service.name} />
-                              </div>
-                            )}
-                            <div className="service-info">
-                              <h4 className="service-name">{service.name}</h4>
-                              <div className="service-meta">
-                                <span className="service-duration">
-                                  <i className="fas fa-clock"></i> {service.duration} min
-                                </span>
-                                <span className="service-price">
-                                  € {((service.discount_price && service.discount_price > 0 ? service.discount_price : service.price) / 100).toFixed(2)}
-                                </span>
-                              </div>
-                            </div>
-                            {bookingState.selectedServices.has(service.id) && (
-                              <div className="service-selected-badge">
-                                <i className="fas fa-check"></i>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                  <div className="services-container">
+                    {getFilteredCategories().map(category => renderCategory(category, 0))}
+                  </div>
 
                   {getFilteredCategories().length === 0 && (
                     <div className="empty-state">
@@ -784,6 +948,18 @@ const PublicBookingPage: React.FC = () => {
                           <h4 className="staff-name">{member.user.first_name} {member.user.last_name}</h4>
                           {member.user.position && (
                             <p className="staff-position">{member.user.position}</p>
+                          )}
+                          {member.user.languages && (
+                            <div className="staff-languages">
+                              <i className="fas fa-language"></i>
+                              <div className="languages-tags">
+                                {member.user.languages.split(',').map((lang, index) => (
+                                  <span key={index} className="language-tag">
+                                    {lang.trim()}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
                         {bookingState.selectedStaff === member.user_id && (
