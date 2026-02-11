@@ -187,6 +187,12 @@ export const servicesAPI = {
     return response.data;
   },
 
+  // Copy service
+  copyService: async (serviceId: string) => {
+    const response = await apiClient.post(`/v1/services/service/${serviceId}/copy`);
+    return response.data;
+  },
+
   // Get all categories
   getCategories: async () => {
     const response = await apiClient.get('/v1/services/companies/categories');

@@ -62,6 +62,7 @@ const StaffPage: React.FC = () => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [invitationsLoading, setInvitationsLoading] = useState(true);
+  const [invitationsError, setInvitationsError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
@@ -79,7 +80,7 @@ const StaffPage: React.FC = () => {
     }
   });
   const [saving, setSaving] = useState(false);
-  const [_message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
@@ -123,18 +124,56 @@ const StaffPage: React.FC = () => {
   const fetchInvitations = async () => {
     try {
       setInvitationsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/v1/companies/all/invitations`, {
+      setInvitationsError(null);
+
+      // Try the main endpoint first
+      let response = await fetch(`${API_BASE_URL}/v1/companies/all/invitations`, {
         credentials: 'include'
       });
 
+      // If main endpoint fails with the async session error, try alternative endpoint
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.message && errorData.message.includes("'AsyncSession' object has no attribute 'query'")) {
+          console.log('Main endpoint failed with async session error, trying alternative...');
+          response = await fetch(`${API_BASE_URL}/v1/invitations`, {
+            credentials: 'include'
+          });
+        }
+      }
+
       if (response.ok) {
         const data = await response.json();
-        setInvitations(data.data || []);
+        setInvitations(data.data || data || []);
+        setInvitationsError(null);
       } else {
-        console.error('Failed to fetch invitations');
+        // Parse error response
+        let errorMessage = 'Failed to fetch invitations';
+        try {
+          const errorData = await response.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+            console.error('Invitations API Error:', errorData);
+
+            // Check for specific backend error
+            if (errorData.message.includes("'AsyncSession' object has no attribute 'query'")) {
+              errorMessage = "Database configuration issue - please contact your system administrator";
+            }
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+        }
+
+        console.error('Failed to fetch invitations:', response.status, errorMessage);
+        setInvitationsError(errorMessage);
+
+        // Set empty array so UI doesn't show loading forever
+        setInvitations([]);
       }
     } catch (error) {
       console.error('Error fetching invitations:', error);
+      setInvitationsError('Network error while loading invitations. Please check your connection.');
+      setInvitations([]);
     } finally {
       setInvitationsLoading(false);
     }
@@ -349,6 +388,19 @@ const StaffPage: React.FC = () => {
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
       <div className="page-with-sidebar">
+        {/* Message Display */}
+        {message && (
+          <div className={`message-banner ${message.type}`}>
+            <div className="message-content">
+              <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>
+              <span>{message.text}</span>
+              <button className="message-close" onClick={() => setMessage(null)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="staff-page">
           {/* Header */}
           <div className="staff-header">
@@ -511,6 +563,16 @@ const StaffPage: React.FC = () => {
                     <div className="loading-container">
                       <div className="loading-spinner"></div>
                       <p>Loading invitations...</p>
+                    </div>
+                  ) : invitationsError ? (
+                    <div className="error-state">
+                      <i className="fas fa-exclamation-triangle"></i>
+                      <h3>Error Loading Invitations</h3>
+                      <p>{invitationsError}</p>
+                      <button className="btn btn-primary" onClick={fetchInvitations}>
+                        <i className="fas fa-redo"></i>
+                        Try Again
+                      </button>
                     </div>
                   ) : invitations.length > 0 ? (
                     <table className="staff-table">

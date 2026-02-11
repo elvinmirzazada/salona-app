@@ -48,6 +48,12 @@ const ServicesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [copyingServices, setCopyingServices] = useState<Set<string>>(new Set());
+  const [savingServices, setSavingServices] = useState<Set<string>>(new Set());
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [editingServiceData, setEditingServiceData] = useState<Partial<Service>>({});
+  const [editingImageFile, setEditingImageFile] = useState<File | null>(null);
+  const [editingImagePreview, setEditingImagePreview] = useState<string | null>(null);
 
   // Modal states
   const [serviceModal, setServiceModal] = useState<ServiceModalData>({
@@ -463,6 +469,176 @@ const ServicesPage: React.FC = () => {
     }
   };
 
+  // Copy service
+  const handleCopyService = async (serviceId: string, serviceName: string) => {
+    // Check if this service is already being copied
+    if (copyingServices.has(serviceId)) {
+      return;
+    }
+
+    // Add this service to the copying set
+    setCopyingServices(prev => new Set(prev).add(serviceId));
+
+    try {
+      const response = await servicesAPI.copyService(serviceId);
+
+      // If the response contains the new service data, add it to the list
+      if (response && response.id) {
+        setServices(prevServices => [...prevServices, response]);
+      } else {
+        // If no service data returned, we need to refresh to get the new service
+        await loadData();
+      }
+
+      setSuccess(`Service "${serviceName}" copied successfully`);
+    } catch (err: any) {
+      console.error('Failed to copy service:', err);
+      let errorMessage = 'Failed to copy service';
+      if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+    } finally {
+      // Remove this service from the copying set
+      setCopyingServices(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(serviceId);
+        return newSet;
+      });
+    }
+  };
+
+  // Inline editing functions
+  const startInlineEdit = (service: Service) => {
+    setEditingServiceId(service.id);
+    setEditingServiceData({
+      name: service.name,
+      duration: service.duration,
+      price: service.price,
+      discount_price: service.discount_price,
+      category_id: service.category_id,
+    });
+    setEditingImagePreview(service.image_url || null);
+    setEditingImageFile(null);
+  };
+
+  const cancelInlineEdit = () => {
+    setEditingServiceId(null);
+    setEditingServiceData({});
+    setEditingImageFile(null);
+    setEditingImagePreview(null);
+  };
+
+  const updateEditingField = (field: string, value: any) => {
+    setEditingServiceData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleInlineImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditingImageFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setEditingImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeInlineImage = () => {
+    setEditingImageFile(null);
+    setEditingImagePreview(null);
+  };
+
+  const saveInlineEdit = async (serviceId: string) => {
+    // Check if this service is already being saved
+    if (savingServices.has(serviceId)) {
+      return;
+    }
+
+    // Add this service to the saving set
+    setSavingServices(prev => new Set(prev).add(serviceId));
+
+    // Exit edit mode immediately so user can edit other rows
+    setEditingServiceId(null);
+
+    // Store the data to save before clearing the editing state
+    const dataToSave = {
+      name: editingServiceData.name!,
+      duration: editingServiceData.duration!,
+      price: editingServiceData.price!,
+      discount_price: editingServiceData.discount_price,
+      category_id: editingServiceData.category_id!,
+    };
+    const imageToSave = editingImageFile;
+    const imagePreviewToSave = editingImagePreview;
+
+    // Clear editing state
+    setEditingServiceData({});
+    setEditingImageFile(null);
+    setEditingImagePreview(null);
+
+    try {
+      const serviceData: CreateServiceData = {
+        name: dataToSave.name,
+        duration: dataToSave.duration,
+        price: dataToSave.price,
+        discount_price: dataToSave.discount_price,
+        category_id: dataToSave.category_id,
+        status: 'active',
+        buffer_before: 0,
+        buffer_after: 0,
+        staff_ids: services.find(s => s.id === serviceId)?.service_staff?.map(ss => ss.user_id) || [],
+      };
+
+      const response = await servicesAPI.updateService(serviceId, serviceData, imageToSave || undefined);
+
+      if (!response || response.success === false) {
+        const errorMessage = response?.message || 'Failed to update service';
+        setError(errorMessage);
+        return;
+      }
+
+      // Update the local services state with the new data
+      setServices(prevServices =>
+        prevServices.map(service =>
+          service.id === serviceId
+            ? {
+                ...service,
+                name: dataToSave.name,
+                duration: dataToSave.duration,
+                price: dataToSave.price,
+                discount_price: dataToSave.discount_price || 0,
+                category_id: dataToSave.category_id,
+                // Update image_url if a new image was uploaded
+                image_url: imagePreviewToSave || service.image_url,
+              }
+            : service
+        )
+      );
+
+      setSuccess('Service updated successfully');
+    } catch (err: any) {
+      console.error('Failed to save service:', err);
+      let errorMessage = 'Failed to update service';
+      if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+    } finally {
+      // Remove this service from the saving set
+      setSavingServices(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(serviceId);
+        return newSet;
+      });
+    }
+  };
+
   // Image handling
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -673,80 +849,247 @@ const ServicesPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {services.map((service) => (
-                        <tr key={service.id}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              {service.image_url ? (
-                                <img
-                                  src={service.image_url}
-                                  alt={service.name}
-                                  className="service-image"
-                                />
+                      {services.map((service) => {
+                        const isEditing = editingServiceId === service.id;
+                        const isSaving = savingServices.has(service.id);
+
+                        return (
+                          <tr key={service.id} className={isEditing ? 'editing-row' : (isSaving ? 'saving-row' : '')}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                {isEditing ? (
+                                  <div className="inline-image-upload">
+                                    <input
+                                      type="file"
+                                      id={`inline-image-${service.id}`}
+                                      accept="image/*"
+                                      onChange={handleInlineImageChange}
+                                      style={{ display: 'none' }}
+                                    />
+                                    <div
+                                      className="inline-image-preview"
+                                      onClick={() => document.getElementById(`inline-image-${service.id}`)?.click()}
+                                      title="Click to change image"
+                                    >
+                                      {editingImagePreview ? (
+                                        <img src={editingImagePreview} alt="Service preview" />
+                                      ) : (
+                                        <div className="inline-image-placeholder">
+                                          <i className="fas fa-camera"></i>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {editingImagePreview && (
+                                      <button
+                                        type="button"
+                                        className="inline-image-remove"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeInlineImage();
+                                        }}
+                                        title="Remove image"
+                                      >
+                                        <i className="fas fa-times"></i>
+                                      </button>
+                                    )}
+                                  </div>
+                                ) : (
+                                  service.image_url ? (
+                                    <img
+                                      src={service.image_url}
+                                      alt={service.name}
+                                      className="service-image"
+                                    />
+                                  ) : (
+                                    <div className="service-image service-image-placeholder">
+                                      <i className="fas fa-scissors"></i>
+                                    </div>
+                                  )
+                                )}
+                                <div style={{ flex: 1 }}>
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      className="inline-edit-input"
+                                      value={editingServiceData.name || ''}
+                                      onChange={(e) => updateEditingField('name', e.target.value)}
+                                      placeholder="Service name"
+                                    />
+                                  ) : (
+                                    <>
+                                      <div style={{ fontWeight: 500 }}>{service.name}</div>
+                                      {service.additional_info && (
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                                          {service.additional_info}
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <select
+                                  className="inline-edit-select"
+                                  value={editingServiceData.category_id || ''}
+                                  onChange={(e) => updateEditingField('category_id', e.target.value)}
+                                >
+                                  {getFilteredSelectableCategories().map(({ category }) => (
+                                    <option key={category.id} value={category.id}>
+                                      {getCategoryPath(category.id)}
+                                    </option>
+                                  ))}
+                                </select>
                               ) : (
-                                <div className="service-image service-image-placeholder">
-                                  <i className="fas fa-scissors"></i>
+                                getCategoryName(service.category_id)
+                              )}
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <input
+                                    type="number"
+                                    className="inline-edit-input-small"
+                                    value={editingServiceData.duration || ''}
+                                    onChange={(e) => updateEditingField('duration', parseInt(e.target.value))}
+                                    min="5"
+                                    step="5"
+                                  />
+                                  <span style={{ fontSize: '12px', color: '#6b7280' }}>min</span>
+                                </div>
+                              ) : (
+                                `${service.duration} min`
+                              )}
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                                    <span style={{ fontSize: '14px' }}>€</span>
+                                    <input
+                                      type="number"
+                                      className="inline-edit-input-small"
+                                      value={editingServiceData.price ? (editingServiceData.price / 100).toFixed(2) : ''}
+                                      onChange={(e) => updateEditingField('price', Math.round(parseFloat(e.target.value) * 100))}
+                                      min="0"
+                                      step="0.01"
+                                      placeholder="Price"
+                                    />
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ fontSize: '12px', color: '#10b981' }}>€</span>
+                                    <input
+                                      type="number"
+                                      className="inline-edit-input-small"
+                                      value={editingServiceData.discount_price ? (editingServiceData.discount_price / 100).toFixed(2) : ''}
+                                      onChange={(e) => updateEditingField('discount_price', e.target.value ? Math.round(parseFloat(e.target.value) * 100) : 0)}
+                                      min="0"
+                                      step="0.01"
+                                      placeholder="Discount"
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  € {(service.price / 100).toFixed(2)}
+                                  {service.discount_price !== 0 && (
+                                    <div style={{
+                                      fontSize: '12px',
+                                      color: '#10b981',
+                                      fontWeight: 500
+                                    }}>
+                                      Discount: € {(service.discount_price / 100).toFixed(2)}
+                                    </div>
+                                  )}
                                 </div>
                               )}
-                              <div>
-                                <div style={{ fontWeight: 500 }}>{service.name}</div>
-                                {service.additional_info && (
-                                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                                    {service.additional_info}
-                                  </div>
+                            </td>
+                            <td>
+                              <div className="staff-assignment">
+                                {service.service_staff && service.service_staff.length > 0 ? (
+                                  service.service_staff.map((staff, index) => (
+                                    <span key={index} className="staff-badge">
+                                      {staff.first_name} {staff.last_name}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span style={{ color: '#6b7280', fontSize: '12px' }}>No staff assigned</span>
                                 )}
                               </div>
-                            </div>
-                          </td>
-                          <td>{getCategoryName(service.category_id)}</td>
-                          <td>{service.duration} min</td>
-                          <td>
-                            <div>
-                              € {(service.price / 100).toFixed(2)}
-                              {service.discount_price !== 0 && (
-                                <div style={{
-                                  fontSize: '12px',
-                                  color: '#10b981',
-                                  fontWeight: 500
-                                }}>
-                                  Discount: € {(service.discount_price / 100).toFixed(2)}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td>
-                            <div className="staff-assignment">
-                              {service.service_staff && service.service_staff.length > 0 ? (
-                                service.service_staff.map((staff, index) => (
-                                  <span key={index} className="staff-badge">
-                                    {staff.first_name} {staff.last_name}
-                                  </span>
-                                ))
-                              ) : (
-                                <span style={{ color: '#6b7280', fontSize: '12px' }}>No staff assigned</span>
-                              )}
-                            </div>
-                          </td>
-                          <td>
-                            <div className="service-actions">
-                              <button
-                                className="btn-icon btn-edit"
-                                onClick={() => openServiceModal(service)}
-                                title="Edit Service"
-                              >
-                                <i className="fas fa-edit"></i>
-                              </button>
-                              <button
-                                className="btn-icon btn-delete"
-                                onClick={() => openDeleteModal('service', service.id, service.name)}
-                                title="Delete Service"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td>
+                              <div className="service-actions">
+                                {isEditing ? (
+                                  <>
+                                    <button
+                                      className="btn-icon btn-save"
+                                      onClick={() => saveInlineEdit(service.id)}
+                                      title="Save Changes"
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving ? (
+                                        <i className="fas fa-spinner fa-spin"></i>
+                                      ) : (
+                                        <i className="fas fa-check"></i>
+                                      )}
+                                    </button>
+                                    <button
+                                      className="btn-icon btn-cancel"
+                                      onClick={cancelInlineEdit}
+                                      title="Cancel"
+                                      disabled={isSaving}
+                                    >
+                                      <i className="fas fa-times"></i>
+                                    </button>
+                                  </>
+                                ) : isSaving ? (
+                                  <div className="saving-indicator">
+                                    <i className="fas fa-spinner fa-spin"></i>
+                                    <span>Saving...</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <button
+                                      className="btn-icon btn-copy"
+                                      onClick={() => handleCopyService(service.id, service.name)}
+                                      title="Copy Service"
+                                      disabled={copyingServices.has(service.id)}
+                                    >
+                                      {copyingServices.has(service.id) ? (
+                                        <i className="fas fa-spinner fa-spin"></i>
+                                      ) : (
+                                        <i className="fas fa-copy"></i>
+                                      )}
+                                    </button>
+                                    <button
+                                      className="btn-icon btn-edit"
+                                      onClick={() => startInlineEdit(service)}
+                                      title="Quick Edit"
+                                    >
+                                      <i className="fas fa-edit"></i>
+                                    </button>
+                                    <button
+                                      className="btn-icon btn-details"
+                                      onClick={() => openServiceModal(service)}
+                                      title="Edit Details"
+                                    >
+                                      <i className="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    <button
+                                      className="btn-icon btn-delete"
+                                      onClick={() => openDeleteModal('service', service.id, service.name)}
+                                      title="Delete Service"
+                                    >
+                                      <i className="fas fa-trash"></i>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
