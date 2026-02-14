@@ -14,6 +14,7 @@ interface Company {
   website?: string;
   description?: string;
   team_size?: number;
+  timezone?: string;
 }
 
 interface Email {
@@ -36,6 +37,35 @@ interface Address {
   zip?: string;
   is_primary?: boolean;
 }
+
+// Timezone list for dropdown
+const TIMEZONES = [
+  { value: 'UTC', label: '(UTC+00:00) UTC' },
+  { value: 'Europe/London', label: '(UTC+00:00) London' },
+  { value: 'Europe/Paris', label: '(UTC+01:00) Paris, Berlin, Rome' },
+  { value: 'Europe/Athens', label: '(UTC+02:00) Athens, Bucharest, Helsinki' },
+  { value: 'Europe/Moscow', label: '(UTC+03:00) Moscow, St. Petersburg' },
+  { value: 'Europe/Istanbul', label: '(UTC+03:00) Istanbul' },
+  { value: 'Asia/Dubai', label: '(UTC+04:00) Dubai, Abu Dhabi' },
+  { value: 'Asia/Karachi', label: '(UTC+05:00) Karachi, Tashkent' },
+  { value: 'Asia/Dhaka', label: '(UTC+06:00) Dhaka, Astana' },
+  { value: 'Asia/Bangkok', label: '(UTC+07:00) Bangkok, Jakarta' },
+  { value: 'Asia/Shanghai', label: '(UTC+08:00) Beijing, Shanghai, Hong Kong' },
+  { value: 'Asia/Tokyo', label: '(UTC+09:00) Tokyo, Seoul' },
+  { value: 'Australia/Sydney', label: '(UTC+10:00) Sydney, Melbourne' },
+  { value: 'Pacific/Auckland', label: '(UTC+12:00) Auckland, Wellington' },
+  { value: 'America/New_York', label: '(UTC-05:00) New York, Washington' },
+  { value: 'America/Chicago', label: '(UTC-06:00) Chicago, Dallas' },
+  { value: 'America/Denver', label: '(UTC-07:00) Denver, Phoenix' },
+  { value: 'America/Los_Angeles', label: '(UTC-08:00) Los Angeles, San Francisco' },
+  { value: 'America/Anchorage', label: '(UTC-09:00) Anchorage' },
+  { value: 'Pacific/Honolulu', label: '(UTC-10:00) Honolulu' },
+  { value: 'America/Sao_Paulo', label: '(UTC-03:00) São Paulo, Buenos Aires' },
+  { value: 'America/Mexico_City', label: '(UTC-06:00) Mexico City, Monterrey' },
+  { value: 'Europe/Tallinn', label: '(UTC+02:00) Tallinn' },
+  { value: 'Europe/Riga', label: '(UTC+02:00) Riga' },
+  { value: 'Europe/Vilnius', label: '(UTC+02:00) Vilnius' },
+];
 
 const CompanySettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -62,6 +92,7 @@ const CompanySettingsPage: React.FC = () => {
   const [companyWebsite, setCompanyWebsite] = useState('');
   const [companyDescription, setCompanyDescription] = useState('');
   const [companyTeamSize, setCompanyTeamSize] = useState(1);
+  const [companyTimezone, setCompanyTimezone] = useState('UTC');
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -88,6 +119,7 @@ const CompanySettingsPage: React.FC = () => {
           setCompanyWebsite(companyData.data.website || '');
           setCompanyDescription(companyData.data.description || '');
           setCompanyTeamSize(companyData.data.team_size || 1);
+          setCompanyTimezone(companyData.data.timezone || 'UTC');
         }
       }
 
@@ -277,7 +309,8 @@ const CompanySettingsPage: React.FC = () => {
           logo_url: companyLogoUrl,
           website: companyWebsite,
           description: companyDescription,
-          team_size: companyTeamSize
+          team_size: companyTeamSize,
+          timezone: companyTimezone
         })
       });
 
@@ -317,7 +350,8 @@ const CompanySettingsPage: React.FC = () => {
           logo_url: companyLogoUrl,
           website: companyWebsite,
           description: companyDescription,
-          team_size: companyTeamSize
+          team_size: companyTeamSize,
+          timezone: companyTimezone
         })
       });
 
@@ -714,6 +748,21 @@ const CompanySettingsPage: React.FC = () => {
                       />
                     </div>
 
+                    <div className="form-group">
+                      <label htmlFor="company-timezone">Timezone</label>
+                      <select
+                        id="company-timezone"
+                        value={companyTimezone}
+                        onChange={(e) => setCompanyTimezone(e.target.value)}
+                      >
+                        {TIMEZONES.map((tz) => (
+                          <option key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div className="form-actions">
                       <button type="submit" className="btn-primary" disabled={saving}>
                         {saving ? (
@@ -875,6 +924,21 @@ const CompanySettingsPage: React.FC = () => {
                               value={companyType}
                               onChange={(e) => setCompanyType(e.target.value)}
                             />
+                          </div>
+
+                          <div className="form-group">
+                            <label htmlFor="details-company-timezone">Timezone</label>
+                            <select
+                              id="details-company-timezone"
+                              value={companyTimezone}
+                              onChange={(e) => setCompanyTimezone(e.target.value)}
+                            >
+                              {TIMEZONES.map((tz) => (
+                                <option key={tz.value} value={tz.value}>
+                                  {tz.label}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
                           <div className="form-actions">
