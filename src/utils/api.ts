@@ -93,6 +93,30 @@ export const authAPI = {
   },
 };
 
+// Helper function to clear cookies and logout
+const clearAuthAndLogout = async () => {
+  try {
+    // Clear cookies by calling logout endpoint
+    await refreshClient.put('/v1/users/auth/logout').catch(() => {
+      // Ignore logout API errors, we just want to clear cookies
+    });
+  } catch (error) {
+    // Ignore errors during logout
+    console.error('Error during logout:', error);
+  } finally {
+    // Clear any local storage or session storage if needed
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Redirect to login page
+    if (window.location.pathname !== '/login' &&
+        window.location.pathname !== '/signup' &&
+        !window.location.pathname.startsWith('/booking/')) {
+      window.location.href = '/login';
+    }
+  }
+};
+
 // Add response interceptor for automatic token refresh
 apiClient.interceptors.response.use(
   (response) => response,
@@ -105,14 +129,23 @@ apiClient.interceptors.response.use(
 
       try {
         // Try to refresh token using separate client (no interceptor)
-        await authAPI.refreshToken();
-        // Retry the original request
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed (no refresh token or expired), redirect to login
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-          window.location.href = '/login';
+        const refreshResponse = await refreshClient.post('/v1/users/auth/refresh-token');
+
+        // If refresh was successful, retry the original request
+        if (refreshResponse.status === 200) {
+          return apiClient(originalRequest);
+        } else {
+          // Unexpected response from refresh endpoint
+          await clearAuthAndLogout();
+          return Promise.reject(error);
         }
+      } catch (refreshError: any) {
+        // Refresh token request failed (401, network error, or any other error)
+        console.error('Token refresh failed:', refreshError);
+
+        // Clear auth and logout regardless of the error
+        await clearAuthAndLogout();
+
         return Promise.reject(refreshError);
       }
     }

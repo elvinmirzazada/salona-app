@@ -24,7 +24,8 @@ const CalendarPage: React.FC = () => {
   const [_bookings, setBookings] = useState<Booking[]>([]);
   const [_timeOffs, setTimeOffs] = useState<TimeOff[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [_, setCategories] = useState<any[]>([]);
+  const [flatCategories, setFlatCategories] = useState<any[]>([]); // Flattened categories for easier lookup
   const [staff, setStaff] = useState<Staff[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -243,31 +244,58 @@ const CalendarPage: React.FC = () => {
         // Store categories
         setCategories(servicesRes.data || []);
 
-        // Process services from categories
+        // Process services from categories - recursively extract from nested structure
         const servicesData: Service[] = [];
+        const flatCategoriesData: any[] = [];
+
+        // Recursive function to extract services and flatten categories
+        const extractServicesFromCategory = (category: any) => {
+          // Add category to flat list
+          flatCategoriesData.push({
+            id: category.id,
+            name: category.name,
+            description: category.description,
+            parent_category_id: category.parent_category_id,
+          });
+
+          // Extract services from current category
+          if (category.services && Array.isArray(category.services)) {
+            category.services.forEach((service: any) => {
+              servicesData.push({
+                id: service.id,
+                name: service.name,
+                duration: service.duration,
+                price: service.price,
+                discount_price: service.discount_price,
+                status: service.status,
+                additional_info: service.additional_info || '',
+                buffer_before: service.buffer_before || 0,
+                buffer_after: service.buffer_after || 0,
+                category_id: category.id,
+                image_url: service.image_url,
+                service_staff: service.service_staff || [],
+              });
+            });
+          }
+
+          // Recursively process subcategories
+          if (category.subcategories && Array.isArray(category.subcategories)) {
+            category.subcategories.forEach((subcategory: any) => {
+              extractServicesFromCategory(subcategory);
+            });
+          }
+        };
+
         if (servicesRes.data && Array.isArray(servicesRes.data)) {
           servicesRes.data.forEach((category: any) => {
-            if (category.services && Array.isArray(category.services)) {
-              category.services.forEach((service: any) => {
-                servicesData.push({
-                  id: service.id,
-                  name: service.name,
-                  duration: service.duration,
-                  price: service.price,
-                  discount_price: service.discount_price,
-                  status: service.status,
-                  additional_info: service.additional_info || '',
-                  buffer_before: service.buffer_before || 0,
-                  buffer_after: service.buffer_after || 0,
-                  category_id: category.id,
-                  image_url: service.image_url,
-                  service_staff: service.service_staff || [],
-                });
-              });
-            }
+            extractServicesFromCategory(category);
           });
         }
+
+        console.log('Total services extracted:', servicesData.length);
+        console.log('Total categories (flat):', flatCategoriesData.length);
         setServices(servicesData);
+        setFlatCategories(flatCategoriesData);
 
         // Convert to calendar events
         const calendarEvents = convertToCalendarEvents(bookingsData, timeOffsData);
@@ -1081,7 +1109,7 @@ const CalendarPage: React.FC = () => {
   const getGroupedAndFilteredServices = () => {
     const searchLower = serviceSearch.toLowerCase();
     const filtered = services.filter(service =>
-      service.name.toLowerCase().includes(searchLower)
+      service.name.toLowerCase().includes(searchLower) && service.status === 'active'
     );
 
     // Group by category
@@ -1718,8 +1746,8 @@ const CalendarPage: React.FC = () => {
                     <label>Select Services:</label>
                     <div className="custom-service-list">
                       {Object.entries(getGroupedAndFilteredServices()).map(([categoryId, categoryServices]) => {
-                        // Find category name from services data
-                        const categoryName = categories.find(cat => cat.id === categoryId)?.name || 'Other Services';
+                        // Find category name from flat categories data
+                        const categoryName = flatCategories.find(cat => cat.id === categoryId)?.name || 'Other Services';
 
                         return (
                           <div key={categoryId} className="service-category-group">

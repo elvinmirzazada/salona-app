@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI } from '../utils/api';
 import { API_BASE_URL } from '../config/api';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 
 interface User {
   id: string;
@@ -39,9 +40,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchNotificationsCount = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/notifications`, {
-        credentials: 'include'
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications`);
 
       if (response.ok) {
         const data = await response.json();

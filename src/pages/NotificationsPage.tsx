@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { API_BASE_URL } from '../config/api';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 import '../styles/notifications.css';
 
 interface Notification {
@@ -51,9 +52,7 @@ const NotificationsPage: React.FC = () => {
 
   const loadTotalCount = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/notifications/all-count`, {
-        credentials: 'include'
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications/all-count`);
 
       if (response.ok) {
         const data = await response.json();
@@ -87,9 +86,7 @@ const NotificationsPage: React.FC = () => {
         }
       }
 
-      const response = await fetch(`${API_BASE_URL}/v1/notifications?${params.toString()}`, {
-        credentials: 'include'
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications?${params.toString()}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -114,9 +111,8 @@ const NotificationsPage: React.FC = () => {
   const markAsRead = async (notificationId: string) => {
     setMarkingAsRead(notificationId);
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/notifications/mark-as-read/${notificationId}`, {
-        method: 'POST',
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications/mark-as-read/${notificationId}`, {
+        method: 'POST'
       });
 
       if (response.ok) {
@@ -153,9 +149,8 @@ const NotificationsPage: React.FC = () => {
   const markAllAsRead = async () => {
     try {
       setMarkingAllAsRead(true);
-      const response = await fetch(`${API_BASE_URL}/v1/notifications/mark-all/as-read`, {
-        method: 'PATCH',
-        credentials: 'include'
+      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications/mark-all/as-read`, {
+        method: 'PATCH'
       });
 
       if (response.ok) {
@@ -221,9 +216,7 @@ const NotificationsPage: React.FC = () => {
     try {
       setLoadingBookingDetails(true);
       console.log('Fetching booking details for booking_id:', bookingId);
-      const response = await fetch(`${API_BASE_URL}/v1/bookings/${bookingId}`, {
-        credentials: 'include'
-      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/v1/bookings/${bookingId}`);
 
       if (response.ok) {
         const data = await response.json();

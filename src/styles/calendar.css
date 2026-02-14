@@ -549,7 +549,16 @@
   flex: 1;
 }
 
-.event-popup-time,
+.event-popup-time {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
 .event-popup-status,
 .event-popup-price {
   display: flex;
