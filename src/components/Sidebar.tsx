@@ -4,6 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import { useClearCache } from '../hooks/useClearCache';
 import { authAPI } from '../utils/api';
 import { useCompanySettings } from '../hooks/useCompanySettings';
+import { saveTimezoneToStorage } from '../utils/timezoneUtils';
 import '../styles/sidebar.css';
 
 interface User {
@@ -20,7 +21,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { clearUser } = useUser();
+  const { clearUser, setCompanyTimezone } = useUser();
   const { clearAllCache } = useClearCache();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [servicesSubmenuOpen, setServicesSubmenuOpen] = useState(false);
@@ -34,6 +35,15 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
   // Fetch company settings
   const { data: companyData } = useCompanySettings();
   const company = companyData?.data;
+
+  // Update company timezone when company data is loaded
+  useEffect(() => {
+    if (company?.timezone) {
+      setCompanyTimezone(company.timezone);
+      saveTimezoneToStorage(company.timezone);
+      console.log('Sidebar - Company timezone set to:', company.timezone);
+    }
+  }, [company?.timezone, setCompanyTimezone]);
 
   // Generate company initials from name
   const getCompanyInitials = (name: string): string => {
@@ -194,6 +204,25 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
 
           {/* Main Navigation */}
           <ul className="sidebar-nav">
+            {/* Create Company - Show if user has no role or no company */}
+            {(!user?.role || !user?.company_id) && (
+              <li>
+                <Link
+                  to="/company-settings"
+                  className="sidebar-nav-link"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)'
+                  }}
+                >
+                  <svg className="sidebar-nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  <span className="sidebar-nav-text" style={{ fontWeight: 600 }}>Create Company</span>
+                </Link>
+              </li>
+            )}
+
             {isActive && (
               <>
                 {/* Dashboard (Admin/Owner only) */}
@@ -207,25 +236,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
                         <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
                       </svg>
                       <span className="sidebar-nav-text">Dashboard</span>
-                    </Link>
-                  </li>
-                )}
-
-                {/* Create Company - Show only if no company */}
-                {isAdmin && !user?.company_id && (
-                  <li>
-                    <Link
-                      to="/company-settings"
-                      className="sidebar-nav-link"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%)',
-                        border: '1px solid rgba(139, 92, 246, 0.3)'
-                      }}
-                    >
-                      <svg className="sidebar-nav-icon" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                      </svg>
-                      <span className="sidebar-nav-text" style={{ fontWeight: 600 }}>Create Company</span>
                     </Link>
                   </li>
                 )}

@@ -12,6 +12,13 @@ import { calendarAPI, servicesAPI } from '../utils/api';
 import { Booking, TimeOff, CalendarEvent, CreateBookingData } from '../types/calendar';
 import { Service, Staff } from '../types/services';
 import '../styles/calendar.css';
+import {
+  formatDateTimeInTimezone,
+  formatTimeInTimezone,
+  getDateInTimezone,
+  getTimeInTimezone,
+  createUTCFromLocalDateTime
+} from '../utils/timezoneUtils';
 
 const CalendarPage: React.FC = () => {
   const { user, unreadNotificationsCount } = useUser();
@@ -265,8 +272,8 @@ const CalendarPage: React.FC = () => {
                 id: service.id,
                 name: service.name,
                 duration: service.duration,
-                price: service.price,
-                discount_price: service.discount_price,
+                price: service.price / 100,
+                discount_price: service.discount_price / 100,
                 status: service.status,
                 additional_info: service.additional_info || '',
                 buffer_before: service.buffer_before || 0,
@@ -310,26 +317,13 @@ const CalendarPage: React.FC = () => {
     }
   };
 
-  // Helper function to format dates with local timezone
+  // Helper function to format dates with company timezone
   const formatDateTime = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    return formatDateTimeInTimezone(dateString);
   };
 
   const formatTime = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    return formatTimeInTimezone(dateString);
   };
 
   // Handle calendar view change (prev/next week)
@@ -394,11 +388,8 @@ const CalendarPage: React.FC = () => {
   const convertToCalendarEvents = (bookingsData: Booking[], timeOffsData: TimeOff[]): CalendarEvent[] => {
     const events: CalendarEvent[] = [];
 
-    console.log('Converting bookings to events, count:', bookingsData.length);
-
     // Convert bookings to events
-    bookingsData.forEach((booking, index) => {
-      console.log(`Booking ${index}:`, booking);
+    bookingsData.forEach((booking, _) => {
 
       // Apply status filter
       if (statusFilter.length > 0 && !statusFilter.includes(booking.status)) {
@@ -455,23 +446,15 @@ const CalendarPage: React.FC = () => {
           break;
       }
 
-      // Parse UTC dates and convert to local timezone
-      // Ensure the date string is treated as UTC by appending 'Z' if not present
-      const utcStartString = booking.start_at.includes('Z') ? booking.start_at : booking.start_at + 'Z';
-      const utcEndString = booking.end_at.includes('Z') ? booking.end_at : booking.end_at + 'Z';
-
-      const startDate = new Date(utcStartString);
-      const endDate = new Date(utcEndString);
-
-      console.log(`Creating event: ${title}`);
-      console.log(`  UTC: ${booking.start_at} -> Local: ${startDate.toLocaleString()}`);
-      console.log(`  UTC: ${booking.end_at} -> Local: ${endDate.toLocaleString()}`);
-
+      // API returns UTC times - pass them directly to FullCalendar
+      // FullCalendar will convert them to company timezone based on timeZone prop
+      console.log(booking.start_at);
+      console.log(booking.end_at);
       events.push({
         id: `booking-${booking.id}`,
         title: title,
-        start: startDate.toISOString(), // Pass as ISO string in local time
-        end: endDate.toISOString(),
+        start: booking.start_at,
+        end: booking.end_at,
         backgroundColor,
         borderColor,
         textColor,
@@ -491,18 +474,13 @@ const CalendarPage: React.FC = () => {
         ? `Time Off - ${timeOff.user.first_name} ${timeOff.user.last_name}`
         : 'Time Off';
 
-      // Parse UTC dates and convert to local timezone
-      const utcStartString = timeOff.start_date.includes('Z') ? timeOff.start_date : timeOff.start_date + 'Z';
-      const utcEndString = timeOff.end_date.includes('Z') ? timeOff.end_date : timeOff.end_date + 'Z';
-
-      const startDate = new Date(utcStartString);
-      const endDate = new Date(utcEndString);
-
+      // API returns UTC times - pass them directly to FullCalendar
+      // FullCalendar will convert them to company timezone based on timeZone prop
       events.push({
         id: `timeoff-${timeOff.id}`,
         title: title,
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
+        start: timeOff.start_date,
+        end: timeOff.end_date,
         backgroundColor: '#95a5a6',
         borderColor: '#7f8c8d',
         textColor: 'white',
@@ -585,11 +563,11 @@ const CalendarPage: React.FC = () => {
     setBookingStep(1);
     setSelectedServices([]);
 
-    // Populate start date and time from selected slot
+    // Populate start date and time from selected slot using timezone utils
     if (selectedSlot) {
-      const startDate = new Date(selectedSlot.start);
-      const dateStr = startDate.toISOString().split('T')[0];
-      const timeStr = startDate.toTimeString().slice(0, 5);
+      const startISOString = selectedSlot.start.toISOString();
+      const dateStr = getDateInTimezone(startISOString);
+      const timeStr = getTimeInTimezone(startISOString);
       setBookingStartDate(dateStr);
       setBookingStartTime(timeStr);
     }
@@ -600,15 +578,15 @@ const CalendarPage: React.FC = () => {
     setShowSlotActionPopup(false);
     setShowTimeOffForm(true);
 
-    // Populate start and end date/time from selected slot
+    // Populate start and end date/time from selected slot using timezone utils
     if (selectedSlot) {
-      const startDate = new Date(selectedSlot.start);
-      const endDate = new Date(selectedSlot.end);
+      const startISOString = selectedSlot.start.toISOString();
+      const endISOString = selectedSlot.end.toISOString();
 
-      setTimeOffStartDate(startDate.toISOString().split('T')[0]);
-      setTimeOffStartTime(startDate.toTimeString().slice(0, 5));
-      setTimeOffEndDate(endDate.toISOString().split('T')[0]);
-      setTimeOffEndTime(endDate.toTimeString().slice(0, 5));
+      setTimeOffStartDate(getDateInTimezone(startISOString));
+      setTimeOffStartTime(getTimeInTimezone(startISOString));
+      setTimeOffEndDate(getDateInTimezone(endISOString));
+      setTimeOffEndTime(getTimeInTimezone(endISOString));
     }
   };
 
@@ -618,8 +596,11 @@ const CalendarPage: React.FC = () => {
     setSubmitting(true);
 
     try {
+      // Convert local date/time to UTC for API
+      const startTimeUTC = createUTCFromLocalDateTime(bookingStartDate, bookingStartTime);
+
       const bookingData: CreateBookingData = {
-        start_time: selectedSlot!.start.toISOString(),
+        start_time: startTimeUTC,
         notes: bookingNotes,
         services: selectedServices.map((s) => ({
           category_service_id: s.serviceId,
@@ -633,6 +614,10 @@ const CalendarPage: React.FC = () => {
           phone: selectedCustomerId === 'new' ? newCustomer.phone : customers.find(c => c.id === selectedCustomerId)?.phone || '',
         },
       };
+
+      console.log('Booking data being sent to API:');
+      console.log('  Local time:', bookingStartDate, bookingStartTime);
+      console.log('  UTC time:', startTimeUTC);
 
       // Add customer id if existing customer selected
       if (selectedCustomerId !== 'new') {
@@ -866,10 +851,9 @@ const CalendarPage: React.FC = () => {
       end: new Date(booking.end_at),
     });
 
-    // Populate start date and time
-    const startDate = new Date(booking.start_at);
-    const dateStr = startDate.toISOString().split('T')[0];
-    const timeStr = startDate.toTimeString().slice(0, 5);
+    // Populate start date and time using timezone utils
+    const dateStr = getDateInTimezone(booking.start_at);
+    const timeStr = getTimeInTimezone(booking.start_at);
     setBookingStartDate(dateStr);
     setBookingStartTime(timeStr);
 
@@ -926,10 +910,10 @@ const CalendarPage: React.FC = () => {
       end: endDate,
     });
 
-    setTimeOffStartDate(startDate.toISOString().split('T')[0]);
-    setTimeOffStartTime(startDate.toTimeString().slice(0, 5));
-    setTimeOffEndDate(endDate.toISOString().split('T')[0]);
-    setTimeOffEndTime(endDate.toTimeString().slice(0, 5));
+    setTimeOffStartDate(getDateInTimezone(timeOff.start_date));
+    setTimeOffStartTime(getTimeInTimezone(timeOff.start_date));
+    setTimeOffEndDate(getDateInTimezone(timeOff.end_date));
+    setTimeOffEndTime(getTimeInTimezone(timeOff.end_date));
 
     setTimeOffStaffId(timeOff.user_id);
     setTimeOffReason(timeOff.reason || '');
@@ -962,16 +946,22 @@ const CalendarPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      // Construct datetime from date and time fields
-      const startDateTime = new Date(`${timeOffStartDate}T${timeOffStartTime}`);
-      const endDateTime = new Date(`${timeOffEndDate}T${timeOffEndTime}`);
+      // Convert local date/time to UTC for API
+      const startDateTimeUTC = createUTCFromLocalDateTime(timeOffStartDate, timeOffStartTime);
+      const endDateTimeUTC = createUTCFromLocalDateTime(timeOffEndDate, timeOffEndTime);
 
       const timeOffData = {
-        start_date: startDateTime.toISOString(),
-        end_date: endDateTime.toISOString(),
+        start_date: startDateTimeUTC,
+        end_date: endDateTimeUTC,
         user_id: timeOffStaffId,
         reason: timeOffReason,
       };
+
+      console.log('Time-off data being sent to API:');
+      console.log('  Local start:', timeOffStartDate, timeOffStartTime);
+      console.log('  UTC start:', startDateTimeUTC);
+      console.log('  Local end:', timeOffEndDate, timeOffEndTime);
+      console.log('  UTC end:', endDateTimeUTC);
 
       if (isEditingTimeOff && editingTimeOffId) {
         // Update existing time-off
@@ -1337,21 +1327,21 @@ const CalendarPage: React.FC = () => {
                 center: 'title',
                   right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
                 }}
-                slotMinTime="07:00:00"
-                slotMaxTime="21:00:00"
-                slotLabelInterval={'01:00'}
-                allDaySlot={false}
-                editable={true}
-                selectable={true}
-                selectMirror={true}
-                unselectAuto={true}
-                unselectCancel=".fc-event,.event-popup,.booking-form-panel,.slot-action-popup"
-                eventAllow={() => true}
-                eventStartEditable={false}
-                eventDurationEditable={false}
-                dayMaxEvents={true}
-                weekends={true}
-                timeZone="local"
+              slotMinTime="07:00:00"
+              slotMaxTime="21:00:00"
+              slotLabelInterval={'01:00'}
+              allDaySlot={false}
+              editable={true}
+              selectable={true}
+              selectMirror={true}
+              unselectAuto={true}
+              unselectCancel=".fc-event,.event-popup,.booking-form-panel,.slot-action-popup"
+              eventAllow={() => true}
+              eventStartEditable={false}
+              eventDurationEditable={false}
+              dayMaxEvents={true}
+              weekends={true}
+              timeZone="Europe/Tallinn"
               nowIndicator={true}
               events={events}
               eventClick={handleEventClick}

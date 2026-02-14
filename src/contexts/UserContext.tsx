@@ -23,6 +23,8 @@ interface UserContextType {
   loading: boolean;
   error: string | null;
   unreadNotificationsCount: number;
+  companyTimezone: string;
+  setCompanyTimezone: (timezone: string) => void;
   refreshUser: () => Promise<void>;
   clearUser: () => void;
   setUserData: (user: User | null) => void;
@@ -37,6 +39,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [companyTimezone, setCompanyTimezone] = useState<string>('UTC');
 
   const fetchNotificationsCount = async () => {
     try {
@@ -168,7 +171,18 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <UserContext.Provider value={{ user, loading, error, unreadNotificationsCount, refreshUser, clearUser, setUserData, refreshNotificationsCount }}>
+    <UserContext.Provider value={{
+      user,
+      loading,
+      error,
+      unreadNotificationsCount,
+      companyTimezone,
+      setCompanyTimezone,
+      refreshUser,
+      clearUser,
+      setUserData,
+      refreshNotificationsCount
+    }}>
       {children}
     </UserContext.Provider>
   );

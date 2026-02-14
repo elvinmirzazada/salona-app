@@ -661,57 +661,20 @@ const CompanySettingsPage: React.FC = () => {
                     <div className="form-group">
                       <label>Company Logo</label>
                       <div className="logo-upload-container">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleLogoUpload}
-                          style={{ display: 'none' }}
-                        />
-
-                        {logoPreview ? (
-                          <div className="logo-preview-wrapper">
-                            <img src={logoPreview} alt="Company Logo" className="logo-preview" />
-                            <div className="logo-actions">
-                              <button
-                                type="button"
-                                className="btn-secondary btn-sm"
-                                onClick={handleLogoClick}
-                                disabled={uploadingLogo}
-                              >
-                                <i className="fas fa-sync-alt"></i> Change
-                              </button>
-                              <button
-                                type="button"
-                                className="btn-danger btn-sm"
-                                onClick={handleRemoveLogo}
-                                disabled={uploadingLogo}
-                              >
-                                <i className="fas fa-trash-alt"></i> Remove
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn-upload-logo"
-                            onClick={handleLogoClick}
-                            disabled={uploadingLogo}
-                          >
-                            {uploadingLogo ? (
-                              <>
-                                <i className="fas fa-spinner fa-spin"></i>
-                                <span>Uploading...</span>
-                              </>
-                            ) : (
-                              <>
-                                <i className="fas fa-cloud-upload-alt"></i>
-                                <span>Upload Company Logo</span>
-                                <small>PNG, JPG or WEBP (Max 5MB)</small>
-                              </>
-                            )}
-                          </button>
-                        )}
+                        <div className="alert alert-info" style={{ marginBottom: '1rem' }}>
+                          <i className="fas fa-info-circle"></i>
+                          <span>Please save your company first before uploading a logo.</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-upload-logo"
+                          disabled
+                          style={{ opacity: 0.6, cursor: 'not-allowed' }}
+                        >
+                          <i className="fas fa-cloud-upload-alt"></i>
+                          <span>Upload Company Logo</span>
+                          <small>Available after company creation</small>
+                        </button>
                       </div>
                     </div>
 

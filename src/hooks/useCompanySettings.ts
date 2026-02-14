@@ -9,6 +9,7 @@ interface Company {
   phone?: string;
   email?: string;
   description?: string;
+  timezone?: string;
   address?: {
     address?: string;
     city?: string;

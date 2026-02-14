@@ -180,8 +180,8 @@ const ServicesPage: React.FC = () => {
                 name_ee: service.name_ee || '',
                 name_ru: service.name_ru || '',
                 duration: service.duration,
-                price: service.price,
-                discount_price: service.discount_price || 0,
+                price: parseFloat((service.price / 100).toFixed(2)),
+                discount_price: parseFloat(((service.discount_price || 0) / 100).toFixed(2)),
                 status: service.status,
                 additional_info: service.additional_info || '',
                 additional_info_en: service.additional_info_en || '',
@@ -324,7 +324,7 @@ const ServicesPage: React.FC = () => {
 
     const discountPriceValue = formData.get('service-discount-price') as string;
     const discountPrice = discountPriceValue && parseFloat(discountPriceValue) > 0
-      ? Math.round(parseFloat(discountPriceValue))
+      ? Math.round(parseFloat(discountPriceValue) * 100)
       : undefined;
 
     const serviceData: CreateServiceData = {
@@ -333,8 +333,8 @@ const ServicesPage: React.FC = () => {
       name_ee: languageFormValues.name_ee,
       name_ru: languageFormValues.name_ru,
       duration: parseInt(formData.get('service-duration') as string),
-      price: Math.round(parseFloat(formData.get('service-price') as string)),
-      ...(discountPrice && { discount_price: discountPrice }),
+      price: Math.round(parseFloat(formData.get('service-price') as string) * 100),
+      ...(discountPrice && { discount_price: discountPrice}),
       additional_info_en: languageFormValues.description_en,
       additional_info_ee: languageFormValues.description_ee,
       additional_info_ru: languageFormValues.description_ru,
@@ -367,7 +367,7 @@ const ServicesPage: React.FC = () => {
       // Only show success if the operation actually succeeded
       setSuccess(serviceModal.isEditing ? 'Service updated successfully' : 'Service created successfully');
       closeServiceModal();
-      loadData();
+      await loadData();
     } catch (err: any) {
       console.error('Failed to save service:', err);
 
@@ -516,8 +516,8 @@ const ServicesPage: React.FC = () => {
     setEditingServiceData({
       name: service.name,
       duration: service.duration,
-      price: service.price,
-      discount_price: service.discount_price,
+      price: service.price / 100,
+      discount_price: service.discount_price / 100,
       category_id: service.category_id,
     });
     setEditingImagePreview(service.image_url || null);
@@ -569,7 +569,7 @@ const ServicesPage: React.FC = () => {
       name: editingServiceData.name!,
       duration: editingServiceData.duration!,
       price: editingServiceData.price!,
-      discount_price: editingServiceData.discount_price,
+      discount_price: (editingServiceData?.discount_price || 0),
       category_id: editingServiceData.category_id!,
     };
     const imageToSave = editingImageFile;
@@ -584,8 +584,8 @@ const ServicesPage: React.FC = () => {
       const serviceData: CreateServiceData = {
         name: dataToSave.name,
         duration: dataToSave.duration,
-        price: dataToSave.price,
-        discount_price: dataToSave.discount_price,
+        price: dataToSave.price * 100,
+        discount_price: dataToSave.discount_price * 100,
         category_id: dataToSave.category_id,
         status: 'active',
         buffer_before: 0,
@@ -609,8 +609,8 @@ const ServicesPage: React.FC = () => {
                 ...service,
                 name: dataToSave.name,
                 duration: dataToSave.duration,
-                price: dataToSave.price,
-                discount_price: dataToSave.discount_price || 0,
+                price: serviceData.price,
+                discount_price: serviceData.discount_price || 0,
                 category_id: dataToSave.category_id,
                 // Update image_url if a new image was uploaded
                 image_url: imagePreviewToSave || service.image_url,
@@ -970,10 +970,10 @@ const ServicesPage: React.FC = () => {
                                     <input
                                       type="number"
                                       className="inline-edit-input-small"
-                                      value={editingServiceData.price ? (editingServiceData.price / 100).toFixed(2) : ''}
-                                      onChange={(e) => updateEditingField('price', Math.round(parseFloat(e.target.value) * 100))}
-                                      min="0"
-                                      step="0.01"
+                                      value={editingServiceData.price || ''}
+                                      onChange={(e) => updateEditingField('price', parseFloat(e.target.value))}
+                                      min="1"
+                                      step="1"
                                       placeholder="Price"
                                     />
                                   </div>
@@ -982,8 +982,8 @@ const ServicesPage: React.FC = () => {
                                     <input
                                       type="number"
                                       className="inline-edit-input-small"
-                                      value={editingServiceData.discount_price ? (editingServiceData.discount_price / 100).toFixed(2) : ''}
-                                      onChange={(e) => updateEditingField('discount_price', e.target.value ? Math.round(parseFloat(e.target.value) * 100) : 0)}
+                                      value={editingServiceData.discount_price || ''}
+                                      onChange={(e) => updateEditingField('discount_price', e.target.value ? parseFloat(e.target.value) : 0)}
                                       min="0"
                                       step="0.01"
                                       placeholder="Discount"
@@ -1226,7 +1226,7 @@ const ServicesPage: React.FC = () => {
                           name="service-price"
                           min="0"
                           step="0.01"
-                          defaultValue={serviceModal.service?.price ? (serviceModal.service.price / 100).toFixed(2) : ''}
+                          defaultValue={serviceModal.service?.price ? serviceModal.service.price : ''}
                           required
                         />
                       </div>
@@ -1243,7 +1243,7 @@ const ServicesPage: React.FC = () => {
                         name="service-discount-price"
                         min="0"
                         step="0.01"
-                        defaultValue={serviceModal.service?.discount_price ? (serviceModal.service.discount_price / 100).toFixed(2) : ''}
+                        defaultValue={serviceModal.service?.discount_price ? serviceModal.service.discount_price : ''}
                       />
                     </div>
                   </div>

@@ -192,11 +192,14 @@ export const servicesAPI = {
   updateService: async (serviceId: string, serviceData: CreateServiceData, imageFile?: File) => {
     try {
       const formData = new FormData();
-      formData.append('service_in', JSON.stringify(serviceData));
-
       if (imageFile) {
         formData.append('image', imageFile);
+      } else {
+        serviceData.remove_image = true; // Indicate that the image should be removed if no new image is provided
       }
+      formData.append('service_in', JSON.stringify(serviceData));
+
+
 
       const response = await apiClient.put(`/v1/services/service/${serviceId}`, formData, {
         headers: {
