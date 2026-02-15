@@ -516,8 +516,8 @@ const ServicesPage: React.FC = () => {
     setEditingServiceData({
       name: service.name,
       duration: service.duration,
-      price: service.price / 100,
-      discount_price: service.discount_price / 100,
+      price: service.price,
+      discount_price: service.discount_price,
       category_id: service.category_id,
     });
     setEditingImagePreview(service.image_url || null);
@@ -609,8 +609,8 @@ const ServicesPage: React.FC = () => {
                 ...service,
                 name: dataToSave.name,
                 duration: dataToSave.duration,
-                price: serviceData.price,
-                discount_price: serviceData.discount_price || 0,
+                price: dataToSave.price,
+                discount_price: dataToSave.discount_price || 0,
                 category_id: dataToSave.category_id,
                 // Update image_url if a new image was uploaded
                 image_url: imagePreviewToSave || service.image_url,
@@ -992,14 +992,14 @@ const ServicesPage: React.FC = () => {
                                 </div>
                               ) : (
                                 <div>
-                                  € {(service.price / 100).toFixed(2)}
+                                  € {(service.price).toFixed(2)}
                                   {service.discount_price !== 0 && (
                                     <div style={{
                                       fontSize: '12px',
                                       color: '#10b981',
                                       fontWeight: 500
                                     }}>
-                                      Discount: € {(service.discount_price / 100).toFixed(2)}
+                                      Discount: € {(service.discount_price).toFixed(2)}
                                     </div>
                                   )}
                                 </div>

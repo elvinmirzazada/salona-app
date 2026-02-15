@@ -166,9 +166,15 @@ const BookingConfirmationPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="confirmation-container">
-        <div className="confirmation-loading-spinner">
-          <i className="fas fa-spinner fa-spin"></i>
+      <div className="confirmation-page">
+        <div className="confirmation-container">
+          <div className="confirmation-card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+            <div className="confirmation-loading-spinner">
+              <i className="fas fa-spinner fa-spin" style={{ fontSize: '3rem', color: '#667eea' }}></i>
+            </div>
+            <h2 style={{ marginTop: '1.5rem', color: '#4a5568' }}>Loading your booking...</h2>
+            <p style={{ color: '#718096', marginTop: '0.5rem' }}>Please wait while we retrieve your confirmation details</p>
+          </div>
         </div>
       </div>
     );

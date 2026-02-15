@@ -294,6 +294,18 @@ const StaffPage: React.FC = () => {
 
       const method = modalMode === 'edit' ? 'PUT' : 'POST';
 
+      // Convert availability object to list format for API
+      const availabilitiesList = Object.keys(formData.availability).map((dayKey) => {
+        const day = parseInt(dayKey);
+        const dayData = formData.availability[day];
+        return {
+          day_of_week: day,
+          start_time: dayData.start_time,
+          end_time: dayData.end_time,
+          is_available: dayData.enabled
+        };
+      });
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -302,12 +314,12 @@ const StaffPage: React.FC = () => {
         body: JSON.stringify({
           email: formData.email,
           role: formData.role,
-          availability: formData.availability
+          availabilities: availabilitiesList
         }),
         credentials: 'include'
       });
 
-      if (response.ok) {
+      if (response.ok && (modalMode === 'edit' ? await response.json().then(data => data.success) : true)) {
         if (modalMode === 'add') {
           alert('Invitation sent successfully');
           fetchInvitations();

@@ -5,6 +5,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import luxon3Plugin from '@fullcalendar/luxon3';
 import UserProfile from '../components/UserProfile';
 import listPlugin from '@fullcalendar/list';
 import { EventClickArg, DateSelectArg } from '@fullcalendar/core';
@@ -21,7 +22,7 @@ import {
 } from '../utils/timezoneUtils';
 
 const CalendarPage: React.FC = () => {
-  const { user, unreadNotificationsCount } = useUser();
+  const { user, unreadNotificationsCount, companyTimezone } = useUser();
   const calendarRef = useRef<FullCalendar>(null);
   const initialLoadDone = useRef(false);
   const isLoadingData = useRef(false);
@@ -1320,7 +1321,7 @@ const CalendarPage: React.FC = () => {
             )}
             <FullCalendar
               ref={calendarRef}
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, luxon3Plugin]}
               initialView="timeGridWeek"
               headerToolbar={{
                 left: 'prev,next today datePicker',
@@ -1341,7 +1342,7 @@ const CalendarPage: React.FC = () => {
               eventDurationEditable={false}
               dayMaxEvents={true}
               weekends={true}
-              timeZone="Europe/Tallinn"
+              timeZone={companyTimezone}
               nowIndicator={true}
               events={events}
               eventClick={handleEventClick}

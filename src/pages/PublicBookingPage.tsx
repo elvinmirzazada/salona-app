@@ -233,8 +233,11 @@ const PublicBookingPage: React.FC = () => {
 
       const params = new URLSearchParams({
         date_from: startDate,
-        service_ids: serviceIds.join(','),
-        availability_type: 'monthly'
+        availability_type: 'monthly',
+      });
+
+      serviceIds.forEach(id => {
+        params.append("service_ids", id);
       });
 
       const res = await fetch(
@@ -303,15 +306,14 @@ const PublicBookingPage: React.FC = () => {
     const slots: TimeSlot[] = [];
 
     // Get total duration of selected services
-    const totalDuration = getTotalDuration();
-    const slotInterval = 30; // 30-minute intervals
+    const slotInterval = 15; // 15-minute intervals
 
     selectedDayData.time_slots.forEach(timeRange => {
       if (!timeRange.is_available) return;
 
       // Create UTC datetime objects (API returns times in UTC)
-      const startUTC = new Date(`${dateStr}T${timeRange.start_time}Z`);
-      const endUTC = new Date(`${dateStr}T${timeRange.end_time}Z`);
+      const startUTC = new Date(`${dateStr}T${timeRange.start_time}`);
+      const endUTC = new Date(`${dateStr}T${timeRange.end_time}`);
 
       // Convert to local time
       const startLocal = new Date(startUTC.toLocaleString('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }));
@@ -321,9 +323,9 @@ const PublicBookingPage: React.FC = () => {
       const endMinutes = endLocal.getHours() * 60 + endLocal.getMinutes();
 
       // Generate slots at intervals
-      for (let minutes = startMinutes; minutes < endMinutes; minutes += slotInterval) {
+      for (let minutes = startMinutes; minutes <= endMinutes; minutes += slotInterval) {
         // Check if there's enough time for the service
-        if (minutes + totalDuration <= endMinutes) {
+        if (minutes <= endMinutes) {
           const hour = Math.floor(minutes / 60);
           const min = minutes % 60;
           const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
