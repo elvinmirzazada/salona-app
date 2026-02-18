@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import '../styles/public-booking.css';
 
 interface Service {
@@ -86,6 +88,7 @@ interface BookingState {
 const PublicBookingPage: React.FC = () => {
   const { companySlug } = useParams<{ companySlug: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
@@ -468,7 +471,7 @@ const PublicBookingPage: React.FC = () => {
     e.preventDefault();
 
     if (!bookingState.termsAgreed) {
-      setError('Please agree to the terms and conditions');
+      setError(t('booking.errors.termsRequired'));
       return;
     }
 
@@ -687,6 +690,15 @@ const PublicBookingPage: React.FC = () => {
 
   const progressPercentage = (bookingState.currentStep - 1) * 33.33;
 
+  // Helper function to get localized service name
+  const getServiceName = (service: Service): string => {
+    const lang = i18n.language;
+    if (lang === 'en' && service.name_en) return service.name_en;
+    if (lang === 'ee' && service.name_ee) return service.name_ee;
+    if (lang === 'ru' && service.name_ru) return service.name_ru;
+    return service.name; // fallback to default name
+  };
+
   // Recursive component to render category and its subcategories
   const renderCategory = (category: Category, level: number = 0): React.ReactElement => {
     const hasServices = category.services && category.services.length > 0;
@@ -751,11 +763,11 @@ const PublicBookingPage: React.FC = () => {
                   )}
 
                   <div className="service-info">
-                    <h4 className="service-name">{service.name}</h4>
+                    <h4 className="service-name">{getServiceName(service)}</h4>
                     <div className="service-meta">
                       <div className="service-duration">
                         <i className="fas fa-clock"></i>
-                        <span>{service.duration} min</span>
+                        <span>{service.duration} {t('booking.step1.min')}</span>
                       </div>
                       <div className="service-price">
                         {hasDiscount ? (
@@ -794,18 +806,22 @@ const PublicBookingPage: React.FC = () => {
   if (loading) {
     return (
       <div className="public-booking-loading-overlay">
+        <LanguageSwitcher />
         <div className="public-booking-loading-spinner">
           <div className="public-booking-spinner-ring"></div>
           <div className="public-booking-spinner-ring"></div>
           <div className="public-booking-spinner-ring"></div>
         </div>
-        <p className="public-booking-loading-text">Loading your booking experience...</p>
+        <p className="public-booking-loading-text">{t('booking.loading')}</p>
       </div>
     );
   }
 
   return (
     <div className="public-booking-page">
+      {/* Language Switcher */}
+      <LanguageSwitcher />
+
       {/* Animated Background */}
       <div className="background-animation">
         <div className="background-shape shape-1"></div>
@@ -827,7 +843,7 @@ const PublicBookingPage: React.FC = () => {
             </div>
             <div className="company-badge-content">
               <h1 className="company-badge-name">{companyName}</h1>
-              <p className="company-badge-subtitle">Book your appointment</p>
+              <p className="company-badge-subtitle">{t('booking.title')}</p>
             </div>
           </div>
 
@@ -839,19 +855,19 @@ const PublicBookingPage: React.FC = () => {
               </div>
               <div className={`progress-step ${bookingState.currentStep >= 1 ? 'active' : ''}`} onClick={() => goToStep(1)}>
                 <div className="progress-step-circle">1</div>
-                <div className="progress-step-label">Services</div>
+                <div className="progress-step-label">{t('booking.steps.services')}</div>
               </div>
               <div className={`progress-step ${bookingState.currentStep >= 2 ? 'active' : ''}`}>
                 <div className="progress-step-circle">2</div>
-                <div className="progress-step-label">Professional</div>
+                <div className="progress-step-label">{t('booking.steps.professional')}</div>
               </div>
               <div className={`progress-step ${bookingState.currentStep >= 3 ? 'active' : ''}`}>
                 <div className="progress-step-circle">3</div>
-                <div className="progress-step-label">Date & Time</div>
+                <div className="progress-step-label">{t('booking.steps.dateTime')}</div>
               </div>
               <div className={`progress-step ${bookingState.currentStep >= 4 ? 'active' : ''}`}>
                 <div className="progress-step-circle">4</div>
-                <div className="progress-step-label">Your Details</div>
+                <div className="progress-step-label">{t('booking.steps.yourDetails')}</div>
               </div>
             </div>
           </div>
@@ -883,9 +899,9 @@ const PublicBookingPage: React.FC = () => {
               <div className="booking-section">
                 <div className="section-header">
                   <div className="section-number">1</div>
-                  <h2 className="section-title">Choose Services</h2>
+                  <h2 className="section-title">{t('booking.step1.title')}</h2>
                 </div>
-                <p className="section-subtitle">Select one or more services you'd like to book</p>
+                <p className="section-subtitle">{t('booking.step1.subtitle')}</p>
 
                 {/* Search */}
                 <div className="service-search-container">
@@ -894,7 +910,7 @@ const PublicBookingPage: React.FC = () => {
                     <input
                       type="text"
                       className="service-search-input"
-                      placeholder="Search services..."
+                      placeholder={t('booking.step1.searchPlaceholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -915,7 +931,7 @@ const PublicBookingPage: React.FC = () => {
                   {getFilteredCategories().length === 0 && (
                     <div className="empty-state">
                       <div className="empty-state-icon">🔍</div>
-                      <div>No services found</div>
+                      <div>{t('booking.step1.noServices')}</div>
                     </div>
                   )}
                 </div>
@@ -923,14 +939,14 @@ const PublicBookingPage: React.FC = () => {
                 <div className="step-navigation">
                   <button className="booking-nav-button" disabled>
                     <i className="fas fa-arrow-left booking-nav-button-icon"></i>
-                    <span>Previous</span>
+                    <span>{t('booking.navigation.previous')}</span>
                   </button>
                   <button
                     className="booking-nav-button primary"
                     onClick={() => goToStep(2)}
                     disabled={!canGoToNextStep()}
                   >
-                    <span>Next: Choose Professional</span>
+                    <span>{t('booking.navigation.next')}: {t('booking.steps.professional')}</span>
                     <i className="fas fa-arrow-right booking-nav-button-icon"></i>
                   </button>
                 </div>
@@ -944,9 +960,9 @@ const PublicBookingPage: React.FC = () => {
               <div className="booking-section">
                 <div className="section-header">
                   <div className="section-number">2</div>
-                  <h2 className="section-title">Select Professional</h2>
+                  <h2 className="section-title">{t('booking.step2.title')}</h2>
                 </div>
-                <p className="section-subtitle">Choose your preferred professional</p>
+                <p className="section-subtitle">{t('booking.step2.subtitle')}</p>
 
                 {/* Search */}
                 <div className="service-search-container">
@@ -955,7 +971,7 @@ const PublicBookingPage: React.FC = () => {
                     <input
                       type="text"
                       className="service-search-input"
-                      placeholder="Search professionals..."
+                      placeholder={t('booking.step2.searchPlaceholder')}
                       value={staffSearchQuery}
                       onChange={(e) => setStaffSearchQuery(e.target.value)}
                     />
@@ -1014,7 +1030,7 @@ const PublicBookingPage: React.FC = () => {
                   {getFilteredStaff().length === 0 && (
                     <div className="empty-state">
                       <div className="empty-state-icon">👨‍💼</div>
-                      <div>No professionals found</div>
+                      <div>{t('booking.step2.noProfessionals')}</div>
                     </div>
                   )}
                 </div>
@@ -1022,14 +1038,14 @@ const PublicBookingPage: React.FC = () => {
                 <div className="step-navigation">
                   <button className="booking-nav-button" onClick={() => goToStep(1)}>
                     <i className="fas fa-arrow-left booking-nav-button-icon"></i>
-                    <span>Previous</span>
+                    <span>{t('booking.navigation.previous')}</span>
                   </button>
                   <button
                     className="booking-nav-button primary"
                     onClick={() => goToStep(3)}
                     disabled={!canGoToNextStep()}
                   >
-                    <span>Next: Pick Date & Time</span>
+                    <span>{t('booking.navigation.nextPickDateTime')}</span>
                     <i className="fas fa-arrow-right booking-nav-button-icon"></i>
                   </button>
                 </div>
@@ -1043,9 +1059,9 @@ const PublicBookingPage: React.FC = () => {
               <div className="booking-section">
                 <div className="section-header">
                   <div className="section-number">3</div>
-                  <h2 className="section-title">Pick Date & Time</h2>
+                  <h2 className="section-title">{t('booking.step3.title')}</h2>
                 </div>
-                <p className="section-subtitle">Choose when you'd like your appointment</p>
+                <p className="section-subtitle">{t('booking.step3.subtitle')}</p>
 
                 <div className="step-content">
                   {loadingTimeSlots ? (
@@ -1057,7 +1073,7 @@ const PublicBookingPage: React.FC = () => {
                           <div className="spinner-ring"></div>
                         </div>
                         <p style={{ marginTop: '20px', color: '#667eea', fontSize: '16px', fontWeight: 500 }}>
-                          Loading availability...
+                          {t('booking.step3.loadingAvailability')}
                         </p>
                       </div>
                     </div>
@@ -1085,13 +1101,13 @@ const PublicBookingPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="calendar-grid">
-                          <div className="calendar-day-header">Sun</div>
-                          <div className="calendar-day-header">Mon</div>
-                          <div className="calendar-day-header">Tue</div>
-                          <div className="calendar-day-header">Wed</div>
-                          <div className="calendar-day-header">Thu</div>
-                          <div className="calendar-day-header">Fri</div>
-                          <div className="calendar-day-header">Sat</div>
+                          <div className="calendar-day-header">{t('booking.step3.days.sun')}</div>
+                          <div className="calendar-day-header">{t('booking.step3.days.mon')}</div>
+                          <div className="calendar-day-header">{t('booking.step3.days.tue')}</div>
+                          <div className="calendar-day-header">{t('booking.step3.days.wed')}</div>
+                          <div className="calendar-day-header">{t('booking.step3.days.thu')}</div>
+                          <div className="calendar-day-header">{t('booking.step3.days.fri')}</div>
+                          <div className="calendar-day-header">{t('booking.step3.days.sat')}</div>
 
                           {calendarDays.map((day, index) => {
                             const isToday = day.toDateString() === new Date().toDateString();
@@ -1120,17 +1136,17 @@ const PublicBookingPage: React.FC = () => {
 
                       {/* Time Slots */}
                       <div className="time-slots-container">
-                        <div className="calendar-month" style={{ marginBottom: '15px' }}>Available Times</div>
+                        <div className="calendar-month" style={{ marginBottom: '15px' }}>{t('booking.step3.selectTime')}</div>
                         <div className="time-slots-grid">
                           {!bookingState.selectedDate ? (
                             <div className="empty-state">
                               <div className="empty-state-icon">🕐</div>
-                              <div>Select a date to view available times</div>
+                              <div>{t('booking.step3.selectDate')}</div>
                             </div>
                           ) : timeSlots.length === 0 ? (
                             <div className="empty-state">
                               <div className="empty-state-icon">📅</div>
-                              <div>No available times for this date</div>
+                              <div>{t('booking.step3.noSlotsAvailable')}</div>
                             </div>
                           ) : (
                             timeSlots.map((slot, index) => (
@@ -1153,14 +1169,14 @@ const PublicBookingPage: React.FC = () => {
                 <div className="step-navigation">
                   <button className="booking-nav-button" onClick={() => goToStep(2)}>
                     <i className="fas fa-arrow-left booking-nav-button-icon"></i>
-                    <span>Previous</span>
+                    <span>{t('booking.navigation.previous')}</span>
                   </button>
                   <button
                     className="booking-nav-button primary"
                     onClick={() => goToStep(4)}
                     disabled={!canGoToNextStep()}
                   >
-                    <span>Next: Your Details</span>
+                    <span>{t('booking.navigation.next')}: {t('booking.steps.yourDetails')}</span>
                     <i className="fas fa-arrow-right booking-nav-button-icon"></i>
                   </button>
                 </div>
@@ -1174,14 +1190,14 @@ const PublicBookingPage: React.FC = () => {
               <div className="booking-section">
                 <div className="section-header">
                   <div className="section-number">4</div>
-                  <h2 className="section-title">Your Information</h2>
+                  <h2 className="section-title">{t('booking.step4.title')}</h2>
                 </div>
-                <p className="section-subtitle">We'll use this to confirm your booking</p>
+                <p className="section-subtitle">{t('booking.step4.subtitle')}</p>
 
                 <div className="step-content">
                   <form className="customer-form" onSubmit={handleSubmitBooking}>
                     <div className="form-group">
-                      <label className="form-label" htmlFor="first-name">First Name *</label>
+                      <label className="form-label" htmlFor="first-name">{t('booking.step4.firstName')} {t('booking.step4.required')}</label>
                       <input
                         type="text"
                         className="form-input"
@@ -1197,7 +1213,7 @@ const PublicBookingPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label" htmlFor="last-name">Last Name *</label>
+                      <label className="form-label" htmlFor="last-name">{t('booking.step4.lastName')} {t('booking.step4.required')}</label>
                       <input
                         type="text"
                         className="form-input"
@@ -1213,7 +1229,7 @@ const PublicBookingPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label" htmlFor="email">Email *</label>
+                      <label className="form-label" htmlFor="email">{t('booking.step4.email')} {t('booking.step4.required')}</label>
                       <input
                         type="email"
                         className="form-input"
@@ -1229,7 +1245,7 @@ const PublicBookingPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label" htmlFor="phone">Phone Number *</label>
+                      <label className="form-label" htmlFor="phone">{t('booking.step4.phone')} {t('booking.step4.required')}</label>
                       <div className="phone-input-row">
                         <select
                           id="phone-country-code"
@@ -1267,7 +1283,7 @@ const PublicBookingPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label" htmlFor="birthday">Birthday (Optional)</label>
+                      <label className="form-label" htmlFor="birthday">{t('booking.step4.birthday')}</label>
                       <input
                         type="date"
                         className="form-input"
@@ -1282,11 +1298,11 @@ const PublicBookingPage: React.FC = () => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label className="form-label" htmlFor="notes">Additional Notes (Optional)</label>
+                      <label className="form-label" htmlFor="notes">{t('booking.step4.notes')}</label>
                       <textarea
                         className="form-input"
                         id="notes"
-                        placeholder="Any special requests or information we should know..."
+                        placeholder={t('booking.step4.notesPlaceholder')}
                         value={bookingState.customerInfo.notes}
                         onChange={(e) => setBookingState(prev => ({
                           ...prev,
@@ -1310,13 +1326,13 @@ const PublicBookingPage: React.FC = () => {
                           />
                           <span className="booking-checkmark"></span>
                           <span className="booking-terms-text">
-                            I agree to the{' '}
+                            {t('booking.step4.terms')}{' '}
                             <a href="/booking-terms" target="_blank" rel="noopener noreferrer">
-                              Booking Terms & Conditions
+                              {t('booking.step4.termsLink')}
                             </a>
-                            {' '}and{' '}
+                            {' '}{t('booking.step4.and')}{' '}
                             <a href="/booking-privacy" target="_blank" rel="noopener noreferrer">
-                              Privacy Policy
+                              {t('booking.step4.privacyLink')}
                             </a>
                           </span>
                         </label>
@@ -1328,7 +1344,7 @@ const PublicBookingPage: React.FC = () => {
                 <div className="step-navigation">
                   <button className="booking-nav-button" onClick={() => goToStep(3)}>
                     <i className="fas fa-arrow-left booking-nav-button-icon"></i>
-                    <span>Previous</span>
+                    <span>{t('booking.navigation.previous')}</span>
                   </button>
                   <button
                     type="submit"
@@ -1339,11 +1355,11 @@ const PublicBookingPage: React.FC = () => {
                     {submitting ? (
                       <>
                         <i className="fas fa-spinner fa-spin booking-nav-button-icon"></i>
-                        <span>Creating Booking...</span>
+                        <span>{t('booking.navigation.creatingBooking')}</span>
                       </>
                     ) : (
                       <>
-                        <span>Complete Booking</span>
+                        <span>{t('booking.navigation.completeBooking')}</span>
                         <i className="fas fa-check booking-nav-button-icon"></i>
                       </>
                     )}
@@ -1356,17 +1372,17 @@ const PublicBookingPage: React.FC = () => {
 
         {/* Booking Summary Sidebar */}
         <div className="booking-summary">
-          <h3 className="summary-title">Booking Summary</h3>
+          <h3 className="summary-title">{t('booking.summary.title')}</h3>
 
           <div className="summary-section">
-            <div className="summary-label">Services</div>
+            <div className="summary-label">{t('booking.summary.services')}</div>
             <div>
               {getSelectedServices().length === 0 ? (
-                <div className="summary-placeholder">No services selected</div>
+                <div className="summary-placeholder">{t('booking.summary.noServices')}</div>
               ) : (
                 getSelectedServices().map(service => (
                   <div key={service.id} className="summary-item">
-                    <span>{service.name}</span>
+                    <span>{getServiceName(service)}</span>
                     <span>€ {((service.discount_price && service.discount_price > 0 ? service.discount_price : service.price) / 100).toFixed(2)}</span>
                   </div>
                 ))
@@ -1375,10 +1391,10 @@ const PublicBookingPage: React.FC = () => {
           </div>
 
           <div className="summary-section">
-            <div className="summary-label">Professional</div>
+            <div className="summary-label">{t('booking.summary.professional')}</div>
             <div>
               {!bookingState.selectedStaff ? (
-                <div className="summary-placeholder">Not selected</div>
+                <div className="summary-placeholder">{t('booking.summary.notSelected')}</div>
               ) : (
                 <div className="summary-value">
                   {getSelectedStaffInfo()?.user.first_name} {getSelectedStaffInfo()?.user.last_name}
@@ -1388,10 +1404,10 @@ const PublicBookingPage: React.FC = () => {
           </div>
 
           <div className="summary-section">
-            <div className="summary-label">Date & Time</div>
+            <div className="summary-label">{t('booking.summary.dateTime')}</div>
             <div>
               {!bookingState.selectedDate || !bookingState.selectedTime ? (
-                <div className="summary-placeholder">Not selected</div>
+                <div className="summary-placeholder">{t('booking.summary.notSelected')}</div>
               ) : (
                 <div className="summary-value">
                   {new Date(bookingState.selectedDate).toLocaleDateString('en-US', {
@@ -1400,7 +1416,7 @@ const PublicBookingPage: React.FC = () => {
                     day: 'numeric'
                   })} at {bookingState.selectedTime}
                   <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                    Duration: {getTotalDuration()} minutes
+                    {t('booking.summary.duration')}: {getTotalDuration()} {t('booking.summary.minutes')}
                   </div>
                 </div>
               )}
@@ -1408,7 +1424,7 @@ const PublicBookingPage: React.FC = () => {
           </div>
 
           <div className="summary-total">
-            <div className="summary-total-label">Total</div>
+            <div className="summary-total-label">{t('booking.summary.total')}</div>
             <div className="summary-total-price">€ {calculateTotal().toFixed(2)}</div>
           </div>
         </div>
