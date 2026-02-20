@@ -182,14 +182,20 @@ const CalendarPage: React.FC = () => {
         // Check for API errors
         if (!bookingsRes.success) {
           setError(bookingsRes.message || 'Failed to load bookings.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
         if (!timeOffsRes.success) {
           setError(timeOffsRes.message || 'Failed to load time-offs.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
         if (!customersRes.success) {
           setError(customersRes.message || 'Failed to load customers.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
 
@@ -219,22 +225,32 @@ const CalendarPage: React.FC = () => {
         // Check for API errors
         if (!bookingsRes.success) {
           setError(bookingsRes.message || 'Failed to load bookings.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
         if (!timeOffsRes.success) {
           setError(timeOffsRes.message || 'Failed to load time-offs.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
         if (!servicesRes.success) {
           setError(servicesRes.message || 'Failed to load services.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
         if (!staffRes.success) {
           setError(staffRes.message || 'Failed to load staff.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
         if (!customersRes.success) {
           setError(customersRes.message || 'Failed to load customers.');
+          setDataLoading(false);
+          isLoadingData.current = false;
           return;
         }
 

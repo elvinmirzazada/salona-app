@@ -3,6 +3,7 @@
  * All times from API are in UTC format and need to be converted to company timezone for display
  * All times sent to API must be converted from company timezone to UTC
  */
+import { DateTime } from "luxon";
 
 // Local storage key for timezone
 const TIMEZONE_STORAGE_KEY = 'company_timezone';
@@ -142,64 +143,23 @@ export const getTimeInTimezone = (utcDateString: string, timezone?: string): str
  * @param timezone - Optional IANA timezone identifier (uses localStorage if not provided)
  * @returns ISO string in UTC format
  */
-export const createUTCFromLocalDateTime = (dateStr: string, timeStr: string, timezone?: string): string => {
+export const createUTCFromLocalDateTime = (
+  dateStr: string,
+  timeStr: string,
+  timezone?: string
+): string => {
   const tz = timezone || getCurrentTimezone();
 
-  // Parse the input components
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const [hour, minute] = timeStr.split(':').map(Number);
+  const dateTime = DateTime.fromISO(
+    `${dateStr}T${timeStr}`,
+    { zone: tz }
+  );
 
-  // Create a date string that includes timezone info
-  // We'll use a trick: create a date, format it in both the target TZ and UTC, then calculate the difference
+  if (!dateTime.isValid) {
+    throw new Error("Invalid date/time for timezone (possible DST issue)");
+  }
 
-  // Start with a Date object representing this date/time (will be in local browser timezone, but we'll adjust)
-  const tempDate = new Date(year, month - 1, day, hour, minute, 0);
-
-  // Format this date in the target timezone
-  const targetTZString = tempDate.toLocaleString('en-US', {
-    timeZone: tz,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-
-  // Format the same date in UTC
-  const utcString = tempDate.toLocaleString('en-US', {
-    timeZone: 'UTC',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-
-  // Parse both strings to get timestamps
-  const parseLocaleString = (str: string): number => {
-    // Format is "MM/DD/YYYY, HH:MM:SS"
-    const [datePart, timePart] = str.split(', ');
-    const [m, d, y] = datePart.split('/').map(Number);
-    const [h, min, s] = timePart.split(':').map(Number);
-    return Date.UTC(y, m - 1, d, h, min, s);
-  };
-
-  const targetTimestamp = parseLocaleString(targetTZString);
-  const utcTimestamp = parseLocaleString(utcString);
-
-  // The offset is the difference between what the date looks like in the target TZ vs UTC
-  const offset = utcTimestamp - targetTimestamp;
-
-  // Now we want our input (year, month, day, hour, minute) to be interpreted as being in the target timezone
-  // So we create a UTC timestamp for those components, then subtract the offset
-  const inputAsUTC = Date.UTC(year, month - 1, day, hour, minute, 0);
-  const adjustedTimestamp = inputAsUTC - offset;
-
-  return new Date(adjustedTimestamp).toISOString();
+  return dateTime.toUTC().toISO();
 };
 
 /**
