@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -103,6 +103,8 @@ const PublicBookingPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [staffSearchQuery, setStaffSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const [bookingState, setBookingState] = useState<BookingState>({
     currentStep: 1,
@@ -130,6 +132,20 @@ const PublicBookingPage: React.FC = () => {
   useEffect(() => {
     fetchInitialData();
   }, [companySlug]);
+
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Generate calendar when month changes
   useEffect(() => {
@@ -381,6 +397,43 @@ const PublicBookingPage: React.FC = () => {
       ...prev,
       selectedServices: newSelected,
     }));
+  };
+
+  // Handle selecting a service from the search dropdown
+  const selectServiceFromDropdown = (serviceId: string) => {
+    // Find the service and its category path
+    const findServiceAndCategory = (cats: Category[]): string | null => {
+      for (const cat of cats) {
+        // Check if service is in this category
+        if (cat.services.some(s => s.id === serviceId)) {
+          return cat.id;
+        }
+        // Check subcategories
+        if (cat.subcategories) {
+          const found = findServiceAndCategory(cat.subcategories);
+          if (found) {
+            // Also expand parent category
+            setExpandedCategories(prev => new Set([...prev, cat.id]));
+            return found;
+          }
+        }
+      }
+      return null;
+    };
+
+    const categoryId = findServiceAndCategory(categories);
+
+    // Expand the category that contains this service
+    if (categoryId) {
+      setExpandedCategories(prev => new Set([...prev, categoryId]));
+    }
+
+    // Toggle the service selection
+    toggleService(serviceId);
+
+    // Close dropdown and clear search
+    setShowSearchDropdown(false);
+    setSearchQuery('');
   };
 
   // Toggle category expansion
@@ -651,6 +704,41 @@ const PublicBookingPage: React.FC = () => {
       .filter((cat): cat is Category => cat !== null);
   };
 
+  // Get flattened list of filtered services for dropdown display
+  const getFilteredServicesForDropdown = (): Array<{ service: Service; categoryPath: string }> => {
+    if (!searchQuery.trim()) {
+      return [];
+    }
+
+    const results: Array<{ service: Service; categoryPath: string }> = [];
+    const query = searchQuery.toLowerCase();
+
+    const extractServices = (category: Category, parentPath: string = '') => {
+      const currentPath = parentPath ? `${parentPath} > ${category.name}` : category.name;
+
+      // Add matching services from this category
+      category.services.forEach(service => {
+        const matchesSearch =
+          service.name.toLowerCase().includes(query) ||
+          service.name_en?.toLowerCase().includes(query) ||
+          service.name_ee?.toLowerCase().includes(query) ||
+          service.name_ru?.toLowerCase().includes(query);
+
+        if (matchesSearch) {
+          results.push({ service, categoryPath: currentPath });
+        }
+      });
+
+      // Recursively extract from subcategories
+      if (category.subcategories) {
+        category.subcategories.forEach(subcat => extractServices(subcat, currentPath));
+      }
+    };
+
+    categories.forEach(cat => extractServices(cat));
+    return results;
+  };
+
   // Get staff assigned to selected services
   const getStaffForSelectedServices = (): Staff[] => {
     if (bookingState.selectedServices.size === 0) {
@@ -904,7 +992,7 @@ const PublicBookingPage: React.FC = () => {
                 <p className="section-subtitle">{t('booking.step1.subtitle')}</p>
 
                 {/* Search */}
-                <div className="service-search-container">
+                <div className="service-search-container" ref={searchContainerRef}>
                   <div className="search-input-wrapper">
                     <i className="fas fa-search search-icon"></i>
                     <input
@@ -912,14 +1000,91 @@ const PublicBookingPage: React.FC = () => {
                       className="service-search-input"
                       placeholder={t('booking.step1.searchPlaceholder')}
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowSearchDropdown(e.target.value.trim().length > 0);
+                      }}
+                      onFocus={() => {
+                        if (searchQuery.trim().length > 0) {
+                          setShowSearchDropdown(true);
+                        }
+                      }}
                     />
                     {searchQuery && (
-                      <button className="search-clear-btn" onClick={() => setSearchQuery('')}>
+                      <button className="search-clear-btn" onClick={() => {
+                        setSearchQuery('');
+                        setShowSearchDropdown(false);
+                      }}>
                         <i className="fas fa-times"></i>
                       </button>
                     )}
                   </div>
+
+                  {/* Search Results Dropdown */}
+                  {showSearchDropdown && searchQuery.trim().length > 0 && (
+                    <div className="search-dropdown">
+                      {getFilteredServicesForDropdown().length > 0 ? (
+                        <div className="search-dropdown-results">
+                          {getFilteredServicesForDropdown().map(({ service, categoryPath }) => {
+                            const isSelected = bookingState.selectedServices.has(service.id);
+                            const price = service.discount_price && service.discount_price > 0
+                              ? service.discount_price
+                              : service.price;
+                            const hasDiscount = service.discount_price && service.discount_price > 0 && service.discount_price < service.price;
+
+                            return (
+                              <div
+                                key={service.id}
+                                className={`search-dropdown-item ${isSelected ? 'selected' : ''}`}
+                                onClick={() => selectServiceFromDropdown(service.id)}
+                              >
+                                <div className="search-dropdown-item-content">
+                                  {service.image_url ? (
+                                    <div className="search-dropdown-item-image">
+                                      <img src={service.image_url} alt={service.name} />
+                                    </div>
+                                  ) : (
+                                    <div className="search-dropdown-item-image search-dropdown-item-image-placeholder">
+                                      <i className="fas fa-cut"></i>
+                                    </div>
+                                  )}
+                                  <div className="search-dropdown-item-info">
+                                    <div className="search-dropdown-item-name">{getServiceName(service)}</div>
+                                    <div className="search-dropdown-item-category">{categoryPath}</div>
+                                    <div className="search-dropdown-item-meta">
+                                      <span className="search-dropdown-item-duration">
+                                        <i className="fas fa-clock"></i> {service.duration} {t('booking.step1.min')}
+                                      </span>
+                                      <span className="search-dropdown-item-price">
+                                        {hasDiscount ? (
+                                          <>
+                                            <span className="original-price">€{(service.price / 100).toFixed(2)}</span>
+                                            <span className="current-price">€{(price / 100).toFixed(2)}</span>
+                                          </>
+                                        ) : (
+                                          <span>€{(service.price / 100).toFixed(2)}</span>
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {isSelected && (
+                                    <div className="search-dropdown-item-check">
+                                      <i className="fas fa-check"></i>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="search-dropdown-empty">
+                          <i className="fas fa-search"></i>
+                          <span>{t('booking.step1.noServices')}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Services by Category */}
