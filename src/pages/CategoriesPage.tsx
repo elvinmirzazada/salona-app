@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/categories.css';
 
 interface Category {
@@ -82,21 +82,13 @@ const CategoriesPage: React.FC = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/v1/services/companies/categories`, {
-        credentials: 'include'
-      });
+      const response = await apiClient.get('/v1/services/companies/categories');
+      const data = response.data;
+      const flatCategories = data.data || [];
 
-      if (response.ok) {
-        const data = await response.json();
-        const flatCategories = data.data || [];
-
-        // Build hierarchical structure
-        const hierarchicalCategories = buildCategoryHierarchy(flatCategories);
-        setCategories(hierarchicalCategories);
-      } else {
-        console.error('Failed to fetch categories');
-        setCategories([]);
-      }
+      // Build hierarchical structure
+      const hierarchicalCategories = buildCategoryHierarchy(flatCategories);
+      setCategories(hierarchicalCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
       setCategories([]);
@@ -219,8 +211,8 @@ const CategoriesPage: React.FC = () => {
 
     try {
       const url = modalMode === 'edit' && editingCategory
-        ? `${API_BASE_URL}/v1/services/categories/${editingCategory.id}`
-        : `${API_BASE_URL}/v1/services/categories`;
+        ? `/v1/services/categories/${editingCategory.id}`
+        : `/v1/services/categories`;
 
       const method = modalMode === 'edit' ? 'PUT' : 'POST';
 
@@ -239,27 +231,19 @@ const CategoriesPage: React.FC = () => {
         requestBody.parent_category_id = parentCategoryId;
       }
 
-      const response = await fetch(url, {
+      const response = await apiClient.request({
+        url,
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-        credentials: 'include'
+        data: requestBody,
       });
+      const data = response.data;
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          showMessage('success', `Category ${modalMode === 'edit' ? 'updated' : 'created'} successfully!`);
-          setShowModal(false);
-          fetchCategories();
-        } else {
-          showMessage('error', data.message || `Failed to ${modalMode === 'edit' ? 'update' : 'create'} category`);
-        }
+      if (data?.success !== false) {
+        showMessage('success', `Category ${modalMode === 'edit' ? 'updated' : 'created'} successfully!`);
+        setShowModal(false);
+        fetchCategories();
       } else {
-        const errorData = await response.json();
-        showMessage('error', errorData.message || `Failed to ${modalMode === 'edit' ? 'update' : 'create'} category`);
+        showMessage('error', data.message || `Failed to ${modalMode === 'edit' ? 'update' : 'create'} category`);
       }
     } catch (error: any) {
       console.error('Error saving category:', error);
@@ -275,24 +259,16 @@ const CategoriesPage: React.FC = () => {
     setDeleting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/services/categories/${deletingCategory.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiClient.delete(`/v1/services/categories/${deletingCategory.id}`);
+      const data = response.data;
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          showMessage('success', 'Category deleted successfully!');
-          setShowDeleteModal(false);
-          setDeletingCategory(null);
-          fetchCategories();
-        } else {
-          showMessage('error', data.message || 'Failed to delete category');
-        }
+      if (data?.success !== false) {
+        showMessage('success', 'Category deleted successfully!');
+        setShowDeleteModal(false);
+        setDeletingCategory(null);
+        fetchCategories();
       } else {
-        const errorData = await response.json();
-        showMessage('error', errorData.message || 'Failed to delete category');
+        showMessage('error', data.message || 'Failed to delete category');
       }
     } catch (error: any) {
       console.error('Error deleting category:', error);
@@ -755,4 +731,3 @@ const CategoriesPage: React.FC = () => {
 };
 
 export default CategoriesPage;
-

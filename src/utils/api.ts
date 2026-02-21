@@ -1,10 +1,18 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { API_BASE_URL } from '../config/api';
 import { CreateServiceData, CreateCategoryData } from '../types/services';
 import { CreateBookingData, CreateTimeOffData } from '../types/calendar';
+import { clearAuthAndLogout } from './authHelpers';
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    _retry?: boolean;
+    skipAuthRefresh?: boolean;
+  }
+}
 
 // Create axios instance with default config
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Important for cookies
   headers: {
@@ -58,8 +66,10 @@ export const authAPI = {
   },
 
   // Get current user
-  getCurrentUser: async () => {
-    const response = await apiClient.get('/v1/users/me');
+  getCurrentUser: async (options?: { skipAuthRefresh?: boolean }) => {
+    const response = await apiClient.get('/v1/users/me', {
+      skipAuthRefresh: options?.skipAuthRefresh,
+    });
     return response;
   },
 
@@ -93,64 +103,70 @@ export const authAPI = {
   },
 };
 
-// Helper function to clear cookies and logout
-const clearAuthAndLogout = async () => {
-  try {
-    // Clear cookies by calling logout endpoint
-    await refreshClient.put('/v1/users/auth/logout').catch(() => {
-      // Ignore logout API errors, we just want to clear cookies
-    });
-  } catch (error) {
-    // Ignore errors during logout
-    console.error('Error during logout:', error);
-  } finally {
-    // Clear any local storage or session storage if needed
-    localStorage.clear();
-    sessionStorage.clear();
+let refreshPromise: Promise<void> | null = null;
+let logoutPromise: Promise<void> | null = null;
 
-    // Redirect to login page
-    if (window.location.pathname !== '/login' &&
-        window.location.pathname !== '/signup' &&
-        !window.location.pathname.startsWith('/booking/')) {
-      window.location.href = '/login';
-    }
+const isRefreshRequest = (config?: AxiosRequestConfig) => {
+  const url = config?.url || '';
+  return url.includes('/v1/users/auth/refresh-token');
+};
+
+const ensureSingleRefresh = async () => {
+  if (!refreshPromise) {
+    refreshPromise = refreshClient
+      .post('/v1/users/auth/refresh-token')
+      .then(() => undefined)
+      .finally(() => {
+        refreshPromise = null;
+      });
   }
+
+  return refreshPromise;
+};
+
+const ensureLoggedOut = async () => {
+  if (!logoutPromise) {
+    logoutPromise = clearAuthAndLogout().finally(() => {
+      logoutPromise = null;
+    });
+  }
+
+  return logoutPromise;
 };
 
 // Add response interceptor for automatic token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest: AxiosRequestConfig | undefined = error.config;
+    const status = error.response?.status;
 
-    // If 401 and we haven't retried yet, try to refresh token
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Try to refresh token using separate client (no interceptor)
-        const refreshResponse = await refreshClient.post('/v1/users/auth/refresh-token');
-
-        // If refresh was successful, retry the original request
-        if (refreshResponse.status === 200) {
-          return apiClient(originalRequest);
-        } else {
-          // Unexpected response from refresh endpoint
-          await clearAuthAndLogout();
-          return Promise.reject(error);
-        }
-      } catch (refreshError: any) {
-        // Refresh token request failed (401, network error, or any other error)
-        console.error('Token refresh failed:', refreshError);
-
-        // Clear auth and logout regardless of the error
-        await clearAuthAndLogout();
-
-        return Promise.reject(refreshError);
-      }
+    if (!originalRequest || status !== 401) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    if (originalRequest.skipAuthRefresh || originalRequest._retry || isRefreshRequest(originalRequest)) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      await ensureSingleRefresh();
+    } catch (refreshError) {
+      console.error('Token refresh failed:', refreshError);
+      await ensureLoggedOut();
+      return Promise.reject(refreshError);
+    }
+
+    try {
+      return await apiClient(originalRequest);
+    } catch (retryError: any) {
+      if (retryError.response?.status === 401) {
+        await ensureLoggedOut();
+      }
+      return Promise.reject(retryError);
+    }
   }
 );
 

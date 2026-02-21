@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import { useUser } from '../contexts/UserContext';
 
 interface Company {
@@ -25,15 +25,8 @@ interface CompanyResponse {
 }
 
 const fetchCompanySettings = async (companyId: string): Promise<CompanyResponse> => {
-  const response = await fetch(`${API_BASE_URL}/v1/companies/${companyId}`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch company settings');
-  }
-
-  return response.json();
+  const response = await apiClient.get(`/v1/companies/${companyId}`);
+  return response.data;
 };
 
 export const useCompanySettings = () => {

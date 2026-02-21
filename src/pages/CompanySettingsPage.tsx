@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/company-settings.css';
 
 interface Company {
@@ -105,62 +105,46 @@ const CompanySettingsPage: React.FC = () => {
     isLoadingRef.current = true;
     try {
       // Load company details
-      const companyResponse = await fetch(`${API_BASE_URL}/v1/companies/${companyId}`, {
-        credentials: 'include'
-      });
-      if (companyResponse.ok) {
-        const companyData = await companyResponse.json();
-        if (companyData.success && companyData.data) {
-          setCompany(companyData.data);
-          setCompanyName(companyData.data.name || '');
-          setCompanyType(companyData.data.type || '');
-          setCompanyLogoUrl(companyData.data.logo_url || '');
-          setLogoPreview(companyData.data.logo_url || '');
-          setCompanyWebsite(companyData.data.website || '');
-          setCompanyDescription(companyData.data.description || '');
-          setCompanyTeamSize(companyData.data.team_size || 1);
-          setCompanyTimezone(companyData.data.timezone || 'UTC');
-        }
+      const companyResponse = await apiClient.get(`/v1/companies/${companyId}`);
+      const companyData = companyResponse.data;
+      if (companyData.success && companyData.data) {
+        setCompany(companyData.data);
+        setCompanyName(companyData.data.name || '');
+        setCompanyType(companyData.data.type || '');
+        setCompanyLogoUrl(companyData.data.logo_url || '');
+        setLogoPreview(companyData.data.logo_url || '');
+        setCompanyWebsite(companyData.data.website || '');
+        setCompanyDescription(companyData.data.description || '');
+        setCompanyTeamSize(companyData.data.team_size || 1);
+        setCompanyTimezone(companyData.data.timezone || 'UTC');
       }
 
       // Load emails
-      const emailsResponse = await fetch(`${API_BASE_URL}/v1/companies/all/emails`, {
-        credentials: 'include'
-      });
-      if (emailsResponse.ok) {
-        const emailsData = await emailsResponse.json();
-        if (emailsData.success && emailsData.data && emailsData.data.length > 0) {
-          setEmails(emailsData.data);
-        }
+      const emailsResponse = await apiClient.get('/v1/companies/all/emails');
+      const emailsData = emailsResponse.data;
+      if (emailsData.success && emailsData.data && emailsData.data.length > 0) {
+        setEmails(emailsData.data);
       }
 
       // Load phones
-      const phonesResponse = await fetch(`${API_BASE_URL}/v1/companies/all/phones`, {
-        credentials: 'include'
-      });
-      if (phonesResponse.ok) {
-        const phonesData = await phonesResponse.json();
-        if (phonesData.success && phonesData.data && phonesData.data.length > 0) {
-          setPhones(phonesData.data);
-        }
+      const phonesResponse = await apiClient.get('/v1/companies/all/phones');
+      const phonesData = phonesResponse.data;
+      if (phonesData.success && phonesData.data && phonesData.data.length > 0) {
+        setPhones(phonesData.data);
       }
 
       // Load address
-      const addressResponse = await fetch(`${API_BASE_URL}/v1/companies/${companyId}/address`, {
-        credentials: 'include'
-      });
-      if (addressResponse.ok) {
-        const addressData = await addressResponse.json();
-        if (addressData.success && addressData.data) {
-          // Map API 'address' field to UI 'street' field
-          setAddress({
-            street: addressData.data.address || '',
-            city: addressData.data.city || '',
-            country: addressData.data.country || '',
-            zip: addressData.data.zip || '',
-            is_primary: addressData.data.is_primary || false
-          });
-        }
+      const addressResponse = await apiClient.get(`/v1/companies/${companyId}/address`);
+      const addressData = addressResponse.data;
+      if (addressData.success && addressData.data) {
+        // Map API 'address' field to UI 'street' field
+        setAddress({
+          street: addressData.data.address || '',
+          city: addressData.data.city || '',
+          country: addressData.data.country || '',
+          zip: addressData.data.zip || '',
+          is_primary: addressData.data.is_primary || false
+        });
       }
     } catch (error) {
       console.error('Error loading company data:', error);
@@ -211,15 +195,12 @@ const CompanySettingsPage: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE_URL}/v1/companies/logo`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
+      const response = await apiClient.post('/v1/companies/logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Company logo uploaded successfully!');
 
         // Update the logo URL and preview
@@ -260,23 +241,19 @@ const CompanySettingsPage: React.FC = () => {
       setUploadingLogo(true);
 
       // You can implement a DELETE endpoint or just update the company with empty logo_url
-      const response = await fetch(`${API_BASE_URL}/v1/companies/logo`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
+      const response = await apiClient.delete('/v1/companies/logo', {
+        data: {
           name: companyName,
           type: companyType,
           logo_url: '',
           website: companyWebsite,
           description: companyDescription,
           team_size: companyTeamSize
-        })
+        }
       });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Company logo removed successfully!');
         setCompanyLogoUrl('');
         setLogoPreview('');
@@ -299,24 +276,18 @@ const CompanySettingsPage: React.FC = () => {
     setSaving(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/companies`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: companyName,
-          type: companyType,
-          logo_url: companyLogoUrl,
-          website: companyWebsite,
-          description: companyDescription,
-          team_size: companyTeamSize,
-          timezone: companyTimezone
-        })
+      const response = await apiClient.post('/v1/companies', {
+        name: companyName,
+        type: companyType,
+        logo_url: companyLogoUrl,
+        website: companyWebsite,
+        description: companyDescription,
+        team_size: companyTeamSize,
+        timezone: companyTimezone
       });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Company created successfully!');
         // Refresh user data to get the new company_id
         await refreshUser();
@@ -340,24 +311,18 @@ const CompanySettingsPage: React.FC = () => {
     setSaving(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/companies`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: companyName,
-          type: companyType,
-          logo_url: companyLogoUrl,
-          website: companyWebsite,
-          description: companyDescription,
-          team_size: companyTeamSize,
-          timezone: companyTimezone
-        })
+      const response = await apiClient.patch('/v1/companies', {
+        name: companyName,
+        type: companyType,
+        logo_url: companyLogoUrl,
+        website: companyWebsite,
+        description: companyDescription,
+        team_size: companyTeamSize,
+        timezone: companyTimezone
       });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Company details updated successfully!');
         // Update company state with the response data if available
         if (data.data) {
@@ -387,19 +352,13 @@ const CompanySettingsPage: React.FC = () => {
         status: 'primary' // Add status field
       }));
 
-      const response = await fetch(`${API_BASE_URL}/v1/companies/emails`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          emails: formattedEmails,
-          company_id: company.id
-        })
+      const response = await apiClient.post('/v1/companies/emails', {
+        emails: formattedEmails,
+        company_id: company.id
       });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Company emails saved successfully!');
         // Update emails state if the response includes the saved data
         if (data.data && data.data.length > 0) {
@@ -428,19 +387,13 @@ const CompanySettingsPage: React.FC = () => {
         is_primary: index === 0 || phone.type === 'primary' // First phone or explicitly marked as primary
       }));
 
-      const response = await fetch(`${API_BASE_URL}/v1/companies/phones`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          company_phones: formattedPhones,
-          company_id: company.id
-        })
+      const response = await apiClient.post('/v1/companies/phones', {
+        company_phones: formattedPhones,
+        company_id: company.id
       });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Company phone numbers saved successfully!');
         // Update phones state if the response includes the saved data
         if (data.data && data.data.length > 0) {
@@ -472,16 +425,10 @@ const CompanySettingsPage: React.FC = () => {
         is_primary: address.is_primary || false
       };
 
-      const response = await fetch(`${API_BASE_URL}/v1/companies/address`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(addressData)
-      });
+      const response = await apiClient.post('/v1/companies/address', addressData);
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Company address saved successfully!');
         // Address state is already updated, no need to reload
       } else {
@@ -514,14 +461,10 @@ const CompanySettingsPage: React.FC = () => {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/v1/companies/emails/${emailToRemove.id}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        });
+        const response = await apiClient.delete(`/v1/companies/emails/${emailToRemove.id}`);
+        const data = response.data;
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
+        if (data?.success !== false) {
           showMessage('success', 'Email deleted successfully!');
           setEmails(emails.filter((_, i) => i !== index));
         } else {
@@ -562,14 +505,10 @@ const CompanySettingsPage: React.FC = () => {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/v1/companies/phones/${phoneToRemove.id}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        });
+        const response = await apiClient.delete(`/v1/companies/phones/${phoneToRemove.id}`);
+        const data = response.data;
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
+        if (data?.success !== false) {
           showMessage('success', 'Phone number deleted successfully!');
           setPhones(phones.filter((_, i) => i !== index));
         } else {

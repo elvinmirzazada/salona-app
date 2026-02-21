@@ -2,7 +2,7 @@
  * Reports and Analytics Module
  * Handles data aggregation and report generation for the dashboard
  */
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from './api';
 
 export interface Booking {
   id: string;
@@ -69,19 +69,11 @@ export interface StaffPerformance {
 }
 
 export class ReportsManager {
-  private apiBase: string;
   private cache: Map<string, { data: ReportData; timestamp: number }> = new Map();
   private cacheExpiryMinutes: number = 5; // Cache expires after 5 minutes
 
   constructor() {
-    this.apiBase = API_BASE_URL;
-  }
-
-  private getHeaders(): HeadersInit {
-    return {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    };
+    // No-op constructor
   }
 
   /**
@@ -163,16 +155,11 @@ export class ReportsManager {
         params.append('end_date', endDate);
       }
 
-      const response = await fetch(`${this.apiBase}/v1/bookings?${params}`, {
-        headers: this.getHeaders(),
-        credentials: 'include',
+      const response = await apiClient.get('/v1/bookings', {
+        params: Object.fromEntries(params.entries()),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.data || [];
-      }
-      return null;
+      const data = response.data;
+      return data.data || [];
     } catch (error) {
       console.error('Error fetching bookings:', error);
       return null;

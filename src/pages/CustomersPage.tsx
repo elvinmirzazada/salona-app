@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/customers.css';
 
 interface Customer {
@@ -52,18 +52,9 @@ const CustomersPage: React.FC = () => {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/v1/companies/customers`, {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCustomers(data.data || []);
-      } else {
-        console.error('Failed to fetch customers');
-        // For demo purposes, use mock data if API fails
-        setCustomers(generateMockCustomers());
-      }
+      const response = await apiClient.get('/v1/companies/customers');
+      const data = response.data;
+      setCustomers(data.data || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
       // For demo purposes, use mock data if API fails
@@ -453,4 +444,3 @@ const CustomersPage: React.FC = () => {
 };
 
 export default CustomersPage;
-

@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI } from '../utils/api';
-import { API_BASE_URL } from '../config/api';
-import { fetchWithAuth } from '../utils/fetchWithAuth';
+import { apiClient } from '../utils/api';
 
 interface User {
   id: string;
@@ -43,14 +42,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchNotificationsCount = async () => {
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications`);
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const unreadCount = data.data.filter((n: any) => n.status !== 'read').length;
-          setUnreadNotificationsCount(unreadCount);
-        }
+      const response = await apiClient.get('/v1/notifications');
+      const data = response.data;
+      if (data.success && data.data) {
+        const unreadCount = data.data.filter((n: any) => n.status !== 'read').length;
+        setUnreadNotificationsCount(unreadCount);
       }
     } catch (error) {
       console.error('Error fetching notifications count:', error);
@@ -58,54 +54,57 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const fetchUserData = async () => {
+  const applyUserResponse = (response: any) => {
+    if (response.data && response.data.data) {
+      let userData = null;
+      let userRole = null;
+      let userRoleStatus = null;
+      let userCompanyId = null;
+
+      // When company exists: data.data.user contains user info
+      if (response.data.data.user) {
+        userData = response.data.data.user;
+        userRole = response.data.data.role;
+        userRoleStatus = response.data.data.status;
+        userCompanyId = response.data.data.company_id;
+      } else {
+        // When no company: data.data contains user info directly
+        userData = response.data.data;
+        userRole = userData.role;
+        userRoleStatus = userData.role_status || userData.status;
+        userCompanyId = userData.company_id;
+      }
+
+      // Merge all user data
+      const fullUserData: User = {
+        ...userData,
+        role: userRole || userData.role,
+        role_status: userRoleStatus || userData.role_status || userData.status,
+        company_id: userCompanyId || userData.company_id
+      };
+
+      console.log('UserContext - Extracted user data:', fullUserData);
+      setUser(fullUserData);
+
+      // Fetch notifications count if user is authenticated
+      if (fullUserData) {
+        void fetchNotificationsCount();
+      }
+    } else {
+      console.error('UserContext - Invalid response structure');
+      setUser(null);
+      setError('Failed to load user data');
+    }
+  };
+
+  const fetchUserData = async (options?: { skipAuthRefresh?: boolean }) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await authAPI.getCurrentUser();
+      const response = await authAPI.getCurrentUser({ skipAuthRefresh: options?.skipAuthRefresh });
       console.log('UserContext - Full API response:', response);
-
-      if (response.data && response.data.data) {
-        let userData = null;
-        let userRole = null;
-        let userRoleStatus = null;
-        let userCompanyId = null;
-
-        // When company exists: data.data.user contains user info
-        if (response.data.data.user) {
-          userData = response.data.data.user;
-          userRole = response.data.data.role;
-          userRoleStatus = response.data.data.status;
-          userCompanyId = response.data.data.company_id;
-        } else {
-          // When no company: data.data contains user info directly
-          userData = response.data.data;
-          userRole = userData.role;
-          userRoleStatus = userData.role_status || userData.status;
-          userCompanyId = userData.company_id;
-        }
-
-        // Merge all user data
-        const fullUserData: User = {
-          ...userData,
-          role: userRole || userData.role,
-          role_status: userRoleStatus || userData.role_status || userData.status,
-          company_id: userCompanyId || userData.company_id
-        };
-
-        console.log('UserContext - Extracted user data:', fullUserData);
-        setUser(fullUserData);
-
-        // Fetch notifications count if user is authenticated
-        if (fullUserData) {
-          await fetchNotificationsCount();
-        }
-      } else {
-        console.error('UserContext - Invalid response structure');
-        setUser(null);
-        setError('Failed to load user data');
-      }
+      applyUserResponse(response);
     } catch (err: any) {
       console.error('UserContext - Failed to fetch user:', err);
       
@@ -114,6 +113,37 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('UserContext - User not authenticated (401)');
         setUser(null);
         setError(null); // Don't show error for unauthenticated state
+      } else {
+        setError('Failed to fetch user data');
+      }
+    } finally {
+      setLoading(false);
+      setIsInitialized(true);
+    }
+  };
+
+  const initializeUser = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await authAPI.getCurrentUser({ skipAuthRefresh: true });
+      console.log('UserContext - Full API response:', response);
+      applyUserResponse(response);
+    } catch (err: any) {
+      console.error('UserContext - Failed to fetch user:', err);
+
+      if (err?.response?.status === 401) {
+        try {
+          await authAPI.refreshToken();
+          const retryResponse = await authAPI.getCurrentUser({ skipAuthRefresh: true });
+          console.log('UserContext - Full API response (after refresh):', retryResponse);
+          applyUserResponse(retryResponse);
+        } catch (refreshError) {
+          console.log('UserContext - Session refresh failed, treating as logged out.');
+          setUser(null);
+          setError(null);
+        }
       } else {
         setError('Failed to fetch user data');
       }
@@ -139,7 +169,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Only fetch on initial mount and skip for public routes
     if (!isInitialized && !isPublicRoute()) {
-      fetchUserData();
+      initializeUser();
     } else if (!isInitialized && isPublicRoute()) {
       // For public routes, just mark as initialized without fetching user
       setLoading(false);
@@ -196,4 +226,3 @@ export const useUser = () => {
   }
   return context;
 };
-

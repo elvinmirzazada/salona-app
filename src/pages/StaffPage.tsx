@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/staff.css';
 
 interface StaffMember {
@@ -104,16 +104,9 @@ const StaffPage: React.FC = () => {
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/v1/companies/users`, {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStaff(data.data || []);
-      } else {
-        console.error('Failed to fetch staff');
-      }
+      const response = await apiClient.get('/v1/companies/users');
+      const data = response.data;
+      setStaff(data.data || []);
     } catch (error) {
       console.error('Error fetching staff:', error);
     } finally {
@@ -126,53 +119,40 @@ const StaffPage: React.FC = () => {
       setInvitationsLoading(true);
       setInvitationsError(null);
 
-      // Try the main endpoint first
-      let response = await fetch(`${API_BASE_URL}/v1/companies/all/invitations`, {
-        credentials: 'include'
-      });
+      let payload: any = null;
 
-      // If main endpoint fails with the async session error, try alternative endpoint
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (errorData.message && errorData.message.includes("'AsyncSession' object has no attribute 'query'")) {
+      try {
+        const response = await apiClient.get('/v1/companies/all/invitations');
+        payload = response.data;
+      } catch (error: any) {
+        const errorData = error?.response?.data;
+        if (errorData?.message && errorData.message.includes("'AsyncSession' object has no attribute 'query'")) {
           console.log('Main endpoint failed with async session error, trying alternative...');
-          response = await fetch(`${API_BASE_URL}/v1/invitations`, {
-            credentials: 'include'
-          });
+          const fallbackResponse = await apiClient.get('/v1/invitations');
+          payload = fallbackResponse.data;
+        } else {
+          throw error;
         }
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        setInvitations(data.data || data || []);
-        setInvitationsError(null);
-      } else {
-        // Parse error response
-        let errorMessage = 'Failed to fetch invitations';
-        try {
-          const errorData = await response.json();
-          if (errorData.message) {
-            errorMessage = errorData.message;
-            console.error('Invitations API Error:', errorData);
+      setInvitations(payload?.data || payload || []);
+      setInvitationsError(null);
+    } catch (error: any) {
+      // Parse error response
+      let errorMessage = 'Failed to fetch invitations';
+      const errorData = error?.response?.data;
 
-            // Check for specific backend error
-            if (errorData.message.includes("'AsyncSession' object has no attribute 'query'")) {
-              errorMessage = "Database configuration issue - please contact your system administrator";
-            }
-          }
-        } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
+      if (errorData?.message) {
+        errorMessage = errorData.message;
+        console.error('Invitations API Error:', errorData);
+
+        if (errorData.message.includes("'AsyncSession' object has no attribute 'query'")) {
+          errorMessage = 'Database configuration issue - please contact your system administrator';
         }
-
-        console.error('Failed to fetch invitations:', response.status, errorMessage);
-        setInvitationsError(errorMessage);
-
-        // Set empty array so UI doesn't show loading forever
-        setInvitations([]);
       }
-    } catch (error) {
-      console.error('Error fetching invitations:', error);
-      setInvitationsError('Network error while loading invitations. Please check your connection.');
+
+      console.error('Failed to fetch invitations:', error?.response?.status, errorMessage);
+      setInvitationsError(errorMessage);
       setInvitations([]);
     } finally {
       setInvitationsLoading(false);
@@ -221,16 +201,8 @@ const StaffPage: React.FC = () => {
     if (!confirm('Are you sure you want to delete this staff member?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/companies/users/${staffId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setStaff(staff.filter(s => s.id !== staffId));
-      } else {
-        showMessage('error', 'Failed to delete staff member');
-      }
+      await apiClient.delete(`/v1/companies/users/${staffId}`);
+      setStaff(staff.filter(s => s.id !== staffId));
     } catch (error) {
       console.error('Error deleting staff:', error);
       showMessage('error', 'Failed to delete staff member');
@@ -239,18 +211,16 @@ const StaffPage: React.FC = () => {
 
   const handleResendInvitation = async (invitationId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/companies/invitations/${invitationId}/resend`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const response = await apiClient.post(`/v1/companies/invitations/${invitationId}/resend`);
+      const data = response.data;
 
-      if (response.ok && data.success) {
-        showMessage('success', 'Invitation resent successfully!');
-        fetchInvitations();
-      } else {
+      if (data?.success === false) {
         showMessage('error', 'Failed to resend invitation' + (data.message ? `: ${data.message}` : ''));
+        return;
       }
+
+      showMessage('success', 'Invitation resent successfully!');
+      fetchInvitations();
     } catch (error) {
       console.error('Error resending invitation:', error);
       showMessage('error', 'Failed to resend invitation');
@@ -261,16 +231,8 @@ const StaffPage: React.FC = () => {
     if (!confirm('Are you sure you want to delete this invitation?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/invitations/${invitationId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setInvitations(invitations.filter(i => i.id !== invitationId));
-      } else {
-        showMessage('error', 'Failed to delete invitation');
-      }
+      await apiClient.delete(`/v1/invitations/${invitationId}`);
+      setInvitations(invitations.filter(i => i.id !== invitationId));
     } catch (error) {
       console.error('Error deleting invitation:', error);
       showMessage('error', 'Failed to delete invitation');
@@ -289,10 +251,10 @@ const StaffPage: React.FC = () => {
 
     try {
       const url = modalMode === 'edit' && editingStaff
-        ? `${API_BASE_URL}/v1/companies/members/${editingStaff.user_id}`
-        : `${API_BASE_URL}/v1/companies/invitations`;
+        ? `/v1/companies/members/${editingStaff.user_id}`
+        : `/v1/companies/invitations`;
 
-      const method = modalMode === 'edit' ? 'PUT' : 'POST';
+      const method = modalMode === 'edit' ? 'put' : 'post';
 
       // Convert availability object to list format for API
       const availabilitiesList = Object.keys(formData.availability).map((dayKey) => {
@@ -306,20 +268,21 @@ const StaffPage: React.FC = () => {
         };
       });
 
-      const response = await fetch(url, {
+      const response = await apiClient.request({
+        url,
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        data: {
           email: formData.email,
           role: formData.role,
           availabilities: availabilitiesList
-        }),
-        credentials: 'include'
+        }
       });
 
-      if (response.ok && (modalMode === 'edit' ? await response.json().then(data => data.success) : true)) {
+      const data = response.data;
+      const isEdit = modalMode === 'edit';
+      const success = isEdit ? data?.success !== false : true;
+
+      if (success) {
         if (modalMode === 'add') {
           alert('Invitation sent successfully');
           fetchInvitations();
@@ -329,12 +292,16 @@ const StaffPage: React.FC = () => {
         }
         setShowModal(false);
       } else {
-        const errorData = await response.json();
-        alert(errorData.message || `Failed to ${modalMode === 'edit' ? 'update' : 'invite'} staff member`);
+        alert(data?.message || `Failed to ${modalMode === 'edit' ? 'update' : 'invite'} staff member`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving staff:', error);
-      alert(`Failed to ${modalMode === 'edit' ? 'update' : 'invite'} staff member`);
+      const message = error?.response?.data?.message;
+      if (message) {
+        alert(message);
+      } else {
+        alert(`Failed to ${modalMode === 'edit' ? 'update' : 'invite'} staff member`);
+      }
     } finally {
       setSaving(false);
     }

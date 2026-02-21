@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
-import { fetchWithAuth } from '../utils/fetchWithAuth';
+import { apiClient } from '../utils/api';
 import '../styles/notifications.css';
 
 interface Notification {
@@ -52,13 +51,10 @@ const NotificationsPage: React.FC = () => {
 
   const loadTotalCount = async () => {
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications/all-count`);
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data && typeof data.data.all_count === 'number') {
-          setTotalCount(data.data.all_count);
-        }
+      const response = await apiClient.get('/v1/notifications/all-count');
+      const data = response.data;
+      if (data.success && data.data && typeof data.data.all_count === 'number') {
+        setTotalCount(data.data.all_count);
       }
     } catch (error) {
       console.error('Error loading total notification count:', error);
@@ -70,34 +66,31 @@ const NotificationsPage: React.FC = () => {
       setLoading(true);
 
       // Build query parameters
-      const params = new URLSearchParams({
+      const params: Record<string, string> = {
         page: currentPage.toString(),
         per_page: itemsPerPage.toString()
-      });
+      };
 
       // Add filter parameter based on current filter
       if (currentFilter !== 'all') {
         if (currentFilter === 'unread') {
-          params.append('status', 'unread');
+          params.status = 'unread';
         } else if (currentFilter === 'booking') {
-          params.append('type', 'booking,booking_created');
+          params.type = 'booking,booking_created';
         } else {
-          params.append('type', currentFilter);
+          params.type = currentFilter;
         }
       }
 
-      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications?${params.toString()}`);
+      const response = await apiClient.get('/v1/notifications', { params });
+      const data = response.data;
+      if (data.success && data.data) {
+        setNotifications(data.data);
+        setFilteredNotifications(data.data);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setNotifications(data.data);
-          setFilteredNotifications(data.data);
-
-          // Update pagination info from API response
-          if (data.pagination) {
-            setTotalPages(data.pagination.total_pages || Math.ceil(data.pagination.total / itemsPerPage));
-          }
+        // Update pagination info from API response
+        if (data.pagination) {
+          setTotalPages(data.pagination.total_pages || Math.ceil(data.pagination.total / itemsPerPage));
         }
       }
     } catch (error) {
@@ -111,20 +104,15 @@ const NotificationsPage: React.FC = () => {
   const markAsRead = async (notificationId: string) => {
     setMarkingAsRead(notificationId);
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications/mark-as-read/${notificationId}`, {
-        method: 'POST'
-      });
-
-      if (response.ok) {
-        setNotifications(notifications.map(n =>
-          n.id === notificationId ? { ...n, status: 'read' } : n
-        ));
-        showSuccessMessage('Notification marked as read');
-        // Refresh notification count in UserContext
-        await refreshNotificationsCount();
-        // Reload notifications to get updated data
-        await loadNotifications();
-      }
+      await apiClient.post(`/v1/notifications/mark-as-read/${notificationId}`);
+      setNotifications(notifications.map(n =>
+        n.id === notificationId ? { ...n, status: 'read' } : n
+      ));
+      showSuccessMessage('Notification marked as read');
+      // Refresh notification count in UserContext
+      await refreshNotificationsCount();
+      // Reload notifications to get updated data
+      await loadNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
     } finally {
@@ -149,17 +137,12 @@ const NotificationsPage: React.FC = () => {
   const markAllAsRead = async () => {
     try {
       setMarkingAllAsRead(true);
-      const response = await fetchWithAuth(`${API_BASE_URL}/v1/notifications/mark-all/as-read`, {
-        method: 'PATCH'
-      });
-
-      if (response.ok) {
-        showSuccessMessage('All notifications marked as read');
-        // Refresh notification count in UserContext
-        await refreshNotificationsCount();
-        // Reload notifications to get updated data
-        await loadNotifications();
-      }
+      await apiClient.patch('/v1/notifications/mark-all/as-read');
+      showSuccessMessage('All notifications marked as read');
+      // Refresh notification count in UserContext
+      await refreshNotificationsCount();
+      // Reload notifications to get updated data
+      await loadNotifications();
     } catch (error) {
       console.error('Error marking all as read:', error);
     } finally {
@@ -178,12 +161,8 @@ const NotificationsPage: React.FC = () => {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/notifications/${notificationId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
+      await apiClient.delete(`/v1/notifications/${notificationId}`);
+      {
         showSuccessMessage('Notification deleted successfully');
         // Refresh notification count in UserContext
         await refreshNotificationsCount();
@@ -216,25 +195,20 @@ const NotificationsPage: React.FC = () => {
     try {
       setLoadingBookingDetails(true);
       console.log('Fetching booking details for booking_id:', bookingId);
-      const response = await fetchWithAuth(`${API_BASE_URL}/v1/bookings/${bookingId}`);
+      const response = await apiClient.get(`/v1/bookings/${bookingId}`);
+      const data = response.data;
+      console.log('Booking API response:', data);
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Booking API response:', data);
-
-        if (data.success && data.data) {
-          // Attach the full booking data to the notification
-          const updatedNotification = {
-            ...notification,
-            data: typeof notification.data === 'string'
-              ? JSON.stringify({ ...JSON.parse(notification.data), booking: data.data })
-              : { ...notification.data, booking: data.data }
-          };
-          setSelectedNotification(updatedNotification);
-          console.log('Updated notification with booking data:', updatedNotification);
-        }
-      } else {
-        console.error('Failed to fetch booking details:', response.status);
+      if (data.success && data.data) {
+        // Attach the full booking data to the notification
+        const updatedNotification = {
+          ...notification,
+          data: typeof notification.data === 'string'
+            ? JSON.stringify({ ...JSON.parse(notification.data), booking: data.data })
+            : { ...notification.data, booking: data.data }
+        };
+        setSelectedNotification(updatedNotification);
+        console.log('Updated notification with booking data:', updatedNotification);
       }
     } catch (error) {
       console.error('Error fetching booking details:', error);
@@ -1046,4 +1020,3 @@ const NotificationsPage: React.FC = () => {
 };
 
 export default NotificationsPage;
-

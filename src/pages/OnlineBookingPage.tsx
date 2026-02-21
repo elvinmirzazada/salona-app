@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/online-booking.css';
 
 interface Company {
@@ -32,22 +32,17 @@ const OnlineBookingPage: React.FC = () => {
 
   const loadCompanyData = async (companyId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/companies/${companyId}`, {
-        credentials: 'include'
-      });
+      const response = await apiClient.get(`/v1/companies/${companyId}`);
+      const data = response.data;
+      if (data.success && data.data) {
+        setCompany(data.data);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setCompany(data.data);
-
-          // Construct booking URL
-          // Use window.location to get the current domain
-          const currentDomain = window.location.origin;
-          const slug = data.data.slug || '';
-          const url = slug ? `${currentDomain}/booking/${slug}` : '';
-          setBookingUrl(url);
-        }
+        // Construct booking URL
+        // Use window.location to get the current domain
+        const currentDomain = window.location.origin;
+        const slug = data.data.slug || '';
+        const url = slug ? `${currentDomain}/booking/${slug}` : '';
+        setBookingUrl(url);
       }
     } catch (error) {
       console.error('Error loading company data:', error);
@@ -177,4 +172,3 @@ const OnlineBookingPage: React.FC = () => {
 };
 
 export default OnlineBookingPage;
-

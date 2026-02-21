@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/telegram-bot.css';
 //
 // interface TelegramConfig {
@@ -34,17 +34,12 @@ const TelegramBotPage: React.FC = () => {
 
   const loadTelegramConfig = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/telegram/bot`, {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setBotToken(data.data.bot_token || '');
-          setChatId(data.data.chat_id || '');
-          setIsConnected(data.data.status === 'active');
-        }
+      const response = await apiClient.get('/v1/telegram/bot');
+      const data = response.data;
+      if (data.success && data.data) {
+        setBotToken(data.data.bot_token || '');
+        setChatId(data.data.chat_id || '');
+        setIsConnected(data.data.status === 'active');
       }
     } catch (error) {
       console.error('Error loading Telegram config:', error);
@@ -255,4 +250,3 @@ const TelegramBotPage: React.FC = () => {
 };
 
 export default TelegramBotPage;
-

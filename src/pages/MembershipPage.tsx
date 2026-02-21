@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/membership.css';
 
 interface MembershipPlan {
@@ -45,28 +45,18 @@ const MembershipPage: React.FC = () => {
       setError(false);
 
       // Load membership plans
-      const plansResponse = await fetch(`${API_BASE_URL}/v1/memberships/plans`, {
-        credentials: 'include'
-      });
-
-      if (plansResponse.ok) {
-        const plansData = await plansResponse.json();
-        if (plansData.success && plansData.data) {
-          setPlans(plansData.data);
-        }
+      const plansResponse = await apiClient.get('/v1/memberships/plans');
+      const plansData = plansResponse.data;
+      if (plansData.success && plansData.data) {
+        setPlans(plansData.data);
       }
 
       // Load active subscription if user has company
       if (user?.company_id) {
-        const subscriptionResponse = await fetch(`${API_BASE_URL}/v1/memberships/active-plan`, {
-          credentials: 'include'
-        });
-
-        if (subscriptionResponse.ok) {
-          const subscriptionData = await subscriptionResponse.json();
-          if (subscriptionData.success && subscriptionData.data) {
-            setActivePlan(subscriptionData.data);
-          }
+        const subscriptionResponse = await apiClient.get('/v1/memberships/active-plan');
+        const subscriptionData = subscriptionResponse.data;
+        if (subscriptionData.success && subscriptionData.data) {
+          setActivePlan(subscriptionData.data);
         }
       }
     } catch (error) {
@@ -102,15 +92,10 @@ const MembershipPage: React.FC = () => {
       setProcessingPlanId(planId);
 
       // Create checkout session
-      const response = await fetch(`${API_BASE_URL}/v1/memberships/create-checkout-session/${planId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
+      const response = await apiClient.post(`/v1/memberships/create-checkout-session/${planId}`);
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.url) {
+      if (data?.url) {
         // Open checkout URL in new tab
         window.open(data.url, '_blank');
       } else {
@@ -339,4 +324,3 @@ const MembershipPage: React.FC = () => {
 };
 
 export default MembershipPage;
-

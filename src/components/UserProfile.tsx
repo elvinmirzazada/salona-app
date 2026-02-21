@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/user-profile.css';
 
 interface UserProfileProps {
@@ -59,10 +59,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/v1/users/auth/logout`, {
-        method: 'PUT',
-        credentials: 'include',
-      });
+      await apiClient.put('/v1/users/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -103,4 +100,3 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
 };
 
 export default UserProfile;
-

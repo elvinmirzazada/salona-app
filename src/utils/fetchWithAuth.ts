@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config/api';
+import { clearAuthAndLogout } from './authHelpers';
 
 /**
  * Fetch wrapper that handles 401 errors with automatic token refresh
@@ -40,32 +41,6 @@ const refreshToken = async (): Promise<boolean> => {
   } catch (error) {
     console.error('Token refresh error:', error);
     return false;
-  }
-};
-
-// Helper function to clear auth and logout
-const clearAuthAndLogout = async () => {
-  try {
-    // Call logout endpoint to clear cookies
-    await fetch(`${API_BASE_URL}/v1/users/auth/logout`, {
-      method: 'PUT',
-      credentials: 'include',
-    }).catch(() => {
-      // Ignore logout API errors
-    });
-  } catch (error) {
-    console.error('Error during logout:', error);
-  } finally {
-    // Clear storage
-    localStorage.clear();
-    sessionStorage.clear();
-
-    // Redirect to login page
-    if (window.location.pathname !== '/login' &&
-        window.location.pathname !== '/signup' &&
-        !window.location.pathname.startsWith('/booking/')) {
-      window.location.href = '/login';
-    }
   }
 };
 
@@ -142,4 +117,3 @@ export const fetchWithAuth = async (
 
   return response;
 };
-

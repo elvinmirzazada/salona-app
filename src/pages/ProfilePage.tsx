@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
-import { API_BASE_URL } from '../config/api';
+import { apiClient } from '../utils/api';
 import '../styles/profile.css';
 
 interface User {
@@ -118,18 +118,10 @@ const ProfilePage: React.FC = () => {
         languages: selectedLanguages.join(',')
       };
 
-      const response = await fetch(`${API_BASE_URL}/v1/users/me`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(profileData)
-      });
+      const response = await apiClient.put('/v1/users/me', profileData);
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Profile updated successfully!');
         // Refresh user context to get updated data
         await refreshUser();
@@ -165,15 +157,12 @@ const ProfilePage: React.FC = () => {
 
     setUploadingPhoto(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/users/me/profile-photo`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
+      const response = await apiClient.post('/v1/users/me/profile-photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Profile photo uploaded successfully!');
         // Add cache-busting query parameter to force browser to load new image
         const newPhotoUrl = data.data.profile_photo_url + '?t=' + Date.now();
@@ -198,14 +187,10 @@ const ProfilePage: React.FC = () => {
 
     setUploadingPhoto(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/users/me/profile-photo`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await apiClient.delete('/v1/users/me/profile-photo');
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data?.success !== false) {
         showMessage('success', 'Profile photo removed successfully!');
         setProfilePhoto('');
         // Refresh user context to update profile photo
@@ -494,4 +479,3 @@ const ProfilePage: React.FC = () => {
 };
 
 export default ProfilePage;
-
