@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { useClearCache } from '../hooks/useClearCache';
 import { authAPI } from '../utils/api';
+import { clearAuthAndLogout } from '../utils/authHelpers';
 import { useCompanySettings } from '../hooks/useCompanySettings';
 import { saveTimezoneToStorage } from '../utils/timezoneUtils';
 import '../styles/sidebar.css';
@@ -20,7 +21,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { clearUser, setCompanyTimezone } = useUser();
   const { clearAllCache } = useClearCache();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -83,8 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
       clearUser();
       console.log('User context cleared, redirecting to login...');
 
-      // Navigate to login
-      navigate('/login');
+      await clearAuthAndLogout({ skipServerCall: true });
     }
   };
 
@@ -499,4 +498,3 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
 };
 
 export default Sidebar;
-

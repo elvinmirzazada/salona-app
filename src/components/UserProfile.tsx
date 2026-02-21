@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiClient } from '../utils/api';
+import { authAPI } from '../utils/api';
+import { clearAuthAndLogout } from '../utils/authHelpers';
 import '../styles/user-profile.css';
 
 interface UserProfileProps {
@@ -59,14 +60,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
 
   const handleLogout = async () => {
     try {
-      await apiClient.put('/v1/users/auth/logout');
+      await authAPI.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear any local storage if needed
-      localStorage.removeItem('user');
-      // Redirect to login page
-      window.location.href = '/login';
+      await clearAuthAndLogout({ skipServerCall: true });
     }
   };
 
