@@ -161,6 +161,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         '/booking/',
         '/terms-of-service',
         '/privacy-policy',
+        '/login',
+        '/signup',
       ];
 
       // Check if pathname starts with any public path
