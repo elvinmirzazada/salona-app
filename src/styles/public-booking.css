@@ -292,7 +292,7 @@
   gap: 20px;
   position: relative;
   z-index: 1;
-  height: 700px;
+  height: 800px;
 }
 
 /* Main Content */
@@ -1417,6 +1417,8 @@
 @media (max-width: 1024px) {
   .public-booking-page .booking-container {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 700px;
   }
 
   .public-booking-page .booking-summary {
