@@ -359,7 +359,7 @@ const CustomersPage: React.FC = () => {
                                 </td>
                                 <td>
                                   <span className="stat-badge stat-revenue">
-                                    {formatCurrency(customer.total_spent)}
+                                    {formatCurrency(customer.total_spent / 100)}
                                   </span>
                                 </td>
                                 <td>
