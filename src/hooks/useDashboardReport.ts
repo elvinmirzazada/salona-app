@@ -8,6 +8,14 @@ import { ReportsManager } from '../utils/ReportsManager';
 const reportsManager = new ReportsManager();
 
 /**
+ * Clear the ReportsManager in-memory cache.
+ * Call this before refetch() so the internal 5-minute cache doesn't serve stale data.
+ */
+export const clearReportsCache = () => {
+  reportsManager.clearCache();
+};
+
+/**
  * Hook to fetch dashboard report with TanStack Query caching
  * Caching disabled for custom date ranges
  */
@@ -49,13 +57,14 @@ export const useInvalidateReport = () => {
   const queryClient = useQueryClient();
 
   const invalidateReport = (userId: string | undefined, period: string, customStartDate?: string, customEndDate?: string) => {
-    queryClient.invalidateQueries({
+    // Use removeQueries to fully clear cached data so staleTime doesn't prevent a fresh fetch
+    queryClient.removeQueries({
       queryKey: ['dashboard-report', userId, period, customStartDate, customEndDate]
     });
   };
 
   const invalidateAllReports = () => {
-    queryClient.invalidateQueries({
+    queryClient.removeQueries({
       queryKey: ['dashboard-report']
     });
   };

@@ -764,6 +764,13 @@
   font-weight: 500;
 }
 
+/* Table responsive wrapper */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Responsive design */
 /* Language Tabs */
 .language-section {
@@ -835,12 +842,131 @@
 }
 
 @media (max-width: 768px) {
+  /* Page padding */
+  .page-with-sidebar main {
+    padding: 1rem !important;
+  }
+
+  /* Header */
   .header-content {
     flex-direction: column;
     gap: 16px;
-    text-align: center;
+    align-items: flex-start;
+    padding: 16px;
   }
 
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .services-title {
+    font-size: 20px;
+  }
+
+  .services-subtitle {
+    font-size: 13px;
+  }
+
+  .add-service-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  /* Card body */
+  .card-body {
+    padding: 12px;
+  }
+
+  /* Table → Card layout */
+  .services-table thead {
+    display: none;
+  }
+
+  .services-table,
+  .services-table tbody,
+  .services-table tr,
+  .services-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .services-table tbody tr {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .services-table tbody tr:hover {
+    background: #fafafa;
+  }
+
+  .services-table td {
+    padding: 6px 0;
+    border-bottom: none;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  /* Data labels via ::before */
+  .services-table td:nth-child(1)::before { content: 'Service'; }
+  .services-table td:nth-child(2)::before { content: 'Category'; }
+  .services-table td:nth-child(3)::before { content: 'Duration'; }
+  .services-table td:nth-child(4)::before { content: 'Price'; }
+  .services-table td:nth-child(5)::before { content: 'Staff'; }
+  .services-table td:nth-child(6)::before { content: 'Actions'; }
+
+  .services-table td::before {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+
+  /* Hide label for service cell (has its own layout with image + name) */
+  .services-table td:nth-child(1)::before {
+    display: none;
+  }
+
+  /* Service name cell */
+  .services-table td:nth-child(1) > div {
+    gap: 10px;
+  }
+
+  /* Actions row */
+  .service-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-icon {
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+
+  /* Inline edit inputs */
+  .inline-edit-input,
+  .inline-edit-select {
+    font-size: 16px; /* prevents iOS zoom */
+  }
+
+  .inline-edit-input-small {
+    width: 70px;
+    font-size: 16px;
+  }
+
+  /* Editing / saving row */
+  .editing-row {
+    box-shadow: 0 0 0 2px #4f46e5;
+  }
+
+  /* Form */
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -859,6 +985,71 @@
 
   .form-actions button {
     width: 100%;
+    justify-content: center;
+  }
+
+  /* Language tabs */
+  .language-tabs {
+    gap: 0;
+    flex-wrap: nowrap;
+  }
+
+  .language-tab {
+    flex: 1;
+    padding: 0.6rem 0.4rem;
+    font-size: 0.75rem;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-header {
+    padding: 16px 16px 0;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  /* Staff badges on mobile */
+  .staff-assignment {
+    flex-wrap: wrap;
+  }
+
+  /* Saving indicator */
+  .saving-indicator span {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .services-title {
+    font-size: 18px;
+  }
+
+  .services-icon {
+    padding: 8px;
+    font-size: 16px;
+  }
+
+  .service-actions {
+    gap: 6px;
+  }
+
+  .btn-icon {
+    padding: 8px 10px;
   }
 }
 

@@ -266,6 +266,28 @@
     padding: 1rem;
   }
 
+  .settings-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-left: 3.5rem;
+  }
+
+  .settings-header .header-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .settings-header .page-title {
+    font-size: 1.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .tabs-header {
     flex-wrap: nowrap;
   }

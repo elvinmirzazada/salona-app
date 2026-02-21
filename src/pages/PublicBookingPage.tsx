@@ -573,6 +573,7 @@ const PublicBookingPage: React.FC = () => {
         }
       );
 
+
       const data = await res.json();
 
       if (!data.success) {

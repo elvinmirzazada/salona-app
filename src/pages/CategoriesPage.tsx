@@ -477,20 +477,22 @@ const CategoriesPage: React.FC = () => {
                     <p>Loading categories...</p>
                   </div>
                 ) : categories.length > 0 ? (
-                  <table className="categories-table">
-                    <thead>
-                      <tr>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Count</th>
-                        <th>Created Date</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categories.map((category) => renderCategoryRow(category))}
-                    </tbody>
-                  </table>
+                  <div className="table-responsive">
+                    <table className="categories-table">
+                      <thead>
+                        <tr>
+                          <th>Category</th>
+                          <th>Description</th>
+                          <th>Count</th>
+                          <th>Created Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {categories.map((category) => renderCategoryRow(category))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
                   <div className="empty-state">
                     <i className="fas fa-folder-open"></i>

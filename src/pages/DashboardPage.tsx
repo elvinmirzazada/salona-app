@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import UserProfile from '../components/UserProfile';
 import DashboardCharts from '../components/DashboardCharts';
 import { useUser } from '../contexts/UserContext';
-import { useDashboardReport, useInvalidateReport } from '../hooks/useDashboardReport';
+import { useDashboardReport, useInvalidateReport, clearReportsCache } from '../hooks/useDashboardReport';
 import type { ReportData, StaffPerformance } from '../utils/ReportsManager';
 import { exportToPDF, exportToCSV } from '../utils/dashboardExport';
 import '../styles/dashboard.css';
@@ -21,7 +21,7 @@ const DashboardPage: React.FC = () => {
   const [customEndDate, setCustomEndDate] = useState('');
 
   // Use TanStack Query for data fetching with caching
-  const { data: metrics, isLoading, refetch } = useDashboardReport(
+  const { data: metrics, isLoading, isFetching, refetch } = useDashboardReport(
     selectedPeriod,
     customStartDate,
     customEndDate,
@@ -78,12 +78,15 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleManualRefresh = async () => {
-    // Invalidate and refetch the current report
+    // 1. Clear the ReportsManager in-memory cache so it doesn't serve stale data
+    clearReportsCache();
+    // 2. Remove TanStack Query's cached entry so staleTime doesn't block a fresh fetch
     if (selectedPeriod === 'custom' && customStartDate && customEndDate) {
       invalidateReport(user?.id, selectedPeriod, customStartDate, customEndDate);
     } else {
       invalidateReport(user?.id, selectedPeriod);
     }
+    // 3. Trigger a fresh fetch
     await refetch();
   };
 
@@ -218,6 +221,7 @@ const DashboardPage: React.FC = () => {
 
               {/* Dashboard Controls */}
               <div className="dashboard-controls">
+                {/* Desktop: button group */}
                 <div className="period-selector">
                   <button
                     className={`period-btn ${selectedPeriod === 'week' ? 'active' : ''}`}
@@ -249,13 +253,34 @@ const DashboardPage: React.FC = () => {
                   </button>
                 </div>
 
+                {/* Mobile: dropdown */}
+                <div className="period-selector-dropdown">
+                  <i className="fas fa-calendar-alt period-dropdown-icon"></i>
+                  <select
+                    value={selectedPeriod}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'custom') {
+                        handleCustomDateChange();
+                      } else {
+                        handlePeriodChange(val);
+                      }
+                    }}
+                  >
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                    <option value="custom">Custom Dates</option>
+                  </select>
+                </div>
+
                 <div className="export-buttons">
                   <button
                     className="export-btn"
                     onClick={handleManualRefresh}
-                    disabled={isLoading}
+                    disabled={isFetching}
                   >
-                    <i className={`fas ${isLoading ? 'fa-spinner fa-spin' : 'fa-sync-alt'}`}></i>
+                    <i className={`fas ${isFetching ? 'fa-spinner fa-spin' : 'fa-sync-alt'}`}></i>
                     Refresh
                   </button>
                   <button className="export-btn" onClick={handleExportPDF} disabled={!metrics}>
@@ -422,7 +447,7 @@ const DashboardPage: React.FC = () => {
                     </h3>
                     <p className="table-subtitle">Bookings and revenue by staff member</p>
                   </div>
-                  <div className="table-container">
+                  <div className="table-responsive">
                     <table className="performance-table">
                       <thead>
                         <tr>

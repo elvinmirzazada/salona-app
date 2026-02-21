@@ -20,6 +20,8 @@ export interface BookingService {
   };
   category_service: {
     name: string;
+    price: number;
+    discount_price: number;
   };
   price: number;
 }
@@ -328,9 +330,9 @@ export class ReportsManager {
             revenue: 0
           };
         }
-        report.bookings_by_staff[staffId].count += 1;
+        report.bookings_by_staff[staffId].count = 1;
         if (status === 'completed') {
-          report.bookings_by_staff[staffId].revenue += totalPrice;
+          report.bookings_by_staff[staffId].revenue += (service.category_service.discount_price || service.category_service.price || 0) / 100;
         }
 
         // Service data

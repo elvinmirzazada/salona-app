@@ -154,6 +154,57 @@
   transform: none;
 }
 
+/* Period selector dropdown — mobile only, hidden on desktop */
+.period-selector-dropdown {
+  display: none;
+  position: relative;
+}
+
+.period-selector-dropdown select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.75rem 2.5rem 0.75rem 2.75rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  color: #374151;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.2s ease;
+}
+
+.period-selector-dropdown select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.period-dropdown-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6366f1;
+  pointer-events: none;
+  font-size: 0.875rem;
+}
+
+
+.period-selector-dropdown::after {
+  content: '\f107';
+  font-family: 'Font Awesome 6 Free', sans-serif;
+  font-weight: 900;
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+  font-size: 0.875rem;
+}
+
 .date-range-display {
   display: flex;
   align-items: center;
@@ -634,14 +685,39 @@
   font-weight: 600;
 }
 
+/* Table responsive wrapper */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-page {
     padding: 1rem;
   }
 
+  .dashboard-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-left: 3.5rem;
+  }
+
   .dashboard-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+  }
+
+  .dashboard-subtitle {
+    display: none;
   }
 
   .dashboard-controls {
@@ -649,8 +725,13 @@
     align-items: stretch;
   }
 
+  /* Hide button group, show dropdown on mobile */
   .period-selector {
-    justify-content: center;
+    display: none;
+  }
+
+  .period-selector-dropdown {
+    display: block;
   }
 
   .export-buttons {
@@ -665,6 +746,71 @@
     grid-template-columns: 1fr;
   }
 
+  /* Chart cards */
+  .chart-card {
+    padding: 1rem;
+    overflow: hidden;
+  }
+
+  .chart-container {
+    height: 220px;
+  }
+
+  /* Table card */
+  .table-card {
+    padding: 1rem;
+  }
+
+  /* Performance table → card layout */
+  .performance-table thead {
+    display: none;
+  }
+
+  .performance-table,
+  .performance-table tbody,
+  .performance-table tr,
+  .performance-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .performance-table tbody tr {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  .performance-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .performance-table td {
+    padding: 4px 0;
+    border-bottom: none;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .performance-table td::before {
+    font-size: 10px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .performance-table td:nth-child(1)::before { content: 'Staff Member'; }
+  .performance-table td:nth-child(2)::before { content: 'Bookings'; }
+  .performance-table td:nth-child(3)::before { content: 'Revenue'; }
+  .performance-table td:nth-child(4)::before { content: 'Avg. per Booking'; }
+
   .quick-actions-bar {
     padding: 1rem;
   }
@@ -674,9 +820,6 @@
     padding: 0.6rem 1rem;
   }
 
-  .chart-container {
-    height: 250px;
-  }
 
   .insights-grid {
     grid-template-columns: 1fr;
@@ -699,14 +842,6 @@
 }
 
 @media (max-width: 480px) {
-  .period-selector {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .period-btn {
-    justify-content: center;
-  }
 
   .export-buttons {
     flex-direction: column;
