@@ -653,9 +653,9 @@ body {
 }
 
 @media (max-width: 768px) {
-    .nav-links {
-        display: none;
-    }
+    /*.nav-links {*/
+    /*    display: none;*/
+    /*}*/
 
     .auth-container {
         padding: 90px 16px 40px;

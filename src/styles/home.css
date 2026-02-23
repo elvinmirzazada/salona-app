@@ -295,7 +295,7 @@ body {
 .floating-notification {
     position: absolute;
     top: -20px;
-    right: -40px;
+    /*right: -40px;*/
     background: var(--gradient-primary);
     color: white;
     padding: 12px 20px;
@@ -771,88 +771,52 @@ body {
 
     .hero-content {
         padding: 0;
-    }
-
-    .hero-text {
-        width: 100%;
-        max-width: 100%;
-        padding: 0;
-    }
-
-    .hero-title {
-        font-size: 2.2rem;
-        margin-bottom: 20px;
-    }
-
-    .hero-subtitle {
-        font-size: 1rem;
-        margin-bottom: 30px;
-    }
-
-    .hero-buttons {
-        flex-direction: column;
-        gap: 12px;
-        margin-bottom: 40px;
-        width: 100%;
-        padding: 0;
-    }
-
-    .btn {
-        width: 100%;
-        max-width: 100%;
-        justify-content: center;
-        padding: 14px 16px;
-        font-size: 0.9rem;
-        box-sizing: border-box;
         text-align: center;
     }
 
-    .btn i {
-        flex-shrink: 0;
-        font-size: 0.9rem;
+    .hero-text {
+        order: 0;
     }
 
-    .hero-stats {
-        flex-wrap: wrap;
-        gap: 30px;
-        justify-content: center;
-    }
-
-    .stat {
-        flex: 1;
-        min-width: 120px;
-    }
-
-    .stat-number {
-        font-size: 1.5rem;
-    }
-
-    .stat-label {
-        font-size: 0.85rem;
-    }
-
-    .salon-dashboard {
+    .hero-image {
+        order: 1;
         width: 100%;
+    }
+
+    .hero-card {
+        width: 100%;
+        max-width: 380px;
+        margin: 0 auto;
         padding: 20px;
     }
 
+    .hero-buttons {
+        align-items: stretch;
+    }
+
+    .hero-stats {
+        justify-content: center;
+    }
+
     .floating-notification {
-        position: static;
-        margin-top: 20px;
-        font-size: 0.85rem;
-        padding: 10px 16px;
+        /*margin: 16px auto 0;*/
+        justify-content: center;
+        text-align: center;
+        max-width: 320px;
     }
 
     .stats-card {
-        position: static;
-        margin-top: 20px;
-        width: 100%;
+        margin: 16px auto 0;
+        max-width: 260px;
     }
 
-    .hero-shape-1,
-    .hero-shape-2,
-    .hero-shape-3 {
-        opacity: 0.05;
+    .salon-mockup {
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    .about-text {
+        text-align: left;
     }
 
     /* Features Section */
@@ -1023,26 +987,27 @@ body {
     }
 
     .appointment-item {
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
 
-    .appointment-time {
-        min-width: auto;
+    .appointment-details {
+        margin-left: 0;
     }
 
     .appointment-status {
-        margin-left: 76px;
+        margin-left: 0;
     }
 
-    .footer-logo {
-        font-size: 1.3rem;
+    .hero-shape-1,
+    .hero-shape-2,
+    .hero-shape-3 {
+        display: none;
     }
 
-    .footer-logo img,
-    .footer-logo .nav-logo-icon,
-    .footer-logo-icon {
-        width: 40px;
-        height: 40px;
+    .hero-card {
+        max-width: 100%;
+        padding: 16px;
     }
 }
