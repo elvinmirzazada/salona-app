@@ -15,6 +15,9 @@ interface Service {
   discount_price?: number;
   image_url?: string;
   category_id: string;
+  additional_info_ee?: string;
+  additional_info_en?: string;
+  additional_info_ru?: string;
   service_staff?: Array<{
     id: string;
     service_id: string;
@@ -788,6 +791,16 @@ const PublicBookingPage: React.FC = () => {
     return service.name; // fallback to default name
   };
 
+  // Helper function to get localized additional info
+  const getServiceAdditionalInfo = (service: Service): string | null => {
+    const lang = i18n.language;
+    if (lang === 'en' && service.additional_info_en) return service.additional_info_en;
+    if (lang === 'ee' && service.additional_info_ee) return service.additional_info_ee;
+    if (lang === 'ru' && service.additional_info_ru) return service.additional_info_ru;
+    // Fallback: return any available additional info
+    return service.additional_info_en || service.additional_info_ee || service.additional_info_ru || null;
+  };
+
   // Recursive component to render category and its subcategories
   const renderCategory = (category: Category, level: number = 0): React.ReactElement => {
     const hasServices = category.services && category.services.length > 0;
@@ -846,13 +859,16 @@ const PublicBookingPage: React.FC = () => {
                       <img src={service.image_url} alt={service.name} />
                     </div>
                   ) : (
-                    <div className="service-image service-image-placeholder">
+                    <div className="service-image service-image-placeholder no-image">
                       <i className="fas fa-cut"></i>
                     </div>
                   )}
 
                   <div className="service-info">
                     <h4 className="service-name">{getServiceName(service)}</h4>
+                    {getServiceAdditionalInfo(service) && (
+                      <p className="service-additional-info">{getServiceAdditionalInfo(service)}</p>
+                    )}
                     <div className="service-meta">
                       <div className="service-duration">
                         <i className="fas fa-clock"></i>

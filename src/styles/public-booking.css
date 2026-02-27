@@ -749,6 +749,18 @@
   object-fit: cover;
 }
 
+.public-booking-page .service-image-placeholder {
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.public-booking-page .service-image-placeholder i {
+  font-size: 1.25rem;
+  color: #a0aec0;
+}
+
 .public-booking-page .service-info {
   flex: 1;
 }
@@ -758,6 +770,13 @@
   font-weight: 600;
   color: #2d3748;
   margin: 0 0 6px 0;
+}
+
+.public-booking-page .service-additional-info {
+  font-size: 0.75rem;
+  color: #718096;
+  margin: 0 0 6px 0;
+  line-height: 1.4;
 }
 
 .public-booking-page .service-meta {
@@ -1496,6 +1515,10 @@
     width: 48px;
     height: 48px;
     font-size: 1.5rem;
+  }
+
+  .public-booking-page .service-image.no-image {
+    display: none;
   }
 }
 
