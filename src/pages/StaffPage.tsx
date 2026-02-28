@@ -380,236 +380,224 @@ const StaffPage: React.FC = () => {
           </div>
         )}
 
-        <div className="staff-page">
-          {/* Header */}
-          <div className="staff-header">
-            <div className="staff-header-left">
-              {/*<button className="back-button" onClick={() => navigate('/dashboard')}>*/}
-              {/*  <i className="fas fa-arrow-left"></i>*/}
-              {/*</button>*/}
-              <h1 className="page-title">Staff</h1>
-            </div>
-            <UserProfile user={user} />
-          </div>
-
+        <main style={{ padding: '2rem' }}>
           {!user?.company_id ? (
-            <div className="empty-state">
-              <i className="fas fa-building"></i>
-              <h3>No Company Found</h3>
-              <p>You need to create a company first to manage staff members.</p>
-              <button className="btn btn-primary" onClick={() => navigate('/company-settings')}>
-                Create Company
-              </button>
+            <div className="services-card">
+              <div className="card-body">
+                <div className="empty-state">
+                  <i className="fas fa-building"></i>
+                  <h3>No Company Found</h3>
+                  <p>You need to create a company first to manage staff members.</p>
+                  <button className="btn btn-primary" onClick={() => navigate('/company-settings')}>
+                    Create Company
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <>
               {/* Staff Members Section */}
-              <div className="staff-container">
-                <div className="staff-section-header">
+              <div className="services-card">
+                <div className="services-header">
                   <div className="header-content">
                     <div className="header-text">
-                      <h2 className="staff-title">
-                        <i className="fas fa-users staff-icon"></i>
+                      <h2 className="services-title">
+                        <i className="fas fa-users services-icon"></i>
                         Manage Staff
                       </h2>
-                      <p className="staff-subtitle">Create, edit, and organize your staff members</p>
+                      <p className="services-subtitle">Create, edit, and organize your staff members</p>
                     </div>
-                    {isAdmin && (
+                    <div className="header-right">
                       <div className="header-actions">
-                        <button className="add-staff-btn" onClick={handleAddStaff}>
-                          <i className="fas fa-plus-circle"></i>
-                          <span>Invite team member</span>
-                        </button>
+                        {isAdmin && (
+                          <button className="add-service-btn" onClick={handleAddStaff}>
+                            <i className="fas fa-plus-circle"></i>
+                            <span>Invite team member</span>
+                          </button>
+                        )}
                       </div>
-                    )}
+                      <UserProfile user={user} />
+                    </div>
                   </div>
                 </div>
 
-                <div className="staff-table-container">
+                <div className="card-body">
                   {loading ? (
                     <div className="loading-container">
-                      <div className="loading-spinner"></div>
-                      <p>Loading staff members...</p>
+                      <div className="spinner"></div>
                     </div>
-                  ) : staff.length > 0 ? (
-                    <table className="staff-table">
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Phone</th>
-                          <th>Position</th>
-                          <th>Role</th>
-                          <th>Status</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {staff.map((member) => (
-                          <tr key={member.id}>
-                            <td>
-                              <div className="staff-member">
-                                <div className="staff-avatar">
-                                  {member.user.profile_photo_url ? (
-                                    <img
-                                      src={member.user.profile_photo_url}
-                                      alt={`${member.user.first_name} ${member.user.last_name}`}
-                                      onError={(e) => {
-                                        // Fallback to initials if image fails to load
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        target.parentElement!.textContent = getInitials(member.user.first_name, member.user.last_name);
-                                      }}
-                                    />
-                                  ) : (
-                                    getInitials(member.user.first_name, member.user.last_name)
-                                  )}
-                                </div>
-                                <div className="staff-info">
-                                  <h4>{member.user.first_name} {member.user.last_name}</h4>
-                                </div>
-                              </div>
-                            </td>
-                            <td>{member.user.email}</td>
-                            <td>{member.user.phone || '-'}</td>
-                            <td>{member.user.position || '-'}</td>
-                            <td>
-                              <span className={`role-badge role-${member.role}`}>
-                                {getRoleDisplayName(member.role)}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={`status-badge status-${member.status}`}>
-                                {getStatusDisplayName(member.status)}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="action-buttons">
-                                {isAdmin && (
-                                  <>
-                                    <button
-                                      className="action-btn edit"
-                                      onClick={() => handleEditStaff(member)}
-                                      title="Edit"
-                                    >
-                                      <i className="fas fa-edit"></i>
-                                    </button>
-                                    <button
-                                      className="action-btn delete"
-                                      onClick={() => handleDeleteStaff(member.id)}
-                                      title="Delete"
-                                    >
-                                      <i className="fas fa-trash"></i>
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
+                  ) : staff.length === 0 ? (
                     <div className="empty-state">
-                      <i className="fas fa-users"></i>
-                      <h3>No Staff Members</h3>
                       {isAdmin ? (
                         <p>No staff members found. Click "Invite team member" to add your first staff member.</p>
                       ) : (
                         <p>Insufficient privileges. Please contact your administrator.</p>
                       )}
                     </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="services-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Position</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {staff.map((member) => (
+                            <tr key={member.id}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <div className="staff-avatar">
+                                    {member.user.profile_photo_url ? (
+                                      <img
+                                        src={member.user.profile_photo_url}
+                                        alt={`${member.user.first_name} ${member.user.last_name}`}
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          target.parentElement!.textContent = getInitials(member.user.first_name, member.user.last_name);
+                                        }}
+                                      />
+                                    ) : (
+                                      getInitials(member.user.first_name, member.user.last_name)
+                                    )}
+                                  </div>
+                                  <div style={{ fontWeight: 500 }}>{member.user.first_name} {member.user.last_name}</div>
+                                </div>
+                              </td>
+                              <td>{member.user.email}</td>
+                              <td>{member.user.phone || '-'}</td>
+                              <td>{member.user.position || '-'}</td>
+                              <td>
+                                <span className={`role-badge role-${member.role}`}>
+                                  {getRoleDisplayName(member.role)}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-badge status-${member.status}`}>
+                                  {getStatusDisplayName(member.status)}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="service-actions">
+                                  {isAdmin && (
+                                    <>
+                                      <button
+                                        className="btn-icon btn-edit"
+                                        onClick={() => handleEditStaff(member)}
+                                        title="Edit"
+                                      >
+                                        <i className="fas fa-edit"></i>
+                                      </button>
+                                      <button
+                                        className="btn-icon btn-delete"
+                                        onClick={() => handleDeleteStaff(member.id)}
+                                        title="Delete"
+                                      >
+                                        <i className="fas fa-trash"></i>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Pending Invitations Section */}
-              <div className="staff-container">
-                <div className="staff-section-header">
+              <div className="services-card">
+                <div className="services-header invitations-header">
                   <div className="header-content">
                     <div className="header-text">
-                      <h2 className="staff-title">
-                        <i className="fas fa-envelope staff-icon"></i>
+                      <h2 className="services-title">
+                        <i className="fas fa-envelope services-icon"></i>
                         Pending Invitations
                       </h2>
-                      <p className="staff-subtitle">Manage pending team member invitations</p>
+                      <p className="services-subtitle">Manage pending team member invitations</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="staff-table-container">
+                <div className="card-body">
                   {invitationsLoading ? (
                     <div className="loading-container">
-                      <div className="loading-spinner"></div>
-                      <p>Loading invitations...</p>
+                      <div className="spinner"></div>
                     </div>
                   ) : invitationsError ? (
-                    <div className="error-state">
-                      <i className="fas fa-exclamation-triangle"></i>
-                      <h3>Error Loading Invitations</h3>
-                      <p>{invitationsError}</p>
+                    <div className="empty-state">
+                      <p style={{ color: '#dc2626' }}>{invitationsError}</p>
                       <button className="btn btn-primary" onClick={fetchInvitations}>
-                        <i className="fas fa-redo"></i>
-                        Try Again
+                        <i className="fas fa-redo"></i> Try Again
                       </button>
                     </div>
-                  ) : invitations.length > 0 ? (
-                    <table className="staff-table">
-                      <thead>
-                        <tr>
-                          <th>Email</th>
-                          <th>Role</th>
-                          <th>Sent Date</th>
-                          <th>Status</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {invitations.map((invitation) => (
-                          <tr key={invitation.id}>
-                            <td>{invitation.email}</td>
-                            <td>
-                              <span className={`role-badge role-${invitation.role}`}>
-                                {getRoleDisplayName(invitation.role)}
-                              </span>
-                            </td>
-                            <td>{formatDate(invitation.sent_date)}</td>
-                            <td>
-                              <span className={`status-badge status-${invitation.status}`}>
-                                {getStatusDisplayName(invitation.status)}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="action-buttons">
-                                {isAdmin && (
-                                  <>
-                                    <button
-                                      className="action-btn resend"
-                                      onClick={() => handleResendInvitation(invitation.token)}
-                                      title="Resend"
-                                    >
-                                      <i className="fas fa-redo"></i>
-                                    </button>
-                                    <button
-                                      className="action-btn delete"
-                                      onClick={() => handleDeleteInvitation(invitation.id)}
-                                      title="Delete"
-                                    >
-                                      <i className="fas fa-trash"></i>
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
+                  ) : invitations.length === 0 ? (
                     <div className="empty-state">
-                      <i className="fas fa-envelope-open"></i>
-                      <h3>No Pending Invitations</h3>
-                      <p>No pending invitations. All team members have been accepted or invitations have expired.</p>
+                      <p>No pending invitations. All team members have accepted or invitations have expired.</p>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="services-table">
+                        <thead>
+                          <tr>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Sent Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {invitations.map((invitation) => (
+                            <tr key={invitation.id}>
+                              <td>{invitation.email}</td>
+                              <td>
+                                <span className={`role-badge role-${invitation.role}`}>
+                                  {getRoleDisplayName(invitation.role)}
+                                </span>
+                              </td>
+                              <td>{formatDate(invitation.sent_date)}</td>
+                              <td>
+                                <span className={`status-badge status-${invitation.status}`}>
+                                  {getStatusDisplayName(invitation.status)}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="service-actions">
+                                  {isAdmin && (
+                                    <>
+                                      <button
+                                        className="btn-icon btn-resend"
+                                        onClick={() => handleResendInvitation(invitation.token)}
+                                        title="Resend"
+                                      >
+                                        <i className="fas fa-redo"></i>
+                                      </button>
+                                      <button
+                                        className="btn-icon btn-delete"
+                                        onClick={() => handleDeleteInvitation(invitation.id)}
+                                        title="Delete"
+                                      >
+                                        <i className="fas fa-trash"></i>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </div>
@@ -717,7 +705,7 @@ const StaffPage: React.FC = () => {
                         {saving ? (
                           <>
                             <i className="fas fa-spinner fa-spin"></i>
-                            {modalMode === 'add' ? 'Sending...' : 'Saving...'}
+                            {modalMode === 'add' ? ' Sending...' : ' Saving...'}
                           </>
                         ) : (
                           modalMode === 'add' ? 'Send Invitation' : 'Update Staff Member'
@@ -729,7 +717,7 @@ const StaffPage: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
+        </main>
       </div>
     </>
   );
