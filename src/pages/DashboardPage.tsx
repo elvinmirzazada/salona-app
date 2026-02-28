@@ -196,28 +196,28 @@ const DashboardPage: React.FC = () => {
               </div>
 
               {/* Quick Actions Bar */}
-              <div className="quick-actions-bar">
-                <button className="quick-action-btn" onClick={() => navigate('/calendar')}>
-                  <i className="fas fa-calendar-alt"></i>
-                  <span>View Calendar</span>
-                </button>
-                <button className="quick-action-btn" onClick={() => navigate('/services')}>
-                  <i className="fas fa-cut"></i>
-                  <span>Manage Services</span>
-                </button>
-                <button className="quick-action-btn" onClick={() => navigate('/staff')}>
-                  <i className="fas fa-users"></i>
-                  <span>Manage Staff</span>
-                </button>
-                <button className="quick-action-btn" onClick={() => navigate('/customers')}>
-                  <i className="fas fa-user-friends"></i>
-                  <span>View Customers</span>
-                </button>
-                <button className="quick-action-btn" onClick={() => navigate('/company-settings')}>
-                  <i className="fas fa-cog"></i>
-                  <span>Settings</span>
-                </button>
-              </div>
+              {/*<div className="quick-actions-bar">*/}
+              {/*  <button className="quick-action-btn" onClick={() => navigate('/calendar')}>*/}
+              {/*    <i className="fas fa-calendar-alt"></i>*/}
+              {/*    <span>View Calendar</span>*/}
+              {/*  </button>*/}
+              {/*  <button className="quick-action-btn" onClick={() => navigate('/services')}>*/}
+              {/*    <i className="fas fa-cut"></i>*/}
+              {/*    <span>Manage Services</span>*/}
+              {/*  </button>*/}
+              {/*  <button className="quick-action-btn" onClick={() => navigate('/staff')}>*/}
+              {/*    <i className="fas fa-users"></i>*/}
+              {/*    <span>Manage Staff</span>*/}
+              {/*  </button>*/}
+              {/*  <button className="quick-action-btn" onClick={() => navigate('/customers')}>*/}
+              {/*    <i className="fas fa-user-friends"></i>*/}
+              {/*    <span>View Customers</span>*/}
+              {/*  </button>*/}
+              {/*  <button className="quick-action-btn" onClick={() => navigate('/company-settings')}>*/}
+              {/*    <i className="fas fa-cog"></i>*/}
+              {/*    <span>Settings</span>*/}
+              {/*  </button>*/}
+              {/*</div>*/}
 
               {/* Dashboard Controls */}
               <div className="dashboard-controls">

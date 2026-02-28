@@ -1338,7 +1338,7 @@ const CalendarPage: React.FC = () => {
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, luxon3Plugin]}
-              initialView="timeGridWeek"
+              initialView={window.innerWidth <= 768 ? "timeGridDay" : "timeGridWeek"}
               headerToolbar={{
                 left: 'prev,next today datePicker',
                 center: 'title',
