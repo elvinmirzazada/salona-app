@@ -105,7 +105,8 @@ const PublicBookingPage: React.FC = () => {
   const [calendarDays, setCalendarDays] = useState<Date[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [staffSearchQuery, setStaffSearchQuery] = useState('');
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  // Set of category IDs that are collapsed (empty = all expanded by default)
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -404,53 +405,34 @@ const PublicBookingPage: React.FC = () => {
 
   // Handle selecting a service from the search dropdown
   const selectServiceFromDropdown = (serviceId: string) => {
-    // Find the service and its category path
-    const findServiceAndCategory = (cats: Category[]): string | null => {
+    // Find the service and its category path — ensure those categories are expanded
+    const ensureExpanded = (cats: Category[]): boolean => {
       for (const cat of cats) {
-        // Check if service is in this category
         if (cat.services.some(s => s.id === serviceId)) {
-          return cat.id;
+          setCollapsedCategories(prev => {
+            const next = new Set(prev);
+            next.delete(cat.id);
+            return next;
+          });
+          return true;
         }
-        // Check subcategories
-        if (cat.subcategories) {
-          const found = findServiceAndCategory(cat.subcategories);
-          if (found) {
-            // Also expand parent category
-            setExpandedCategories(prev => new Set([...prev, cat.id]));
-            return found;
-          }
+        if (cat.subcategories && ensureExpanded(cat.subcategories)) {
+          setCollapsedCategories(prev => {
+            const next = new Set(prev);
+            next.delete(cat.id);
+            return next;
+          });
+          return true;
         }
       }
-      return null;
+      return false;
     };
-
-    const categoryId = findServiceAndCategory(categories);
-
-    // Expand the category that contains this service
-    if (categoryId) {
-      setExpandedCategories(prev => new Set([...prev, categoryId]));
-    }
-
-    // Toggle the service selection
+    ensureExpanded(categories);
     toggleService(serviceId);
-
-    // Close dropdown and clear search
     setShowSearchDropdown(false);
     setSearchQuery('');
   };
 
-  // Toggle category expansion
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId);
-      } else {
-        newSet.add(categoryId);
-      }
-      return newSet;
-    });
-  };
 
   // Check if category has any services (directly or in subcategories)
   const categoryHasServices = (category: Category): boolean => {
@@ -801,112 +783,144 @@ const PublicBookingPage: React.FC = () => {
     return service.additional_info_en || service.additional_info_ee || service.additional_info_ru || null;
   };
 
-  // Recursive component to render category and its subcategories
-  const renderCategory = (category: Category, level: number = 0): React.ReactElement => {
-    const hasServices = category.services && category.services.length > 0;
-    const hasSubcategories = category.subcategories && category.subcategories.length > 0;
-    const isExpanded = expandedCategories.has(category.id);
+  // Toggle collapse state for a category
+  const toggleCategoryCollapse = (categoryId: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
 
-    // Don't render categories without any services in them or their subcategories
-    if (!categoryHasServices(category)) {
-      return <></>;
-    }
+  // Render individual service card
+  const renderServiceCard = (service: Service): React.ReactElement => {
+    const isSelected = bookingState.selectedServices.has(service.id);
+    const price = service.discount_price && service.discount_price > 0
+      ? service.discount_price
+      : service.price;
+    const hasDiscount = service.discount_price && service.discount_price > 0 && service.discount_price < service.price;
 
     return (
-      <div key={category.id} className={`service-category level-${level}`}>
-        <div className="category-header-wrapper">
-          <div
-            className="category-name-clickable"
-            onClick={() => toggleCategory(category.id)}
-            style={{
-              cursor: 'pointer',
-              paddingLeft: `${level * 16}px`
-            }}
-          >
-            {/* Always show expand/collapse icon for consistency */}
-            <i className={`fas fa-chevron-${isExpanded ? 'down' : 'right'} category-expand-icon`}></i>
-            <h3 className="category-name-text">{category.name}</h3>
-            {hasSubcategories ? (
-              <span className="subcategory-badge">
-                {category.subcategories!.filter(s => categoryHasServices(s)).length} subcategories
-              </span>
-            ) : hasServices ? (
-              <span className="services-count-badge">
-                {category.services.length} service{category.services.length !== 1 ? 's' : ''}
-              </span>
-            ) : null}
+      <div
+        key={service.id}
+        className={`service-card ${isSelected ? 'selected' : ''}`}
+        onClick={() => toggleService(service.id)}
+      >
+        {service.image_url ? (
+          <div className="service-image">
+            <img src={service.image_url} alt={service.name} />
           </div>
-        </div>
-
-        {/* Render services if this category has them and is expanded */}
-        {hasServices && isExpanded && (
-          <div className="services-grid" style={{ marginLeft: `${level * 16}px` }}>
-            {category.services.map(service => {
-              const isSelected = bookingState.selectedServices.has(service.id);
-              const price = service.discount_price && service.discount_price > 0
-                ? service.discount_price
-                : service.price;
-              const hasDiscount = service.discount_price && service.discount_price > 0 && service.discount_price < service.price;
-
-              return (
-                <div
-                  key={service.id}
-                  className={`service-card ${isSelected ? 'selected' : ''}`}
-                  onClick={() => toggleService(service.id)}
-                >
-                  {service.image_url ? (
-                    <div className="service-image">
-                      <img src={service.image_url} alt={service.name} />
-                    </div>
-                  ) : (
-                    <div className="service-image service-image-placeholder no-image">
-                      <i className="fas fa-cut"></i>
-                    </div>
-                  )}
-
-                  <div className="service-info">
-                    <h4 className="service-name">{getServiceName(service)}</h4>
-                    {getServiceAdditionalInfo(service) && (
-                      <p className="service-additional-info">{getServiceAdditionalInfo(service)}</p>
-                    )}
-                    <div className="service-meta">
-                      <div className="service-duration">
-                        <i className="fas fa-clock"></i>
-                        <span>{service.duration} {t('booking.step1.min')}</span>
-                      </div>
-                      <div className="service-price">
-                        {hasDiscount ? (
-                          <>
-                            <span className="original-price">€{(service.price / 100).toFixed(2)}</span>
-                            <span className="current-price">€{(price / 100).toFixed(2)}</span>
-                          </>
-                        ) : (
-                          <span className="current-price">€{(service.price / 100).toFixed(2)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {isSelected && (
-                    <div className="service-selected-badge">
-                      <i className="fas fa-check"></i>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        ) : (
+          <div className="service-image service-image-placeholder no-image">
+            <i className="fas fa-cut"></i>
           </div>
         )}
-
-        {/* Render subcategories if expanded */}
-        {hasSubcategories && isExpanded && (
-          <div className="subcategories-container">
-            {category.subcategories!.map(subcat => renderCategory(subcat, level + 1))}
+        <div className="service-info">
+          <h4 className="service-name">{getServiceName(service)}</h4>
+          {getServiceAdditionalInfo(service) && (
+            <p className="service-additional-info">{getServiceAdditionalInfo(service)}</p>
+          )}
+          <div className="service-meta">
+            <div className="service-duration">
+              <i className="fas fa-clock"></i>
+              <span>{service.duration} {t('booking.step1.min')}</span>
+            </div>
+            <div className="service-price">
+              {hasDiscount ? (
+                <>
+                  <span className="original-price">€{(service.price / 100).toFixed(2)}</span>
+                  <span className="current-price">€{(price / 100).toFixed(2)}</span>
+                </>
+              ) : (
+                <span className="current-price">€{(service.price / 100).toFixed(2)}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        {isSelected && (
+          <div className="service-selected-badge">
+            <i className="fas fa-check"></i>
           </div>
         )}
       </div>
     );
   };
+
+  // Render the full accordion category tree
+  const renderCategoryAccordion = (): React.ReactElement => {
+    const filteredCategories = getFilteredCategories();
+
+    if (filteredCategories.length === 0) {
+      return (
+        <div className="empty-state">
+          <div className="empty-state-icon">🔍</div>
+          <div>{t('booking.step1.noServices')}</div>
+        </div>
+      );
+    }
+
+    const renderCategory = (category: Category, level: number = 0): React.ReactElement => {
+      if (!categoryHasServices(category)) return <React.Fragment key={category.id} />;
+
+      const isCollapsed = collapsedCategories.has(category.id);
+      const hasSubcats = (category.subcategories || []).filter(s => categoryHasServices(s)).length > 0;
+      const directServices = category.services || [];
+      const totalCount = getAllServicesFromCategory(category).length;
+
+      return (
+        <div key={category.id} className={`category-accordion level-${level}`}>
+          {/* Category Header */}
+          <div
+            className={`category-accordion-header ${isCollapsed ? 'collapsed' : 'expanded'}`}
+            onClick={() => toggleCategoryCollapse(category.id)}
+          >
+            <div className="category-accordion-left">
+              {level > 0 && (
+                <span className="category-level-dot" />
+              )}
+              <span className="category-accordion-name">{category.name}</span>
+              <span className="category-accordion-count">{totalCount}</span>
+            </div>
+            <div className="category-accordion-right">
+              <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'} category-accordion-chevron`} />
+            </div>
+          </div>
+
+          {/* Body — visible when not collapsed */}
+          {!isCollapsed && (
+            <div className="category-accordion-body">
+              {/* Direct services of this category */}
+              {directServices.length > 0 && (
+                <div className={`services-grid ${level > 0 ? 'subcategory-services-grid' : ''}`}>
+                  {directServices.map(service => renderServiceCard(service))}
+                </div>
+              )}
+
+              {/* Subcategories */}
+              {hasSubcats && (
+                <div className="subcategories-accordion-list">
+                  {(category.subcategories || [])
+                    .filter(s => categoryHasServices(s))
+                    .map(sub => renderCategory(sub, level + 1))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="categories-accordion-container">
+        {filteredCategories.map(cat => renderCategory(cat, 0))}
+      </div>
+    );
+  };
+
 
   if (loading) {
     return (
@@ -1104,18 +1118,9 @@ const PublicBookingPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Services by Category */}
+                {/* Services by Category - Accordion Layout */}
                 <div className="step-content">
-                  <div className="services-container">
-                    {getFilteredCategories().map(category => renderCategory(category, 0))}
-                  </div>
-
-                  {getFilteredCategories().length === 0 && (
-                    <div className="empty-state">
-                      <div className="empty-state-icon">🔍</div>
-                      <div>{t('booking.step1.noServices')}</div>
-                    </div>
-                  )}
+                  {renderCategoryAccordion()}
                 </div>
 
                 <div className="step-navigation">

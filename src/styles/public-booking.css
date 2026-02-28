@@ -619,99 +619,229 @@
   background: #a0aec0;
 }
 
-/* Services Grid */
-.public-booking-page .service-category {
-  margin-bottom: 20px;
+/* ============================================
+   Category Accordion Layout
+   ============================================ */
+
+.public-booking-page .categories-accordion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.public-booking-page .category-header-wrapper {
-  margin-bottom: 12px;
+/* Top-level category block */
+.public-booking-page .category-accordion {
+  border-radius: 14px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid #eef0f6;
+  transition: box-shadow 0.2s ease;
 }
 
-.public-booking-page .category-name-clickable {
+.public-booking-page .category-accordion:hover {
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.12);
+}
+
+/* Subcategory blocks are inset */
+.public-booking-page .category-accordion.level-1 {
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1.5px solid #f0f2fa;
+  background: #fafbff;
+}
+
+.public-booking-page .category-accordion.level-2 {
+  border-radius: 8px;
+  box-shadow: none;
+  border: 1.5px solid #f3f4f6;
+  background: #fdfdff;
+}
+
+/* Accordion Header */
+.public-booking-page .category-accordion-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  transition: all 0.2s ease;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+  gap: 12px;
 }
 
-.public-booking-page .category-name-clickable:hover {
-  color: #667eea;
+.public-booking-page .category-accordion.level-0 .category-accordion-header {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f3f0ff 100%);
+  border-bottom: 1.5px solid #eef0f6;
 }
 
-.public-booking-page .category-expand-icon {
-  font-size: 0.75rem;
-  color: #6b7280;
-  transition: transform 0.2s ease;
+.public-booking-page .category-accordion.level-0 .category-accordion-header.collapsed {
+  border-bottom: none;
 }
 
-.public-booking-page .category-name-text {
-  font-size: 0.938rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0;
+.public-booking-page .category-accordion.level-1 .category-accordion-header {
+  background: #f5f6fe;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef0f6;
+}
+
+.public-booking-page .category-accordion.level-1 .category-accordion-header.collapsed {
+  border-bottom: none;
+}
+
+.public-booking-page .category-accordion.level-2 .category-accordion-header {
+  background: #f9f9fd;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f2fa;
+}
+
+.public-booking-page .category-accordion.level-2 .category-accordion-header.collapsed {
+  border-bottom: none;
+}
+
+.public-booking-page .category-accordion-header:hover {
+  filter: brightness(0.97);
+}
+
+/* Left side of header */
+.public-booking-page .category-accordion-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex: 1;
+  min-width: 0;
 }
 
-.public-booking-page .subcategory-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background: #e5e7eb;
-  color: #6b7280;
-  border-radius: 12px;
-  font-size: 0.688rem;
-  font-weight: 500;
-  margin-left: auto;
+/* Level indicator dot for subcategories */
+.public-booking-page .category-level-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  flex-shrink: 0;
 }
 
-.public-booking-page .services-count-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background: #dbeafe;
-  color: #1e40af;
-  border-radius: 12px;
-  font-size: 0.688rem;
-  font-weight: 500;
-  margin-left: auto;
+.public-booking-page .category-accordion.level-2 .category-level-dot {
+  width: 6px;
+  height: 6px;
+  background: #a78bfa;
 }
 
-.public-booking-page .subcategories-container {
-  margin-top: 12px;
-  border-left: 2px solid #f3f4f6;
-  padding-left: 12px;
-}
-
-.public-booking-page .service-category.level-0 .category-name-text {
-  font-size: 1rem;
+/* Category name */
+.public-booking-page .category-accordion-name {
   font-weight: 700;
+  color: #1a202c;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.public-booking-page .service-category.level-1 .category-name-text {
-  font-size: 0.875rem;
+.public-booking-page .category-accordion.level-1 .category-accordion-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.public-booking-page .category-accordion.level-2 .category-accordion-name {
+  font-size: 0.85rem;
   font-weight: 600;
   color: #4b5563;
 }
 
-.public-booking-page .service-category.level-2 .category-name-text {
-  font-size: 0.813rem;
-  font-weight: 500;
-  color: #6b7280;
+/* Service count badge */
+.public-booking-page .category-accordion-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea22, #764ba222);
+  color: #667eea;
+  border: 1px solid #667eea33;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
 }
 
-.public-booking-page .services-container {
+.public-booking-page .category-accordion.level-1 .category-accordion-count {
+  background: #ede9fe;
+  color: #7c3aed;
+  border-color: #c4b5fd44;
+}
+
+.public-booking-page .category-accordion.level-2 .category-accordion-count {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+  font-size: 0.68rem;
+}
+
+/* Chevron icon */
+.public-booking-page .category-accordion-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.public-booking-page .category-accordion-chevron {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  transition: transform 0.25s ease, color 0.2s ease;
+}
+
+.public-booking-page .category-accordion-header:hover .category-accordion-chevron {
+  color: #667eea;
+}
+
+/* Accordion body */
+.public-booking-page .category-accordion-body {
+  padding: 16px 20px 20px;
+  animation: accordionFadeIn 0.2s ease;
+}
+
+.public-booking-page .category-accordion.level-1 .category-accordion-body {
+  padding: 12px 16px 16px;
+}
+
+.public-booking-page .category-accordion.level-2 .category-accordion-body {
+  padding: 10px 14px 14px;
+}
+
+@keyframes accordionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subcategories list inside a category */
+.public-booking-page .subcategories-accordion-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e7eb;
 }
 
+/* Services Grid */
 .public-booking-page .services-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
-  margin-top: 8px;
+}
+
+.public-booking-page .subcategory-services-grid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
 }
 
 .public-booking-page .service-card {
@@ -722,6 +852,8 @@
   transition: all 0.3s ease;
   position: relative;
   background: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .public-booking-page .service-card:hover {
@@ -740,6 +872,7 @@
   height: 60px;
   border-radius: 6px;
   overflow: hidden;
+
   margin-bottom: 10px;
 }
 
@@ -748,6 +881,7 @@
   height: 100%;
   object-fit: cover;
 }
+
 
 .public-booking-page .service-image-placeholder {
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
@@ -763,6 +897,8 @@
 
 .public-booking-page .service-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .public-booking-page .service-name {
@@ -784,6 +920,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 .public-booking-page .service-duration {
@@ -1520,5 +1658,25 @@
   .public-booking-page .service-image.no-image {
     display: none;
   }
+
+  /* Accordion responsive */
+  .public-booking-page .category-accordion-header {
+    padding: 14px 16px;
+  }
+
+  .public-booking-page .category-accordion-name {
+    font-size: 0.9rem;
+  }
+
+  .public-booking-page .category-accordion-body {
+    padding: 12px 16px 16px;
+  }
+
+  .public-booking-page .subcategories-accordion-list {
+    margin-top: 12px;
+    padding-top: 12px;
+    gap: 8px;
+  }
 }
+
 
