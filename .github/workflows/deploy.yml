@@ -45,4 +45,4 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           TARGET_DIR: ${{ secrets.SSH_TARGET_DIR }}
         run: |
-          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cp "$HOME/.env_ui" "${{ secrets.SSH_TARGET_DIR }}/.env" && cd $TARGET_DIR && docker compose up --build -d"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cp "/root/.env_ui" "${{ secrets.SSH_TARGET_DIR }}/.env" && cd $TARGET_DIR && docker compose up --build -d"
