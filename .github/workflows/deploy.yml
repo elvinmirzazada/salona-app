@@ -1,0 +1,48 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SSH_HOST: ${{ secrets.SERVER_IP }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync Files
+        env:
+          SSH_USER: ${{ secrets.SERVER_USER }}
+          SSH_HOST: ${{ secrets.SERVER_IP }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR }}
+        run: |
+          rsync -az --delete \
+            --exclude .git \
+            --exclude node_modules \
+            --exclude dist \
+            -e "ssh -p $SSH_PORT" \
+            ./ "$SSH_USER@$SSH_HOST:$TARGET_DIR"
+
+      - name: Build And Run
+        env:
+          SSH_USER: ${{ secrets.SERVER_USER }}
+          SSH_HOST: ${{ secrets.SERVER_IP }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR }}
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cp "$HOME/.env_ui" "${{ secrets.SSH_TARGET_DIR }}/.env" && cd $TARGET_DIR && docker compose up --build -d"
