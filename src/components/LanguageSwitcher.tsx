@@ -12,27 +12,40 @@ const LanguageSwitcher: React.FC = () => {
 
   return (
     <div className="language-switcher">
-      <button
-        className={`lang-btn ${i18n.language === 'ee' ? 'active' : ''}`}
-        onClick={() => changeLanguage('ee')}
+      {/* Desktop: pill buttons */}
+      <div className="lang-btn-group">
+        <button
+          className={`lang-btn ${i18n.language === 'ee' ? 'active' : ''}`}
+          onClick={() => changeLanguage('ee')}
+        >
+          EE
+        </button>
+        <button
+          className={`lang-btn ${i18n.language === 'en' ? 'active' : ''}`}
+          onClick={() => changeLanguage('en')}
+        >
+          EN
+        </button>
+        <button
+          className={`lang-btn ${i18n.language === 'ru' ? 'active' : ''}`}
+          onClick={() => changeLanguage('ru')}
+        >
+          RU
+        </button>
+      </div>
+
+      {/* Mobile: native select dropdown */}
+      <select
+        className="lang-select"
+        value={i18n.language}
+        onChange={(e) => changeLanguage(e.target.value)}
       >
-        EE
-      </button>
-      <button
-        className={`lang-btn ${i18n.language === 'en' ? 'active' : ''}`}
-        onClick={() => changeLanguage('en')}
-      >
-        EN
-      </button>
-      <button
-        className={`lang-btn ${i18n.language === 'ru' ? 'active' : ''}`}
-        onClick={() => changeLanguage('ru')}
-      >
-        RU
-      </button>
+        <option value="ee">🇪🇪 EE</option>
+        <option value="en">🇬🇧 EN</option>
+        <option value="ru">🇷🇺 RU</option>
+      </select>
     </div>
   );
 };
 
 export default LanguageSwitcher;
-

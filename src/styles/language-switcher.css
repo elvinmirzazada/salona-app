@@ -13,6 +13,16 @@
   border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
+/* Desktop: show button group, hide select */
+.lang-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.lang-select {
+  display: none;
+}
+
 .lang-btn {
   padding: 8px 16px;
   border: none;
@@ -41,17 +51,34 @@
   outline: none;
 }
 
-/* Mobile responsive */
+/* Mobile: hide buttons, show select dropdown */
 @media (max-width: 768px) {
   .language-switcher {
     top: 10px;
     right: 10px;
-    padding: 3px;
+    padding: 4px 6px;
   }
 
-  .lang-btn {
-    padding: 6px 12px;
+  .lang-btn-group {
+    display: none;
+  }
+
+  .lang-select {
+    display: block;
+    border: none;
+    background: transparent;
+    color: #667eea;
     font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 2px;
+    outline: none;
+    appearance: auto;
+    -webkit-appearance: auto;
+    min-width: 70px;
+  }
+
+  .lang-select:focus {
+    outline: none;
   }
 }
-
