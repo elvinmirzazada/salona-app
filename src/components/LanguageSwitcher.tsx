@@ -40,9 +40,9 @@ const LanguageSwitcher: React.FC = () => {
         value={i18n.language}
         onChange={(e) => changeLanguage(e.target.value)}
       >
-        <option value="ee">🇪🇪 EE</option>
-        <option value="en">🇬🇧 EN</option>
-        <option value="ru">🇷🇺 RU</option>
+        <option value="ee">ET</option>
+        <option value="en">EN</option>
+        <option value="ru">RU</option>
       </select>
     </div>
   );
