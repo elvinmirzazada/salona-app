@@ -6,6 +6,8 @@ services:
     container_name: react_app
     expose:
       - "80"
+    ports:
+      - "80:80"
     environment:
       - PORT=80
     networks:
