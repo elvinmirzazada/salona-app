@@ -12,12 +12,12 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=80
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
 
-EXPOSE 3000
+EXPOSE 80
 CMD ["sh", "-c", "npm run start -- --listen ${PORT}"]
