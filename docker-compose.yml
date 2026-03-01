@@ -3,8 +3,9 @@ version: "3.8"
 services:
   web:
     build: .
-    ports:
-      - "80:80"
+    container_name: react_app
+    expose:
+      - "80"
     environment:
       - PORT=80
     networks:
