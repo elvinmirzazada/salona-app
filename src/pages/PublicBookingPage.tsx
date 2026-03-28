@@ -85,7 +85,6 @@ interface BookingState {
     birthday: string;
     notes: string;
   };
-  termsAgreed: boolean;
 }
 
 const PublicBookingPage: React.FC = () => {
@@ -125,12 +124,12 @@ const PublicBookingPage: React.FC = () => {
       birthday: '',
       notes: '',
     },
-    termsAgreed: false,
   });
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [gdprAccepted, setGdprAccepted] = useState(false);
 
   // Fetch company data and services
   useEffect(() => {
@@ -169,6 +168,20 @@ const PublicBookingPage: React.FC = () => {
       fetchAvailableTimeSlots();
     }
   }, [currentMonth]);
+
+  // Auto-select specialist if only one is available
+  useEffect(() => {
+    if (bookingState.currentStep === 2 && !bookingState.selectedStaff && bookingState.selectedServices.size > 0) {
+      const availableStaff = getStaffForSelectedServices();
+      if (availableStaff.length === 1) {
+        selectStaff(availableStaff[0].user_id);
+        // Optionally advance to next step automatically
+        setTimeout(() => {
+          goToStep(3);
+        }, 500);
+      }
+    }
+  }, [bookingState.currentStep, bookingState.selectedServices]);
 
 
   const fetchInitialData = async () => {
@@ -508,7 +521,7 @@ const PublicBookingPage: React.FC = () => {
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!bookingState.termsAgreed) {
+    if (!gdprAccepted) {
       setError(t('booking.errors.termsRequired'));
       return;
     }
@@ -796,131 +809,7 @@ const PublicBookingPage: React.FC = () => {
     });
   };
 
-  // Render individual service card
-  const renderServiceCard = (service: Service): React.ReactElement => {
-    const isSelected = bookingState.selectedServices.has(service.id);
-    const price = service.discount_price && service.discount_price > 0
-      ? service.discount_price
-      : service.price;
-    const hasDiscount = service.discount_price && service.discount_price > 0 && service.discount_price < service.price;
-
-    return (
-      <div
-        key={service.id}
-        className={`service-card ${isSelected ? 'selected' : ''}`}
-        onClick={() => toggleService(service.id)}
-      >
-        {service.image_url ? (
-          <div className="service-image">
-            <img src={service.image_url} alt={service.name} />
-          </div>
-        ) : (
-          <div className="service-image service-image-placeholder no-image">
-            <i className="fas fa-cut"></i>
-          </div>
-        )}
-        <div className="service-info">
-          <h4 className="service-name">{getServiceName(service)}</h4>
-          {getServiceAdditionalInfo(service) && (
-            <p className="service-additional-info">{getServiceAdditionalInfo(service)}</p>
-          )}
-          <div className="service-meta">
-            <div className="service-duration">
-              <i className="fas fa-clock"></i>
-              <span>{service.duration} {t('booking.step1.min')}</span>
-            </div>
-            <div className="service-price">
-              {hasDiscount ? (
-                <>
-                  <span className="original-price">€{(service.price / 100).toFixed(2)}</span>
-                  <span className="current-price">€{(price / 100).toFixed(2)}</span>
-                </>
-              ) : (
-                <span className="current-price">€{(service.price / 100).toFixed(2)}</span>
-              )}
-            </div>
-          </div>
-        </div>
-        {isSelected && (
-          <div className="service-selected-badge">
-            <i className="fas fa-check"></i>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Render the full accordion category tree
-  const renderCategoryAccordion = (): React.ReactElement => {
-    const filteredCategories = getFilteredCategories();
-
-    if (filteredCategories.length === 0) {
-      return (
-        <div className="empty-state">
-          <div className="empty-state-icon">🔍</div>
-          <div>{t('booking.step1.noServices')}</div>
-        </div>
-      );
-    }
-
-    const renderCategory = (category: Category, level: number = 0): React.ReactElement => {
-      if (!categoryHasServices(category)) return <React.Fragment key={category.id} />;
-
-      const isCollapsed = collapsedCategories.has(category.id);
-      const hasSubcats = (category.subcategories || []).filter(s => categoryHasServices(s)).length > 0;
-      const directServices = category.services || [];
-      const totalCount = getAllServicesFromCategory(category).length;
-
-      return (
-        <div key={category.id} className={`category-accordion level-${level}`}>
-          {/* Category Header */}
-          <div
-            className={`category-accordion-header ${isCollapsed ? 'collapsed' : 'expanded'}`}
-            onClick={() => toggleCategoryCollapse(category.id)}
-          >
-            <div className="category-accordion-left">
-              {level > 0 && (
-                <span className="category-level-dot" />
-              )}
-              <span className="category-accordion-name">{category.name}</span>
-              <span className="category-accordion-count">{totalCount}</span>
-            </div>
-            <div className="category-accordion-right">
-              <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'} category-accordion-chevron`} />
-            </div>
-          </div>
-
-          {/* Body — visible when not collapsed */}
-          {!isCollapsed && (
-            <div className="category-accordion-body">
-              {/* Direct services of this category */}
-              {directServices.length > 0 && (
-                <div className={`services-grid ${level > 0 ? 'subcategory-services-grid' : ''}`}>
-                  {directServices.map(service => renderServiceCard(service))}
-                </div>
-              )}
-
-              {/* Subcategories */}
-              {hasSubcats && (
-                <div className="subcategories-accordion-list">
-                  {(category.subcategories || [])
-                    .filter(s => categoryHasServices(s))
-                    .map(sub => renderCategory(sub, level + 1))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    return (
-      <div className="categories-accordion-container">
-        {filteredCategories.map(cat => renderCategory(cat, 0))}
-      </div>
-    );
-  };
-
+  // ...existing code...
 
   if (loading) {
     return (
@@ -1118,9 +1007,62 @@ const PublicBookingPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Services by Category - Accordion Layout */}
+                {/* Split Panel Layout */}
                 <div className="step-content">
-                  {renderCategoryAccordion()}
+                  <div className="services-split-panel">
+                    {/* Left Panel: Category List */}
+                    <div className="categories-panel">
+                      {getFilteredCategories().map(category => (
+                        <div
+                          key={category.id}
+                          className={`category-row ${collapsedCategories.has(category.id) ? '' : 'active'}`}
+                          onClick={() => toggleCategoryCollapse(category.id)}
+                        >
+                          <span className="category-row-name">{category.name}</span>
+                          <span className="category-badge">{getAllServicesFromCategory(category).length}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Right Panel: Service List */}
+                    <div className="services-panel">
+                      {getFilteredCategories().length === 0 ? (
+                        <div className="empty-state" style={{ padding: '40px 20px' }}>
+                          <div className="empty-state-icon">🔍</div>
+                          <div>{t('booking.step1.noServices')}</div>
+                        </div>
+                      ) : (
+                        <div className="services-list">
+                          {getFilteredCategories().map(category => (
+                            !collapsedCategories.has(category.id) && (
+                              <div key={category.id} className="services-in-category">
+                                {getAllServicesFromCategory(category).map(service => {
+                                  const isSelected = bookingState.selectedServices.has(service.id);
+                                  const price = service.discount_price && service.discount_price > 0 ? service.discount_price : service.price;
+                                  return (
+                                    <div
+                                      key={service.id}
+                                      className={`service-list-row ${isSelected ? 'selected' : ''}`}
+                                      onClick={() => toggleService(service.id)}
+                                    >
+                                      <div className="service-list-left">
+                                        <div className="service-list-name">{getServiceName(service)}</div>
+                                        <div className="service-list-description">{getServiceAdditionalInfo(service)}</div>
+                                      </div>
+                                      <div className="service-list-right">
+                                        <div className="service-list-price">€ {(price / 100).toFixed(2)}</div>
+                                        <div className="service-list-duration">{service.duration} min</div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="step-navigation">
@@ -1178,33 +1120,43 @@ const PublicBookingPage: React.FC = () => {
                         className={`staff-card ${bookingState.selectedStaff === member.user_id ? 'selected' : ''}`}
                         onClick={() => selectStaff(member.user_id)}
                       >
-                        <div className="staff-avatar">
-                          {member.user.profile_photo_url ? (
-                            <img src={member.user.profile_photo_url} alt={`${member.user.first_name} ${member.user.last_name}`} />
-                          ) : (
-                            <div className="staff-avatar-placeholder">
-                              {member.user.first_name.charAt(0)}{member.user.last_name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="staff-info">
-                          <h4 className="staff-name">{member.user.first_name} {member.user.last_name}</h4>
-                          {member.user.position && (
-                            <p className="staff-position">{member.user.position}</p>
-                          )}
-                          {member.user.languages && (
-                            <div className="staff-languages">
-                              <i className="fas fa-language"></i>
-                              <div className="languages-tags">
-                                {member.user.languages.split(',').map((lang, index) => (
-                                  <span key={index} className="language-tag">
-                                    {lang.trim()}
-                                  </span>
-                                ))}
+                        <div className="staff-card-header">
+                          <div className="staff-avatar">
+                            {member.user.profile_photo_url ? (
+                              <img src={member.user.profile_photo_url} alt={`${member.user.first_name} ${member.user.last_name}`} />
+                            ) : (
+                              <div className="staff-avatar-initials">
+                                {member.user.first_name.charAt(0)}{member.user.last_name.charAt(0)}
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
+                          <div className="staff-header-info">
+                            <h4 className="staff-name">{member.user.first_name} {member.user.last_name}</h4>
+                            {member.user.position && (
+                              <p className="staff-position">{member.user.position}</p>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Specialty Tags */}
+                        {member.user.position && (
+                          <div className="staff-specialties">
+                            <span className="specialty-tag">{member.user.position}</span>
+                          </div>
+                        )}
+
+                        {/* Languages */}
+                        {member.user.languages && (
+                          <div className="staff-languages-row">
+                            {member.user.languages.split(',').map((lang, index, arr) => (
+                              <span key={index} className="language-text">
+                                {lang.trim()}
+                                {index < arr.length - 1 && <span className="lang-separator">•</span>}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
                         {bookingState.selectedStaff === member.user_id && (
                           <div className="staff-selected-badge">
                             <i className="fas fa-check"></i>
@@ -1311,7 +1263,7 @@ const PublicBookingPage: React.FC = () => {
                             return (
                               <div
                                 key={index}
-                                className={`calendar-day ${isEmptyCell ? 'empty' : ''} ${isPast || isDisabled ? 'past' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+                                className={`calendar-day ${isEmptyCell ? 'empty' : ''} ${isPast ? 'past' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${isDisabled ? 'disabled' : ''}`}
                                 onClick={() => !isPast && !isEmptyCell && hasSlots && selectDate(day)}
                               >
                                 {!isEmptyCell && day.getDate()}
@@ -1323,8 +1275,8 @@ const PublicBookingPage: React.FC = () => {
 
                       {/* Time Slots */}
                       <div className="time-slots-container">
-                        <div className="calendar-month" style={{ marginBottom: '15px' }}>{t('booking.step3.selectTime')}</div>
-                        <div className="time-slots-grid">
+                        <div className="time-slots-label">{t('booking.step3.selectTime')}</div>
+                        <div className="time-slots-content">
                           {!bookingState.selectedDate ? (
                             <div className="empty-state">
                               <div className="empty-state-icon">🕐</div>
@@ -1336,16 +1288,82 @@ const PublicBookingPage: React.FC = () => {
                               <div>{t('booking.step3.noSlotsAvailable')}</div>
                             </div>
                           ) : (
-                            timeSlots.map((slot, index) => (
-                              <button
-                                key={index}
-                                className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
-                                onClick={() => slot.available && selectTime(slot.time)}
-                                disabled={!slot.available}
-                              >
-                                {slot.time}
-                              </button>
-                            ))
+                            <>
+                              {/* Group slots by time of day */}
+                              {timeSlots.filter(slot => {
+                                const hour = parseInt(slot.time.split(':')[0]);
+                                return hour < 12;
+                              }).length > 0 && (
+                                <div className="time-section">
+                                  <div className="time-section-label">MORNING</div>
+                                  <div className="time-slots-group">
+                                    {timeSlots.filter(slot => {
+                                      const hour = parseInt(slot.time.split(':')[0]);
+                                      return hour < 12;
+                                    }).map((slot, index) => (
+                                      <button
+                                        key={index}
+                                        className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
+                                        onClick={() => slot.available && selectTime(slot.time)}
+                                        disabled={!slot.available}
+                                      >
+                                        {slot.time}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Afternoon slots */}
+                              {timeSlots.filter(slot => {
+                                const hour = parseInt(slot.time.split(':')[0]);
+                                return hour >= 12 && hour < 17;
+                              }).length > 0 && (
+                                <div className="time-section">
+                                  <div className="time-section-label">AFTERNOON</div>
+                                  <div className="time-slots-group">
+                                    {timeSlots.filter(slot => {
+                                      const hour = parseInt(slot.time.split(':')[0]);
+                                      return hour >= 12 && hour < 17;
+                                    }).map((slot, index) => (
+                                      <button
+                                        key={index}
+                                        className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
+                                        onClick={() => slot.available && selectTime(slot.time)}
+                                        disabled={!slot.available}
+                                      >
+                                        {slot.time}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Evening slots */}
+                              {timeSlots.filter(slot => {
+                                const hour = parseInt(slot.time.split(':')[0]);
+                                return hour >= 17;
+                              }).length > 0 && (
+                                <div className="time-section">
+                                  <div className="time-section-label">EVENING</div>
+                                  <div className="time-slots-group">
+                                    {timeSlots.filter(slot => {
+                                      const hour = parseInt(slot.time.split(':')[0]);
+                                      return hour >= 17;
+                                    }).map((slot, index) => (
+                                      <button
+                                        key={index}
+                                        className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
+                                        onClick={() => slot.available && selectTime(slot.time)}
+                                        disabled={!slot.available}
+                                      >
+                                        {slot.time}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
@@ -1383,6 +1401,7 @@ const PublicBookingPage: React.FC = () => {
 
                 <div className="step-content">
                   <form className="customer-form" onSubmit={handleSubmitBooking}>
+                    {/* First Name + Last Name (side by side) */}
                     <div className="form-group">
                       <label className="form-label" htmlFor="first-name">{t('booking.step4.firstName')} {t('booking.step4.required')}</label>
                       <input
@@ -1415,7 +1434,8 @@ const PublicBookingPage: React.FC = () => {
                       />
                     </div>
 
-                    <div className="form-group">
+                    {/* Email (full width) */}
+                    <div className="form-group full-width">
                       <label className="form-label" htmlFor="email">{t('booking.step4.email')} {t('booking.step4.required')}</label>
                       <input
                         type="email"
@@ -1431,9 +1451,10 @@ const PublicBookingPage: React.FC = () => {
                       />
                     </div>
 
-                    <div className="form-group">
+                    {/* Phone (country code select + number) */}
+                    <div className="form-group full-width">
                       <label className="form-label" htmlFor="phone">{t('booking.step4.phone')} {t('booking.step4.required')}</label>
-                      <div className="phone-input-row">
+                      <div className="phone-input-wrapper">
                         <select
                           id="phone-country-code"
                           className="country-code-select"
@@ -1469,7 +1490,8 @@ const PublicBookingPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="form-group">
+                    {/* Birthday (full width with hint) */}
+                    <div className="form-group full-width">
                       <label className="form-label" htmlFor="birthday">{t('booking.step4.birthday')}</label>
                       <input
                         type="date"
@@ -1482,14 +1504,16 @@ const PublicBookingPage: React.FC = () => {
                         }))}
                         max={new Date().toISOString().split('T')[0]}
                       />
+                      <div className="form-hint">valikuline — sünnipäeva soodustuse jaoks</div>
                     </div>
 
+                    {/* Notes textarea (full width) */}
                     <div className="form-group full-width">
                       <label className="form-label" htmlFor="notes">{t('booking.step4.notes')}</label>
                       <textarea
                         className="form-input"
                         id="notes"
-                        placeholder={t('booking.step4.notesPlaceholder')}
+                        placeholder="Allergiad, küünte seisund, erinõuded..."
                         value={bookingState.customerInfo.notes}
                         onChange={(e) => setBookingState(prev => ({
                           ...prev,
@@ -1498,30 +1522,25 @@ const PublicBookingPage: React.FC = () => {
                       ></textarea>
                     </div>
 
+                    {/* GDPR & Terms Consent */}
                     <div className="form-group full-width">
-                      <div className="booking-terms">
-                        <label className="booking-checkbox-container">
-                          <input
-                            type="checkbox"
-                            id="terms-agreement"
-                            checked={bookingState.termsAgreed}
-                            onChange={(e) => setBookingState(prev => ({
-                              ...prev,
-                              termsAgreed: e.target.checked
-                            }))}
-                            required
-                          />
-                          <span className="booking-checkmark"></span>
-                          <span className="booking-terms-text">
-                            {t('booking.step4.terms')}{' '}
-                            <a href="/booking-terms" target="_blank" rel="noopener noreferrer">
-                              {t('booking.step4.termsLink')}
-                            </a>
-                            {' '}{t('booking.step4.and')}{' '}
-                            <a href="/booking-privacy" target="_blank" rel="noopener noreferrer">
-                              {t('booking.step4.privacyLink')}
-                            </a>
-                          </span>
+                      <div className="gdpr-consent-container">
+                        <input
+                          type="checkbox"
+                          id="gdpr"
+                          checked={gdprAccepted}
+                          onChange={(e) => setGdprAccepted(e.target.checked)}
+                          required
+                        />
+                        <label htmlFor="gdpr" className="gdpr-consent-label">
+                          {t('booking.step4.gdprConsent')}{' '}
+                          <a href="/booking-terms" target="_blank" rel="noopener noreferrer">
+                            {t('booking.step4.termsLink')}
+                          </a>
+                          {' '}{t('booking.step4.and')}{' '}
+                          <a href="/booking-privacy" target="_blank" rel="noopener noreferrer">
+                            {t('booking.step4.privacyLink')}
+                          </a>
                         </label>
                       </div>
                     </div>
@@ -1537,7 +1556,7 @@ const PublicBookingPage: React.FC = () => {
                     type="submit"
                     className="booking-nav-button primary"
                     onClick={handleSubmitBooking}
-                    disabled={submitting || !bookingState.termsAgreed}
+                    disabled={submitting || !gdprAccepted}
                   >
                     {submitting ? (
                       <>
@@ -1559,59 +1578,132 @@ const PublicBookingPage: React.FC = () => {
 
         {/* Booking Summary Sidebar */}
         <div className="booking-summary">
-          <h3 className="summary-title">{t('booking.summary.title')}</h3>
+          {/* Header */}
+          <div className="summary-header">
+            <h3 className="summary-title">{t('booking.summary.title')}</h3>
+          </div>
 
+          {/* Progress Bar */}
+          <div className="summary-progress-bar">
+            <div className={`progress-pill ${bookingState.currentStep >= 1 ? 'completed' : bookingState.currentStep === 1 ? 'current' : 'future'}`}></div>
+            <div className={`progress-pill ${bookingState.currentStep >= 2 ? 'completed' : bookingState.currentStep === 2 ? 'current' : 'future'}`}></div>
+            <div className={`progress-pill ${bookingState.currentStep >= 3 ? 'completed' : bookingState.currentStep === 3 ? 'current' : 'future'}`}></div>
+            <div className={`progress-pill ${bookingState.currentStep >= 4 ? 'completed' : bookingState.currentStep === 4 ? 'current' : 'future'}`}></div>
+          </div>
+
+          {/* SERVICES Section */}
           <div className="summary-section">
-            <div className="summary-label">{t('booking.summary.services')}</div>
-            <div>
+            <div className="section-header-row">
+              <span className="section-label">{t('booking.summary.services')}</span>
+              {getSelectedServices().length > 0 && (
+                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(1); }}>muuda</a>
+              )}
+            </div>
+            <div className="section-content">
               {getSelectedServices().length === 0 ? (
-                <div className="summary-placeholder">{t('booking.summary.noServices')}</div>
+                <div className="section-placeholder">Pole valitud</div>
               ) : (
-                getSelectedServices().map(service => (
-                  <div key={service.id} className="summary-item">
-                    <span>{getServiceName(service)}</span>
-                    <span>€ {((service.discount_price && service.discount_price > 0 ? service.discount_price : service.price) / 100).toFixed(2)}</span>
-                  </div>
-                ))
+                getSelectedServices().map(service => {
+                  const price = service.discount_price && service.discount_price > 0 ? service.discount_price : service.price;
+                  return (
+                    <div key={service.id} className="section-item">
+                      <div className="item-name">{getServiceName(service)}</div>
+                      <div className="item-meta">
+                        <span className="item-price">€ {(price / 100).toFixed(2)}</span>
+                        <span className="item-duration">{service.duration} min</span>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
 
+          <div className="summary-divider"></div>
+
+          {/* SPECIALIST Section */}
           <div className="summary-section">
-            <div className="summary-label">{t('booking.summary.professional')}</div>
-            <div>
+            <div className="section-header-row">
+              <span className="section-label">SPETSIALIST</span>
+              {bookingState.selectedStaff && (
+                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(2); }}>muuda</a>
+              )}
+            </div>
+            <div className="section-content">
               {!bookingState.selectedStaff ? (
-                <div className="summary-placeholder">{t('booking.summary.notSelected')}</div>
+                <div className="section-placeholder">Pole valitud</div>
               ) : (
-                <div className="summary-value">
-                  {getSelectedStaffInfo()?.user.first_name} {getSelectedStaffInfo()?.user.last_name}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="summary-section">
-            <div className="summary-label">{t('booking.summary.dateTime')}</div>
-            <div>
-              {!bookingState.selectedDate || !bookingState.selectedTime ? (
-                <div className="summary-placeholder">{t('booking.summary.notSelected')}</div>
-              ) : (
-                <div className="summary-value">
-                  {new Date(bookingState.selectedDate).toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric'
-                  })} at {bookingState.selectedTime}
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                    {t('booking.summary.duration')}: {getTotalDuration()} {t('booking.summary.minutes')}
+                <div className="specialist-item">
+                  <div className="specialist-avatar">
+                    {getSelectedStaffInfo()?.user.profile_photo_url ? (
+                      <img src={getSelectedStaffInfo()?.user.profile_photo_url} alt="avatar" />
+                    ) : (
+                      <div className="avatar-initials">
+                        {getSelectedStaffInfo()?.user.first_name.charAt(0)}{getSelectedStaffInfo()?.user.last_name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="specialist-info">
+                    <div className="specialist-name">{getSelectedStaffInfo()?.user.first_name} {getSelectedStaffInfo()?.user.last_name}</div>
+                    {getSelectedStaffInfo()?.user.position && (
+                      <div className="specialist-role">{getSelectedStaffInfo()?.user.position}</div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
 
+          <div className="summary-divider"></div>
+
+          {/* DATE & TIME Section */}
+          <div className="summary-section">
+            <div className="section-header-row">
+              <span className="section-label">KUUPÄEV JA AEG</span>
+              {bookingState.selectedDate && bookingState.selectedTime && (
+                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(3); }}>muuda</a>
+              )}
+            </div>
+            <div className="section-content">
+              {!bookingState.selectedDate || !bookingState.selectedTime ? (
+                <div className="section-placeholder">Pole valitud</div>
+              ) : (
+                <div className="datetime-item">
+                  <div className="datetime-value">
+                    {new Date(bookingState.selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {bookingState.selectedTime}
+                  </div>
+                  <div className="datetime-duration">Kogukestus: {getTotalDuration()} min</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="summary-divider"></div>
+
+          {/* CLIENT Section */}
+          <div className="summary-section">
+            <div className="section-header-row">
+              <span className="section-label">KLIENT</span>
+              {(bookingState.customerInfo.firstName || bookingState.customerInfo.lastName) && (
+                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(4); }}>muuda</a>
+              )}
+            </div>
+            <div className="section-content">
+              {!bookingState.customerInfo.firstName && !bookingState.customerInfo.lastName ? (
+                <div className="section-placeholder">Pole sisestatud</div>
+              ) : (
+                <div className="client-item">
+                  {bookingState.customerInfo.firstName} {bookingState.customerInfo.lastName}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="summary-divider"></div>
+
+          {/* Total Row */}
           <div className="summary-total">
-            <div className="summary-total-label">{t('booking.summary.total')}</div>
+            <div className="summary-total-label">Kokku</div>
             <div className="summary-total-price">€ {calculateTotal().toFixed(2)}</div>
           </div>
         </div>
