@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0ae7db63-5d47-4190-b72e-06830539325b" name="Changes" comment="added dockerization">
+    <list default="true" id="0ae7db63-5d47-4190-b72e-06830539325b" name="Changes" comment="Redesigned public booking page">
       <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/i18n/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/i18n/config.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/pages/PublicBookingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/PublicBookingPage.tsx" afterDir="false" />
@@ -189,7 +190,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772388395573</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Redesigned public booking page">
+      <option name="closed" value="true" />
+      <created>1774733978124</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1774733978124</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -209,7 +218,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="refactor" />
     <MESSAGE value="added dockerization" />
-    <option name="LAST_COMMIT_MESSAGE" value="added dockerization" />
+    <MESSAGE value="Redesigned public booking page" />
+    <option name="LAST_COMMIT_MESSAGE" value="Redesigned public booking page" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

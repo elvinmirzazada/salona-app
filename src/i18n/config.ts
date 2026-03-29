@@ -24,7 +24,8 @@ const resources = {
           "duration": "Kestus",
           "min": "min",
           "noServices": "Teenuseid ei leitud",
-          "selectService": "Vali teenus"
+          "selectService": "Vali teenus",
+          "selectCategory": "Vali teenuste kategooria vasakult"
         },
         "step2": {
           "title": "Vali spetsialist",
@@ -41,6 +42,9 @@ const resources = {
           "selectTime": "Vali aeg",
           "noSlotsAvailable": "Valitud kuupäeval pole vabad ajad",
           "noSlotsForMonth": "Sellel kuul pole vabu aegu",
+          "morning": "HOMMIK",
+          "afternoon": "PÄRASTLÕUNA",
+          "evening": "ÕHTU",
           "days": {
             "sun": "P",
             "mon": "E",
@@ -59,14 +63,16 @@ const resources = {
           "email": "E-post",
           "phone": "Telefoninumber",
           "birthday": "Sünnipäev (valikuline)",
+          "birthdayHint": "valikuline — sünnipäeva soodustuse jaoks",
           "notes": "Täiendavad märkused (valikuline)",
-          "notesPlaceholder": "Kas on erinõudeid või teavet, mida peaksime teadma...",
+          "notesPlaceholder": "Allergiad, küünte seisund, erinõuded...",
           "gdprConsent": "Nõustun, et minu andmeid kasutatakse broneeringu haldamiseks. Nõustun ka",
           "terms": "Nõustun",
           "termsLink": "broneerimise tingimustega",
           "and": "ja",
           "privacyLink": "privaatsuspoliitikaga",
-          "required": "*"
+          "required": "*",
+          "edit": "muuda"
         },
         "navigation": {
           "previous": "Eelmine",
@@ -84,7 +90,10 @@ const resources = {
           "minutes": "minutit",
           "total": "Kokku",
           "notSelected": "Pole valitud",
-          "noServices": "Teenuseid pole valitud"
+          "notEntered": "Pole sisestatud",
+          "noServices": "Teenuseid pole valitud",
+          "edit": "muuda",
+          "totalDuration": "Kogukestus"
         },
         "success": {
           "title": "Broneering õnnestus!",
@@ -119,7 +128,8 @@ const resources = {
           "duration": "Duration",
           "min": "min",
           "noServices": "No services found",
-          "selectService": "Select service"
+          "selectService": "Select service",
+          "selectCategory": "Select a service category from the left"
         },
         "step2": {
           "title": "Choose Professional",
@@ -136,6 +146,9 @@ const resources = {
           "selectTime": "Select a time",
           "noSlotsAvailable": "No available times for selected date",
           "noSlotsForMonth": "No available times in this month",
+          "morning": "MORNING",
+          "afternoon": "AFTERNOON",
+          "evening": "EVENING",
           "days": {
             "sun": "Sun",
             "mon": "Mon",
@@ -154,14 +167,16 @@ const resources = {
           "email": "Email",
           "phone": "Phone Number",
           "birthday": "Birthday (Optional)",
+          "birthdayHint": "optional — for birthday discount",
           "notes": "Additional Notes (Optional)",
-          "notesPlaceholder": "Any special requests or information we should know...",
+          "notesPlaceholder": "Allergies, nail condition, special requests...",
           "gdprConsent": "I agree that my data will be used to manage the booking. I also agree to the",
           "terms": "I agree to the",
           "termsLink": "Booking Terms & Conditions",
           "and": "and",
           "privacyLink": "Privacy Policy",
-          "required": "*"
+          "required": "*",
+          "edit": "edit"
         },
         "navigation": {
           "previous": "Previous",
@@ -179,7 +194,10 @@ const resources = {
           "minutes": "minutes",
           "total": "Total",
           "notSelected": "Not selected",
-          "noServices": "No services selected"
+          "notEntered": "Not entered",
+          "noServices": "No services selected",
+          "edit": "edit",
+          "totalDuration": "Total duration"
         },
         "success": {
           "title": "Booking Successful!",
@@ -214,7 +232,8 @@ const resources = {
           "duration": "Продолжительность",
           "min": "мин",
           "noServices": "Услуги не найдены",
-          "selectService": "Выбрать услугу"
+          "selectService": "Выбрать услугу",
+          "selectCategory": "Выберите категорию услуги слева"
         },
         "step2": {
           "title": "Выберите специалиста",
@@ -231,6 +250,9 @@ const resources = {
           "selectTime": "Выберите время",
           "noSlotsAvailable": "Нет свободных времен для выбранной даты",
           "noSlotsForMonth": "В этом месяце нет свободных времен",
+          "morning": "УТРО",
+          "afternoon": "ДЕНЬ",
+          "evening": "ВЕЧЕР",
           "days": {
             "sun": "Вс",
             "mon": "Пн",
@@ -249,14 +271,16 @@ const resources = {
           "email": "Электронная почта",
           "phone": "Номер телефона",
           "birthday": "День рождения (необязательно)",
+          "birthdayHint": "необязательно — для скидки на день рождения",
           "notes": "Дополнительные заметки (необязательно)",
-          "notesPlaceholder": "Особые пожелания или информация, о которой нам следует знать...",
+          "notesPlaceholder": "Аллергия, состояние ногтей, специальные пожелания...",
           "gdprConsent": "Я согласен, что мои данные будут использоваться для управления бронированием. Я также согласен с",
           "terms": "Я согласен с",
           "termsLink": "условиями бронирования",
           "and": "и",
           "privacyLink": "политикой конфиденциальности",
-          "required": "*"
+          "required": "*",
+          "edit": "изменить"
         },
         "navigation": {
           "previous": "Назад",
@@ -274,7 +298,10 @@ const resources = {
           "minutes": "минут",
           "total": "Итого",
           "notSelected": "Не выбрано",
-          "noServices": "Услуги не выбраны"
+          "notEntered": "Не введено",
+          "noServices": "Услуги не выбраны",
+          "edit": "изменить",
+          "totalDuration": "Общая продолжительность"
         },
         "success": {
           "title": "Бронирование успешно!",

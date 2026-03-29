@@ -104,7 +104,7 @@ const PublicBookingPage: React.FC = () => {
   const [calendarDays, setCalendarDays] = useState<Date[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [staffSearchQuery, setStaffSearchQuery] = useState('');
-  // Set of category IDs that are collapsed (empty = all expanded by default)
+  // Set of category IDs that are collapsed (start with all collapsed by default)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -130,6 +130,7 @@ const PublicBookingPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [gdprAccepted, setGdprAccepted] = useState(false);
+  const [showMobileSummary, setShowMobileSummary] = useState(false);
 
   // Fetch company data and services
   useEffect(() => {
@@ -168,6 +169,23 @@ const PublicBookingPage: React.FC = () => {
       fetchAvailableTimeSlots();
     }
   }, [currentMonth]);
+
+  // Collapse all categories when they are first loaded
+  useEffect(() => {
+    if (categories.length > 0 && collapsedCategories.size === 0) {
+      const allCategoryIds = new Set<string>();
+      const collectCategoryIds = (cats: Category[]) => {
+        cats.forEach(cat => {
+          allCategoryIds.add(cat.id);
+          if (cat.subcategories) {
+            collectCategoryIds(cat.subcategories);
+          }
+        });
+      };
+      collectCategoryIds(categories);
+      setCollapsedCategories(allCategoryIds);
+    }
+  }, [categories]);
 
   // Auto-select specialist if only one is available
   useEffect(() => {
@@ -1031,6 +1049,11 @@ const PublicBookingPage: React.FC = () => {
                           <div className="empty-state-icon">🔍</div>
                           <div>{t('booking.step1.noServices')}</div>
                         </div>
+                      ) : getFilteredCategories().every(cat => collapsedCategories.has(cat.id)) ? (
+                        <div className="empty-state" style={{ padding: '40px 20px' }}>
+                          <div className="empty-state-icon">👈</div>
+                          <div>{t('booking.step1.selectCategory')}</div>
+                        </div>
                       ) : (
                         <div className="services-list">
                           {getFilteredCategories().map(category => (
@@ -1291,78 +1314,78 @@ const PublicBookingPage: React.FC = () => {
                             <>
                               {/* Group slots by time of day */}
                               {timeSlots.filter(slot => {
-                                const hour = parseInt(slot.time.split(':')[0]);
-                                return hour < 12;
-                              }).length > 0 && (
-                                <div className="time-section">
-                                  <div className="time-section-label">MORNING</div>
-                                  <div className="time-slots-group">
-                                    {timeSlots.filter(slot => {
-                                      const hour = parseInt(slot.time.split(':')[0]);
-                                      return hour < 12;
-                                    }).map((slot, index) => (
-                                      <button
-                                        key={index}
-                                        className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
-                                        onClick={() => slot.available && selectTime(slot.time)}
-                                        disabled={!slot.available}
-                                      >
-                                        {slot.time}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                                 const hour = parseInt(slot.time.split(':')[0]);
+                                 return hour < 12;
+                               }).length > 0 && (
+                                 <div className="time-section">
+                                   <div className="time-section-label">{t('booking.step3.morning')}</div>
+                                   <div className="time-slots-group">
+                                     {timeSlots.filter(slot => {
+                                       const hour = parseInt(slot.time.split(':')[0]);
+                                       return hour < 12;
+                                     }).map((slot, index) => (
+                                       <button
+                                         key={index}
+                                         className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
+                                         onClick={() => slot.available && selectTime(slot.time)}
+                                         disabled={!slot.available}
+                                       >
+                                         {slot.time}
+                                       </button>
+                                     ))}
+                                   </div>
+                                 </div>
+                               )}
 
-                              {/* Afternoon slots */}
-                              {timeSlots.filter(slot => {
-                                const hour = parseInt(slot.time.split(':')[0]);
-                                return hour >= 12 && hour < 17;
-                              }).length > 0 && (
-                                <div className="time-section">
-                                  <div className="time-section-label">AFTERNOON</div>
-                                  <div className="time-slots-group">
-                                    {timeSlots.filter(slot => {
-                                      const hour = parseInt(slot.time.split(':')[0]);
-                                      return hour >= 12 && hour < 17;
-                                    }).map((slot, index) => (
-                                      <button
-                                        key={index}
-                                        className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
-                                        onClick={() => slot.available && selectTime(slot.time)}
-                                        disabled={!slot.available}
-                                      >
-                                        {slot.time}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                               {/* Afternoon slots */}
+                               {timeSlots.filter(slot => {
+                                 const hour = parseInt(slot.time.split(':')[0]);
+                                 return hour >= 12 && hour < 17;
+                               }).length > 0 && (
+                                 <div className="time-section">
+                                   <div className="time-section-label">{t('booking.step3.afternoon')}</div>
+                                   <div className="time-slots-group">
+                                     {timeSlots.filter(slot => {
+                                       const hour = parseInt(slot.time.split(':')[0]);
+                                       return hour >= 12 && hour < 17;
+                                     }).map((slot, index) => (
+                                       <button
+                                         key={index}
+                                         className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
+                                         onClick={() => slot.available && selectTime(slot.time)}
+                                         disabled={!slot.available}
+                                       >
+                                         {slot.time}
+                                       </button>
+                                     ))}
+                                   </div>
+                                 </div>
+                               )}
 
-                              {/* Evening slots */}
-                              {timeSlots.filter(slot => {
-                                const hour = parseInt(slot.time.split(':')[0]);
-                                return hour >= 17;
-                              }).length > 0 && (
-                                <div className="time-section">
-                                  <div className="time-section-label">EVENING</div>
-                                  <div className="time-slots-group">
-                                    {timeSlots.filter(slot => {
-                                      const hour = parseInt(slot.time.split(':')[0]);
-                                      return hour >= 17;
-                                    }).map((slot, index) => (
-                                      <button
-                                        key={index}
-                                        className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
-                                        onClick={() => slot.available && selectTime(slot.time)}
-                                        disabled={!slot.available}
-                                      >
-                                        {slot.time}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                               {/* Evening slots */}
+                               {timeSlots.filter(slot => {
+                                 const hour = parseInt(slot.time.split(':')[0]);
+                                 return hour >= 17;
+                               }).length > 0 && (
+                                 <div className="time-section">
+                                   <div className="time-section-label">{t('booking.step3.evening')}</div>
+                                   <div className="time-slots-group">
+                                     {timeSlots.filter(slot => {
+                                       const hour = parseInt(slot.time.split(':')[0]);
+                                       return hour >= 17;
+                                     }).map((slot, index) => (
+                                       <button
+                                         key={index}
+                                         className={`time-slot ${bookingState.selectedTime === slot.time ? 'selected' : ''} ${!slot.available ? 'disabled' : ''}`}
+                                         onClick={() => slot.available && selectTime(slot.time)}
+                                         disabled={!slot.available}
+                                       >
+                                         {slot.time}
+                                       </button>
+                                     ))}
+                                   </div>
+                                 </div>
+                               )}
                             </>
                           )}
                         </div>
@@ -1490,22 +1513,22 @@ const PublicBookingPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Birthday (full width with hint) */}
-                    <div className="form-group full-width">
-                      <label className="form-label" htmlFor="birthday">{t('booking.step4.birthday')}</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        id="birthday"
-                        value={bookingState.customerInfo.birthday}
-                        onChange={(e) => setBookingState(prev => ({
-                          ...prev,
-                          customerInfo: { ...prev.customerInfo, birthday: e.target.value }
-                        }))}
-                        max={new Date().toISOString().split('T')[0]}
-                      />
-                      <div className="form-hint">valikuline — sünnipäeva soodustuse jaoks</div>
-                    </div>
+                      {/* Birthday (full width with hint) */}
+                     <div className="form-group full-width">
+                       <label className="form-label" htmlFor="birthday">{t('booking.step4.birthday')}</label>
+                       <input
+                         type="date"
+                         className="form-input"
+                         id="birthday"
+                         value={bookingState.customerInfo.birthday}
+                         onChange={(e) => setBookingState(prev => ({
+                           ...prev,
+                           customerInfo: { ...prev.customerInfo, birthday: e.target.value }
+                         }))}
+                         max={new Date().toISOString().split('T')[0]}
+                       />
+                       <div className="form-hint">{t('booking.step4.birthdayHint')}</div>
+                     </div>
 
                     {/* Notes textarea (full width) */}
                     <div className="form-group full-width">
@@ -1513,7 +1536,7 @@ const PublicBookingPage: React.FC = () => {
                       <textarea
                         className="form-input"
                         id="notes"
-                        placeholder="Allergiad, küünte seisund, erinõuded..."
+                        placeholder={t('booking.step4.notesPlaceholder')}
                         value={bookingState.customerInfo.notes}
                         onChange={(e) => setBookingState(prev => ({
                           ...prev,
@@ -1591,121 +1614,286 @@ const PublicBookingPage: React.FC = () => {
             <div className={`progress-pill ${bookingState.currentStep >= 4 ? 'completed' : bookingState.currentStep === 4 ? 'current' : 'future'}`}></div>
           </div>
 
-          {/* SERVICES Section */}
-          <div className="summary-section">
-            <div className="section-header-row">
-              <span className="section-label">{t('booking.summary.services')}</span>
-              {getSelectedServices().length > 0 && (
-                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(1); }}>muuda</a>
-              )}
+           {/* SERVICES Section */}
+           <div className="summary-section">
+             <div className="section-header-row">
+               <span className="section-label">{t('booking.summary.services')}</span>
+               {getSelectedServices().length > 0 && (
+                 <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(1); }}>{t('booking.step4.edit')}</a>
+               )}
+             </div>
+             <div className="section-content">
+               {getSelectedServices().length === 0 ? (
+                 <div className="section-placeholder">{t('booking.summary.notSelected')}</div>
+               ) : (
+                 getSelectedServices().map(service => {
+                   const price = service.discount_price && service.discount_price > 0 ? service.discount_price : service.price;
+                   return (
+                     <div key={service.id} className="section-item">
+                       <div className="item-name">{getServiceName(service)}</div>
+                       <div className="item-meta">
+                         <span className="item-price">€ {(price / 100).toFixed(2)}</span>
+                         <span className="item-duration">{service.duration} min</span>
+                       </div>
+                     </div>
+                   );
+                 })
+               )}
+             </div>
+           </div>
+
+           <div className="summary-divider"></div>
+
+           {/* SPECIALIST Section */}
+           <div className="summary-section">
+             <div className="section-header-row">
+               <span className="section-label">{t('booking.steps.professional')}</span>
+               {bookingState.selectedStaff && (
+                 <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(2); }}>{t('booking.step4.edit')}</a>
+               )}
+             </div>
+             <div className="section-content">
+               {!bookingState.selectedStaff ? (
+                 <div className="section-placeholder">{t('booking.summary.notSelected')}</div>
+               ) : (
+                 <div className="specialist-item">
+                   <div className="specialist-avatar">
+                     {getSelectedStaffInfo()?.user.profile_photo_url ? (
+                       <img src={getSelectedStaffInfo()?.user.profile_photo_url} alt="avatar" />
+                     ) : (
+                       <div className="avatar-initials">
+                         {getSelectedStaffInfo()?.user.first_name.charAt(0)}{getSelectedStaffInfo()?.user.last_name.charAt(0)}
+                       </div>
+                     )}
+                   </div>
+                   <div className="specialist-info">
+                     <div className="specialist-name">{getSelectedStaffInfo()?.user.first_name} {getSelectedStaffInfo()?.user.last_name}</div>
+                     {getSelectedStaffInfo()?.user.position && (
+                       <div className="specialist-role">{getSelectedStaffInfo()?.user.position}</div>
+                     )}
+                   </div>
+                 </div>
+               )}
+             </div>
+           </div>
+
+           <div className="summary-divider"></div>
+
+           {/* DATE & TIME Section */}
+           <div className="summary-section">
+             <div className="section-header-row">
+               <span className="section-label">{t('booking.step3.title')}</span>
+               {bookingState.selectedDate && bookingState.selectedTime && (
+                 <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(3); }}>{t('booking.step4.edit')}</a>
+               )}
+             </div>
+             <div className="section-content">
+               {!bookingState.selectedDate || !bookingState.selectedTime ? (
+                 <div className="section-placeholder">{t('booking.summary.notSelected')}</div>
+               ) : (
+                 <div className="datetime-item">
+                   <div className="datetime-value">
+                     {new Date(bookingState.selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {bookingState.selectedTime}
+                   </div>
+                   <div className="datetime-duration">{t('booking.summary.totalDuration')}: {getTotalDuration()} min</div>
+                 </div>
+               )}
+             </div>
+           </div>
+
+           <div className="summary-divider"></div>
+
+           {/* CLIENT Section */}
+           <div className="summary-section">
+             <div className="section-header-row">
+               <span className="section-label">{t('booking.step4.title')}</span>
+               {(bookingState.customerInfo.firstName || bookingState.customerInfo.lastName) && (
+                 <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(4); }}>{t('booking.step4.edit')}</a>
+               )}
+             </div>
+             <div className="section-content">
+               {!bookingState.customerInfo.firstName && !bookingState.customerInfo.lastName ? (
+                 <div className="section-placeholder">{t('booking.summary.notEntered')}</div>
+               ) : (
+                 <div className="client-item">
+                   {bookingState.customerInfo.firstName} {bookingState.customerInfo.lastName}
+                 </div>
+               )}
+             </div>
+           </div>
+
+           <div className="summary-divider"></div>
+
+           {/* Total Row */}
+           <div className="summary-total">
+             <div className="summary-total-label">{t('booking.summary.total')}</div>
+             <div className="summary-total-price">€ {calculateTotal().toFixed(2)}</div>
+           </div>
+        </div>
+      </div>
+
+      {/* Mobile Summary Drawer */}
+      {showMobileSummary && (
+        <>
+          {/* Overlay */}
+          <div
+            className="mobile-summary-overlay"
+            onClick={() => setShowMobileSummary(false)}
+          ></div>
+
+          {/* Drawer */}
+          <div className="mobile-summary-drawer">
+            {/* Close Button */}
+            <div className="drawer-header">
+              <h3 className="drawer-title">{t('booking.summary.title')}</h3>
+              <button
+                className="drawer-close-btn"
+                onClick={() => setShowMobileSummary(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
             </div>
-            <div className="section-content">
-              {getSelectedServices().length === 0 ? (
-                <div className="section-placeholder">Pole valitud</div>
-              ) : (
-                getSelectedServices().map(service => {
-                  const price = service.discount_price && service.discount_price > 0 ? service.discount_price : service.price;
-                  return (
-                    <div key={service.id} className="section-item">
-                      <div className="item-name">{getServiceName(service)}</div>
-                      <div className="item-meta">
-                        <span className="item-price">€ {(price / 100).toFixed(2)}</span>
-                        <span className="item-duration">{service.duration} min</span>
+
+            {/* Progress Bar */}
+            <div className="summary-progress-bar">
+              <div className={`progress-pill ${bookingState.currentStep >= 1 ? 'completed' : bookingState.currentStep === 1 ? 'current' : 'future'}`}></div>
+              <div className={`progress-pill ${bookingState.currentStep >= 2 ? 'completed' : bookingState.currentStep === 2 ? 'current' : 'future'}`}></div>
+              <div className={`progress-pill ${bookingState.currentStep >= 3 ? 'completed' : bookingState.currentStep === 3 ? 'current' : 'future'}`}></div>
+              <div className={`progress-pill ${bookingState.currentStep >= 4 ? 'completed' : bookingState.currentStep === 4 ? 'current' : 'future'}`}></div>
+            </div>
+
+            {/* Content */}
+            <div className="drawer-content">
+              {/* SERVICES Section */}
+              <div className="summary-section">
+                <div className="section-header-row">
+                  <span className="section-label">{t('booking.summary.services')}</span>
+                  {getSelectedServices().length > 0 && (
+                    <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); setShowMobileSummary(false); goToStep(1); }}>{t('booking.step4.edit')}</a>
+                  )}
+                </div>
+                <div className="section-content">
+                  {getSelectedServices().length === 0 ? (
+                    <div className="section-placeholder">{t('booking.summary.notSelected')}</div>
+                  ) : (
+                    getSelectedServices().map(service => {
+                      const price = service.discount_price && service.discount_price > 0 ? service.discount_price : service.price;
+                      return (
+                        <div key={service.id} className="section-item">
+                          <div className="item-name">{getServiceName(service)}</div>
+                          <div className="item-meta">
+                            <span className="item-price">€ {(price / 100).toFixed(2)}</span>
+                            <span className="item-duration">{service.duration} min</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="summary-divider"></div>
+
+              {/* SPECIALIST Section */}
+              <div className="summary-section">
+                <div className="section-header-row">
+                  <span className="section-label">{t('booking.steps.professional')}</span>
+                  {bookingState.selectedStaff && (
+                    <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); setShowMobileSummary(false); goToStep(2); }}>{t('booking.step4.edit')}</a>
+                  )}
+                </div>
+                <div className="section-content">
+                  {!bookingState.selectedStaff ? (
+                    <div className="section-placeholder">{t('booking.summary.notSelected')}</div>
+                  ) : (
+                    <div className="specialist-item">
+                      <div className="specialist-avatar">
+                        {getSelectedStaffInfo()?.user.profile_photo_url ? (
+                          <img src={getSelectedStaffInfo()?.user.profile_photo_url} alt="avatar" />
+                        ) : (
+                          <div className="avatar-initials">
+                            {getSelectedStaffInfo()?.user.first_name.charAt(0)}{getSelectedStaffInfo()?.user.last_name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="specialist-info">
+                        <div className="specialist-name">{getSelectedStaffInfo()?.user.first_name} {getSelectedStaffInfo()?.user.last_name}</div>
+                        {getSelectedStaffInfo()?.user.position && (
+                          <div className="specialist-role">{getSelectedStaffInfo()?.user.position}</div>
+                        )}
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+                  )}
+                </div>
+              </div>
 
-          <div className="summary-divider"></div>
+              <div className="summary-divider"></div>
 
-          {/* SPECIALIST Section */}
-          <div className="summary-section">
-            <div className="section-header-row">
-              <span className="section-label">SPETSIALIST</span>
-              {bookingState.selectedStaff && (
-                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(2); }}>muuda</a>
-              )}
-            </div>
-            <div className="section-content">
-              {!bookingState.selectedStaff ? (
-                <div className="section-placeholder">Pole valitud</div>
-              ) : (
-                <div className="specialist-item">
-                  <div className="specialist-avatar">
-                    {getSelectedStaffInfo()?.user.profile_photo_url ? (
-                      <img src={getSelectedStaffInfo()?.user.profile_photo_url} alt="avatar" />
-                    ) : (
-                      <div className="avatar-initials">
-                        {getSelectedStaffInfo()?.user.first_name.charAt(0)}{getSelectedStaffInfo()?.user.last_name.charAt(0)}
+              {/* DATE & TIME Section */}
+              <div className="summary-section">
+                <div className="section-header-row">
+                  <span className="section-label">{t('booking.step3.title')}</span>
+                  {bookingState.selectedDate && bookingState.selectedTime && (
+                    <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); setShowMobileSummary(false); goToStep(3); }}>{t('booking.step4.edit')}</a>
+                  )}
+                </div>
+                <div className="section-content">
+                  {!bookingState.selectedDate || !bookingState.selectedTime ? (
+                    <div className="section-placeholder">{t('booking.summary.notSelected')}</div>
+                  ) : (
+                    <div className="datetime-item">
+                      <div className="datetime-value">
+                        {new Date(bookingState.selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {bookingState.selectedTime}
                       </div>
-                    )}
-                  </div>
-                  <div className="specialist-info">
-                    <div className="specialist-name">{getSelectedStaffInfo()?.user.first_name} {getSelectedStaffInfo()?.user.last_name}</div>
-                    {getSelectedStaffInfo()?.user.position && (
-                      <div className="specialist-role">{getSelectedStaffInfo()?.user.position}</div>
-                    )}
-                  </div>
+                      <div className="datetime-duration">{t('booking.summary.totalDuration')}: {getTotalDuration()} min</div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
 
-          <div className="summary-divider"></div>
+              <div className="summary-divider"></div>
 
-          {/* DATE & TIME Section */}
-          <div className="summary-section">
-            <div className="section-header-row">
-              <span className="section-label">KUUPÄEV JA AEG</span>
-              {bookingState.selectedDate && bookingState.selectedTime && (
-                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(3); }}>muuda</a>
-              )}
-            </div>
-            <div className="section-content">
-              {!bookingState.selectedDate || !bookingState.selectedTime ? (
-                <div className="section-placeholder">Pole valitud</div>
-              ) : (
-                <div className="datetime-item">
-                  <div className="datetime-value">
-                    {new Date(bookingState.selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {bookingState.selectedTime}
-                  </div>
-                  <div className="datetime-duration">Kogukestus: {getTotalDuration()} min</div>
+              {/* CLIENT Section */}
+              <div className="summary-section">
+                <div className="section-header-row">
+                  <span className="section-label">{t('booking.step4.title')}</span>
+                  {(bookingState.customerInfo.firstName || bookingState.customerInfo.lastName) && (
+                    <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); setShowMobileSummary(false); goToStep(4); }}>{t('booking.step4.edit')}</a>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          <div className="summary-divider"></div>
-
-          {/* CLIENT Section */}
-          <div className="summary-section">
-            <div className="section-header-row">
-              <span className="section-label">KLIENT</span>
-              {(bookingState.customerInfo.firstName || bookingState.customerInfo.lastName) && (
-                <a href="#" className="section-edit-link" onClick={(e) => { e.preventDefault(); goToStep(4); }}>muuda</a>
-              )}
-            </div>
-            <div className="section-content">
-              {!bookingState.customerInfo.firstName && !bookingState.customerInfo.lastName ? (
-                <div className="section-placeholder">Pole sisestatud</div>
-              ) : (
-                <div className="client-item">
-                  {bookingState.customerInfo.firstName} {bookingState.customerInfo.lastName}
+                <div className="section-content">
+                  {!bookingState.customerInfo.firstName && !bookingState.customerInfo.lastName ? (
+                    <div className="section-placeholder">{t('booking.summary.notEntered')}</div>
+                  ) : (
+                    <div className="client-item">
+                      {bookingState.customerInfo.firstName} {bookingState.customerInfo.lastName}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              <div className="summary-divider"></div>
+
+              {/* Total Row */}
+              <div className="summary-total">
+                <div className="summary-total-label">{t('booking.summary.total')}</div>
+                <div className="summary-total-price">€ {calculateTotal().toFixed(2)}</div>
+              </div>
             </div>
           </div>
+        </>
+      )}
 
-          <div className="summary-divider"></div>
-
-          {/* Total Row */}
-          <div className="summary-total">
-            <div className="summary-total-label">Kokku</div>
-            <div className="summary-total-price">€ {calculateTotal().toFixed(2)}</div>
+      {/* Mobile Summary Side Tab */}
+      <div
+        className="mobile-summary-tab"
+        onClick={() => setShowMobileSummary(true)}
+      >
+        <div className="tab-content">
+          <div className="tab-icon">
+            <i className="fas fa-chevron-left"></i>
           </div>
+          <div className="tab-label">{t('booking.summary.title')}</div>
         </div>
       </div>
     </div>
