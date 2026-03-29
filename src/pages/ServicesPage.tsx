@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { servicesAPI } from '../utils/api';
 import { Service, Category, Staff, CreateServiceData, CreateCategoryData } from '../types/services';
 
@@ -38,6 +40,7 @@ interface DeleteModalData {
 
 const ServicesPage: React.FC = () => {
   const { user, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
 
   // State management
   const [services, setServices] = useState<Service[]>([]);
@@ -759,6 +762,7 @@ const ServicesPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         {/* Messages */}
         {success && (
@@ -801,9 +805,9 @@ const ServicesPage: React.FC = () => {
                 <div className="header-text">
                   <h2 className="services-title">
                     <i className="fas fa-cogs services-icon"></i>
-                    Manage Services
+                    {t('services.title')}
                   </h2>
-                  <p className="services-subtitle">Create, edit, and organize your business services</p>
+                  <p className="services-subtitle">{t('services.subtitle')}</p>
                 </div>
                 <div className="header-right">
                   <div className="header-actions">
@@ -813,7 +817,7 @@ const ServicesPage: React.FC = () => {
                         onClick={() => openServiceModal()}
                       >
                         <i className="fas fa-plus-circle"></i>
-                        <span>Add New Service</span>
+                        <span>{t('services.addService')}</span>
                       </button>
                     )}
                   </div>
@@ -830,7 +834,7 @@ const ServicesPage: React.FC = () => {
               ) : services.length === 0 ? (
                 <div className="empty-state">
                   {user?.role === 'owner' || user?.role === 'admin' ? (
-                    <p>No services found. Click "Add Service" to create your first service.</p>
+                    <p>{t('services.noServicesFound')}</p>
                   ) : (
                     <p>Insufficient privileges. Please contact your administrator.</p>
                   )}
@@ -840,12 +844,12 @@ const ServicesPage: React.FC = () => {
                   <table className="services-table">
                     <thead>
                       <tr>
-                        <th>Service</th>
-                        <th>Category</th>
-                        <th>Duration</th>
-                        <th>Price</th>
-                        <th>Staff</th>
-                        <th>Actions</th>
+                        <th>{t('services.name')}</th>
+                        <th>{t('services.category')}</th>
+                        <th>{t('services.duration')}</th>
+                        <th>{t('services.price')}</th>
+                        <th>{t('services.staff')}</th>
+                        <th>{t('services.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1110,7 +1114,7 @@ const ServicesPage: React.FC = () => {
           >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>{serviceModal.isEditing ? 'Edit Service' : 'Add Service'}</h2>
+                <h2>{serviceModal.isEditing ? t('services.editService') : t('services.addService')}</h2>
                 <button className="modal-close" onClick={closeServiceModal}>
                   &times;
                 </button>
@@ -1118,7 +1122,7 @@ const ServicesPage: React.FC = () => {
               <div className="modal-body">
                 <form ref={serviceFormRef} onSubmit={handleServiceSubmit}>
                   <div className="form-group">
-                    <label htmlFor="service-name">Service Name</label>
+                    <label htmlFor="service-name">{t('services.serviceNameLabel')}</label>
                     <input
                       type="text"
                       id="service-name"
@@ -1129,7 +1133,7 @@ const ServicesPage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="service-category">Category</label>
+                    <label htmlFor="service-category">{t('services.categoryLabel')}</label>
                     <div className="category-input-group">
                       <div className="category-search-wrapper">
                         <input
@@ -1142,7 +1146,7 @@ const ServicesPage: React.FC = () => {
                             setShowCategoryDropdown(true);
                           }}
                           onFocus={() => setShowCategoryDropdown(true)}
-                          placeholder="Search and select a category"
+                          placeholder={t('services.searchPlaceholder')}
                           required
                           autoComplete="off"
                         />
@@ -1159,7 +1163,7 @@ const ServicesPage: React.FC = () => {
                           <div className="category-dropdown">
                             {getFilteredSelectableCategories().length === 0 ? (
                               <div className="category-dropdown-item no-results">
-                                No categories found
+                                {t('services.noCategoriesFound')}
                               </div>
                             ) : (
                               getFilteredSelectableCategories().map(({ category, level }) => (
@@ -1198,14 +1202,14 @@ const ServicesPage: React.FC = () => {
                         title="Create new category"
                       >
                         <i className="fas fa-plus"></i>
-                        <span>New Category</span>
+                        <span>{t('services.addCategory')}</span>
                       </button>
                     </div>
                   </div>
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label htmlFor="service-duration">Duration (minutes)</label>
+                      <label htmlFor="service-duration">{t('services.durationLabel')}</label>
                       <input
                         type="number"
                         id="service-duration"
@@ -1217,7 +1221,7 @@ const ServicesPage: React.FC = () => {
                       />
                     </div>
                     <div className="form-group">
-                      <label htmlFor="service-price">Price</label>
+                      <label htmlFor="service-price">{t('services.priceLabel')}</label>
                       <div className="price-input">
                         <span className="currency-symbol">€</span>
                         <input
@@ -1234,7 +1238,7 @@ const ServicesPage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="service-discount-price">Discount Price (optional)</label>
+                    <label htmlFor="service-discount-price">{t('services.priceLabel')} ({t('common.optional')})</label>
                     <div className="price-input">
                       <span className="currency-symbol">€</span>
                       <input
@@ -1251,28 +1255,28 @@ const ServicesPage: React.FC = () => {
 
                   {/* Language Tabs Section */}
                   <div className="language-section">
-                    <div className="language-section-title">Translations (Optional)</div>
+                    <div className="language-section-title">{t('common.translations')}</div>
                     <div className="language-tabs">
                       <button
                         type="button"
                         className={`language-tab ${activeLanguageTab === 'en' ? 'active' : ''}`}
                         onClick={() => setActiveLanguageTab('en')}
                       >
-                        🇬🇧 English
+                        🇬🇧 {t('common.english')}
                       </button>
                       <button
                         type="button"
                         className={`language-tab ${activeLanguageTab === 'ee' ? 'active' : ''}`}
                         onClick={() => setActiveLanguageTab('ee')}
                       >
-                        🇪🇪 Estonian
+                        🇪🇪 {t('common.estonian')}
                       </button>
                       <button
                         type="button"
                         className={`language-tab ${activeLanguageTab === 'ru' ? 'active' : ''}`}
                         onClick={() => setActiveLanguageTab('ru')}
                       >
-                        🇷🇺 Russian
+                        🇷🇺 {t('common.russian')}
                       </button>
                     </div>
 
@@ -1281,18 +1285,18 @@ const ServicesPage: React.FC = () => {
                       {activeLanguageTab === 'en' && (
                         <>
                           <div className="form-group">
-                            <label htmlFor="service-name-en">Service Name (English)</label>
+                            <label htmlFor="service-name-en">{t('services.serviceNameLabel')} - {t('common.english')}</label>
                             <input
                               type="text"
                               id="service-name-en"
                               name="service-name-en"
                               value={languageFormValues.name_en}
                               onChange={(e) => setLanguageFormValues(prev => ({ ...prev, name_en: e.target.value }))}
-                              placeholder="Enter English name"
+                              placeholder={`${t('common.enterText')} ${t('common.english')}`}
                             />
                           </div>
                           <div className="form-group">
-                            <label htmlFor="service-description-en">Description (English)</label>
+                            <label htmlFor="service-description-en">{t('services.descriptionLabel')} - {t('common.english')}</label>
                             <textarea
                               id="service-description-en"
                               name="service-description-en"
@@ -1362,7 +1366,7 @@ const ServicesPage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Service Image (optional)</label>
+                    <label>{t('services.serviceImage')}</label>
                     <div className="image-upload-container">
                       <input
                         ref={imageInputRef}
@@ -1382,7 +1386,7 @@ const ServicesPage: React.FC = () => {
                         ) : (
                           <>
                             <i className="fas fa-image"></i>
-                            <span>Click to upload image</span>
+                            <span>{t('common.uploadImage')}</span>
                           </>
                         )}
                       </div>
@@ -1393,7 +1397,7 @@ const ServicesPage: React.FC = () => {
                           onClick={() => imageInputRef.current?.click()}
                         >
                           <i className="fas fa-upload"></i>
-                          Choose Image
+                          {t('common.uploadImage')}
                         </button>
                         {imagePreview && (
                           <button
@@ -1402,7 +1406,7 @@ const ServicesPage: React.FC = () => {
                             onClick={removeImage}
                           >
                             <i className="fas fa-times"></i>
-                            Remove
+                            {t('common.delete')}
                           </button>
                         )}
                       </div>
@@ -1410,10 +1414,10 @@ const ServicesPage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Staff who perform this service</label>
+                    <label>{t('services.staffLabel')}</label>
                     <div className="checkbox-group">
                       {staff.length === 0 ? (
-                        <p style={{ color: '#6b7280' }}>No staff members available. Please add staff members first.</p>
+                        <p style={{ color: '#6b7280' }}>{t('services.noStaffAvailable')}</p>
                       ) : (
                         staff.map(member => (
                           <div key={member.id} className="staff-checkbox">
@@ -1442,7 +1446,7 @@ const ServicesPage: React.FC = () => {
                       onClick={closeServiceModal}
                       disabled={submitting}
                     >
-                      Cancel
+                      {t('services.cancel')}
                     </button>
                     <button
                       type="submit"
@@ -1452,10 +1456,10 @@ const ServicesPage: React.FC = () => {
                       {submitting ? (
                         <>
                           <i className="fas fa-spinner fa-spin"></i>
-                          {serviceModal.isEditing ? 'Updating...' : 'Saving...'}
+                          {serviceModal.isEditing ? t('services.updating') : t('services.saving')}
                         </>
                       ) : (
-                        serviceModal.isEditing ? 'Update Service' : 'Save Service'
+                        serviceModal.isEditing ? t('services.updateService') : t('services.createService')
                       )}
                     </button>
                   </div>

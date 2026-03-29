@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/profile.css';
 
@@ -37,6 +39,7 @@ const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user: globalUser, loading: userLoading, refreshUser, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -122,15 +125,15 @@ const ProfilePage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Profile updated successfully!');
+        showMessage('success', t('profile.profileUpdatedSuccessfully'));
         // Refresh user context to get updated data
         await refreshUser();
       } else {
-        showMessage('error', data.message || 'Failed to update profile');
+        showMessage('error', data.message || t('profile.failedToUpdateProfile'));
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      showMessage('error', 'Error updating profile');
+      showMessage('error', t('profile.errorUpdatingProfile'));
     } finally {
       setSaving(false);
     }
@@ -142,13 +145,13 @@ const ProfilePage: React.FC = () => {
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      showMessage('error', 'File size must be less than 5MB');
+      showMessage('error', t('profile.fileSizeMustBeLessThan5MB'));
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      showMessage('error', 'Please select an image file');
+      showMessage('error', t('profile.pleaseSelectImageFile'));
       return;
     }
 
@@ -163,25 +166,25 @@ const ProfilePage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Profile photo uploaded successfully!');
+        showMessage('success', t('profile.profilePhotoUploadedSuccessfully'));
         // Add cache-busting query parameter to force browser to load new image
         const newPhotoUrl = data.data.profile_photo_url + '?t=' + Date.now();
         setProfilePhoto(newPhotoUrl);
         // Refresh user context to get updated profile photo
         await refreshUser();
       } else {
-        showMessage('error', data.message || 'Failed to upload photo');
+        showMessage('error', data.message || t('profile.failedToUploadPhoto'));
       }
     } catch (error) {
       console.error('Error uploading photo:', error);
-      showMessage('error', 'Error uploading photo');
+      showMessage('error', t('profile.errorUploadingPhoto'));
     } finally {
       setUploadingPhoto(false);
     }
   };
 
   const handleRemovePhoto = async () => {
-    if (!confirm('Are you sure you want to remove your profile photo?')) {
+    if (!confirm(t('profile.removeProfilePhoto'))) {
       return;
     }
 
@@ -191,16 +194,16 @@ const ProfilePage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Profile photo removed successfully!');
+        showMessage('success', t('profile.profilePhotoRemovedSuccessfully'));
         setProfilePhoto('');
         // Refresh user context to update profile photo
         await refreshUser();
       } else {
-        showMessage('error', data.message || 'Failed to remove photo');
+        showMessage('error', data.message || t('profile.failedToRemovePhoto'));
       }
     } catch (error) {
       console.error('Error removing photo:', error);
-      showMessage('error', 'Error removing photo');
+      showMessage('error', t('profile.errorRemovingPhoto'));
     } finally {
       setUploadingPhoto(false);
     }
@@ -225,7 +228,7 @@ const ProfilePage: React.FC = () => {
         <div className="page-with-sidebar">
           <div style={{ padding: '2rem', textAlign: 'center' }}>
             <div className="spinner-circle"></div>
-            <p>Loading profile...</p>
+            <p>{t('profile.loadingProfile')}</p>
           </div>
         </div>
       </>
@@ -235,6 +238,7 @@ const ProfilePage: React.FC = () => {
   return (
     <>
       <Sidebar user={globalUser} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <main className="profile-page">
           <header className="profile-header">
@@ -242,7 +246,7 @@ const ProfilePage: React.FC = () => {
               <button className="back-button" onClick={() => navigate('/dashboard')}>
                 <i className="fas fa-arrow-left"></i>
               </button>
-              <h2 className="page-title">Profile</h2>
+              <h2 className="page-title">{t('profile.title')}</h2>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
               {!globalUser?.company_id && (globalUser?.role === 'admin' || globalUser?.role === 'owner') && (
@@ -250,7 +254,7 @@ const ProfilePage: React.FC = () => {
                   className="btn-primary"
                   onClick={() => navigate('/company-settings')}
                 >
-                  <i className="fas fa-plus"></i> Create Company
+                  <i className="fas fa-plus"></i> {t('profile.createCompany')}
                 </button>
               )}
               <UserProfile user={globalUser} />
@@ -270,17 +274,17 @@ const ProfilePage: React.FC = () => {
                 <div className="card-body" style={{ textAlign: 'center', padding: '2rem' }}>
                   <i className="fas fa-building" style={{ fontSize: '3rem', color: '#8B5CF6', marginBottom: '1rem' }}></i>
                   <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#6B21A8', marginBottom: '0.5rem' }}>
-                    Create Your Company
+                    {t('profile.createYourCompany')}
                   </h3>
                   <p style={{ color: '#7C3AED', marginBottom: '1.5rem' }}>
-                    Set up your company to start managing your business with Salona
+                    {t('profile.setupCompanyDescription')}
                   </p>
                   <button
                     className="btn-primary"
                     onClick={() => navigate('/company-settings')}
                     style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}
                   >
-                    <i className="fas fa-plus"></i> Create Company Now
+                    <i className="fas fa-plus"></i> {t('profile.createCompanyNow')}
                   </button>
                 </div>
               </div>
@@ -288,13 +292,13 @@ const ProfilePage: React.FC = () => {
 
             <div className="profile-card">
               <div className="card-header">
-                <h2>Profile Information</h2>
+                <h2>{t('profile.profileInformation')}</h2>
               </div>
               <div className="card-body">
                 <form onSubmit={handleSubmit}>
                   {/* Profile Photo Section */}
                   <div className="form-group profile-photo-section">
-                    <label>Profile Photo</label>
+                    <label>{t('profile.profilePhoto')}</label>
                     <div className="profile-photo-container">
                       <div className="profile-photo-preview">
                         {uploadingPhoto ? (
@@ -326,11 +330,11 @@ const ProfilePage: React.FC = () => {
                         >
                           {uploadingPhoto ? (
                             <>
-                              <i className="fas fa-spinner fa-spin"></i> Uploading...
+                              <i className="fas fa-spinner fa-spin"></i> {t('profile.uploading')}
                             </>
                           ) : (
                             <>
-                              <i className="fas fa-upload"></i> Upload Photo
+                              <i className="fas fa-upload"></i> {t('profile.uploadPhoto')}
                             </>
                           )}
                         </button>
@@ -341,18 +345,18 @@ const ProfilePage: React.FC = () => {
                             onClick={handleRemovePhoto}
                             disabled={uploadingPhoto}
                           >
-                            <i className="fas fa-trash"></i> Remove
+                            <i className="fas fa-trash"></i> {t('profile.remove')}
                           </button>
                         )}
                         <small className="form-text">
-                          Recommended: Square image, at least 200x200px, max. 5 MB
+                          {t('profile.recommended')}
                         </small>
                       </div>
                     </div>
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="first-name">First Name</label>
+                    <label htmlFor="first-name">{t('profile.firstName')}</label>
                     <input
                       type="text"
                       id="first-name"
@@ -363,7 +367,7 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="last-name">Last Name</label>
+                    <label htmlFor="last-name">{t('profile.lastName')}</label>
                     <input
                       type="text"
                       id="last-name"
@@ -374,7 +378,7 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="email">Email</label>
+                    <label htmlFor="email">{t('profile.email')}</label>
                     <input
                       type="email"
                       id="email"
@@ -385,7 +389,7 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="phone">Phone Number</label>
+                    <label htmlFor="phone">{t('profile.phoneNumber')}</label>
                     <input
                       type="tel"
                       id="phone"
@@ -395,13 +399,13 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="languages">Languages</label>
+                    <label htmlFor="languages">{t('profile.languages')}</label>
                     <div className="language-select-wrapper">
                       <div className="language-search-container">
                         <input
                           type="text"
                           className="language-search-input"
-                          placeholder="Search languages..."
+                          placeholder={t('profile.searchLanguages')}
                           value={languageSearch}
                           onChange={(e) => setLanguageSearch(e.target.value)}
                           onFocus={() => setShowLanguageDropdown(true)}
@@ -422,7 +426,7 @@ const ProfilePage: React.FC = () => {
                               </div>
                             ))
                           ) : (
-                            <div className="no-results">No languages found</div>
+                            <div className="no-results">{t('profile.noLanguagesFound')}</div>
                           )}
                         </div>
                       )}
@@ -445,26 +449,26 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="position">Position</label>
+                    <label htmlFor="position">{t('profile.position')}</label>
                     <input
                       type="text"
                       id="position"
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
                       maxLength={250}
-                      placeholder="e.g., Stylist, Hairdresser..."
+                      placeholder={t('profile.positionPlaceholder')}
                     />
-                    <small className="form-text">Maximum 250 characters</small>
+                    <small className="form-text">{t('profile.maximumCharacters')}</small>
                   </div>
 
                   <div className="form-actions">
                     <button type="submit" className="btn-primary" disabled={saving}>
                       {saving ? (
                         <>
-                          <i className="fas fa-spinner fa-spin"></i> Saving...
+                          <i className="fas fa-spinner fa-spin"></i> {t('profile.saving')}
                         </>
                       ) : (
-                        <>Save Profile</>
+                        <>{t('profile.saveProfile')}</>
                       )}
                     </button>
                   </div>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/categories.css';
 
@@ -39,6 +41,7 @@ interface CategoryFormData {
 const CategoriesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -316,7 +319,7 @@ const CategoriesPage: React.FC = () => {
               <button
                 className="expand-button"
                 onClick={() => toggleCategory(category.id)}
-                title={isExpanded ? 'Collapse' : 'Expand'}
+                title={isExpanded ? t('common.collapse') : t('common.expand')}
               >
                 <i className={`fas fa-chevron-${isExpanded ? 'down' : 'right'}`}></i>
               </button>
@@ -326,23 +329,23 @@ const CategoriesPage: React.FC = () => {
             </div>
             <div className="category-details">
               <h4>{category.name}</h4>
-              {level > 0 && <span className="subcategory-badge">Subcategory</span>}
+              {level > 0 && <span className="subcategory-badge">{t('categories.subcategory')}</span>}
             </div>
           </div>
         </td>
         <td>
           <div className="category-description">
-            <p>{category.description_en || 'No description provided'}</p>
+            <p>{category.description_en || t('categories.noDescription')}</p>
           </div>
         </td>
         <td>
           {hasSubcategories ? (
             <span className={`stat-badge stat-subcategory`}>
-              {subcategoryCount} {subcategoryCount === 1 ? 'subcategory' : 'subcategories'}
+              {subcategoryCount} {subcategoryCount === 1 ? t('categories.subcategory') : t('categories.subcategories')}
             </span>
           ) : (
             <span className={`stat-badge ${getServicesCountBadge(category.services_count)}`}>
-              {category.services_count || 0} {category.services_count === 1 ? 'service' : 'services'}
+              {category.services_count || 0} {category.services_count === 1 ? t('categories.service') : t('categories.services')}
             </span>
           )}
         </td>
@@ -354,7 +357,7 @@ const CategoriesPage: React.FC = () => {
                 <button
                   className="action-btn add-sub"
                   onClick={() => handleAddCategory(category.id)}
-                  title="Add Subcategory"
+                  title={t('categories.addSubcategory')}
                   style={{
                     visibility: (!category.services_count || category.services_count === 0) ? 'visible' : 'hidden'
                   }}
@@ -364,14 +367,14 @@ const CategoriesPage: React.FC = () => {
                 <button
                   className="action-btn edit"
                   onClick={() => handleEditCategory(category)}
-                  title="Edit Category"
+                  title={t('categories.editCategory')}
                 >
                   <i className="fas fa-edit"></i>
                 </button>
                 <button
                   className="action-btn delete"
                   onClick={() => handleDeleteCategory(category)}
-                  title={hasSubcategories ? 'Cannot delete - has subcategories' : 'Delete Category'}
+                  title={hasSubcategories ? t('categories.cannotDelete') : t('categories.deleteCategory')}
                   disabled={hasSubcategories}
                 >
                   <i className="fas fa-trash"></i>
@@ -396,12 +399,13 @@ const CategoriesPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="categories-page">
           {/* Header */}
           <div className="categories-header">
             <div className="categories-header-left">
-              <h1 className="page-title">Categories</h1>
+              <h1 className="page-title">{t('categories.title')}</h1>
             </div>
             <UserProfile user={user} />
           </div>
@@ -417,10 +421,10 @@ const CategoriesPage: React.FC = () => {
           {!user?.company_id ? (
             <div className="empty-state">
               <i className="fas fa-building"></i>
-              <h3>No Company Found</h3>
-              <p>You need to create a company first to manage categories.</p>
+              <h3>{t('categories.noCompanyFound')}</h3>
+              <p>{t('categories.noCompanyMessage')}</p>
               <button className="btn btn-primary" onClick={() => navigate('/company-settings')}>
-                Create Company
+                {t('categories.createCompany')}
               </button>
             </div>
           ) : (
@@ -431,15 +435,15 @@ const CategoriesPage: React.FC = () => {
                   <div className="header-text">
                     <h2 className="categories-title">
                       <i className="fas fa-folder-open categories-icon"></i>
-                      Manage Categories
+                      {t('categories.title')}
                     </h2>
-                    <p className="categories-subtitle">Organize and structure your service categories</p>
+                    <p className="categories-subtitle">{t('categories.subtitle')}</p>
                   </div>
                   {isAdmin && (
                     <div className="header-actions">
                       <button className="add-category-btn" onClick={() => handleAddCategory()}>
                         <i className="fas fa-plus-circle"></i>
-                        <span>Add New Category</span>
+                        <span>{t('categories.addNewCategory')}</span>
                       </button>
                     </div>
                   )}
@@ -450,18 +454,18 @@ const CategoriesPage: React.FC = () => {
                 {loading ? (
                   <div className="loading-container">
                     <div className="loading-spinner"></div>
-                    <p>Loading categories...</p>
+                    <p>{t('categories.loading')}</p>
                   </div>
                 ) : categories.length > 0 ? (
                   <div className="table-responsive">
                     <table className="categories-table">
                       <thead>
                         <tr>
-                          <th>Category</th>
-                          <th>Description</th>
-                          <th>Count</th>
-                          <th>Created Date</th>
-                          <th>Actions</th>
+                          <th>{t('categories.categoryName')}</th>
+                          <th>{t('categories.description')}</th>
+                          <th>{t('categories.count')}</th>
+                          <th>{t('categories.createdDate')}</th>
+                          <th>{t('categories.actions')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -472,11 +476,11 @@ const CategoriesPage: React.FC = () => {
                 ) : (
                   <div className="empty-state">
                     <i className="fas fa-folder-open"></i>
-                    <h3>No Categories Found</h3>
+                    <h3>{t('categories.noCategoriesFound')}</h3>
                     {isAdmin ? (
-                      <p>No categories found. Click "Add New Category" to create your first category.</p>
+                      <p>{t('categories.noAdminMessage')}</p>
                     ) : (
-                      <p>Insufficient privileges. Please contact your administrator.</p>
+                      <p>{t('categories.insufficientPrivileges')}</p>
                     )}
                   </div>
                 )}
@@ -497,7 +501,7 @@ const CategoriesPage: React.FC = () => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h3 className="modal-title">
-                    {modalMode === 'add' ? 'Add Category' : 'Edit Category'}
+                    {modalMode === 'add' ? t('categories.addCategory') : t('categories.editCategoryTitle')}
                   </h3>
                   <button className="modal-close" onClick={() => setShowModal(false)}>
                     <i className="fas fa-times"></i>
@@ -507,7 +511,7 @@ const CategoriesPage: React.FC = () => {
                   <form onSubmit={handleSubmit}>
                     {/* Default Category Name - Always Visible */}
                     <div className="form-group">
-                      <label className="form-label" htmlFor="category-name">Category Name *</label>
+                      <label className="form-label" htmlFor="category-name">{t('categories.categoryNameLabel')}</label>
                       <input
                         type="text"
                         id="category-name"
@@ -515,53 +519,53 @@ const CategoriesPage: React.FC = () => {
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                         required
-                        placeholder="Enter category name"
+                        placeholder={t('common.enterText')}
                       />
                     </div>
 
                     {/* Parent Category Selection */}
                     <div className="form-group">
-                      <label className="form-label" htmlFor="parent-category">Parent Category (Optional)</label>
+                      <label className="form-label" htmlFor="parent-category">{t('categories.parentCategory')}</label>
                       <select
                         id="parent-category"
                         className="form-input"
                         value={parentCategoryId}
                         onChange={(e) => setParentCategoryId(e.target.value)}
                       >
-                        <option value="">None (Main Category)</option>
+                        <option value="">{t('common.none')} ({t('common.mainCategory')})</option>
                         {getMainCategories(categories, editingCategory?.id).map(cat => (
                           <option key={cat.id} value={cat.id}>
                             {cat.parent_category_id ? '  └─ ' : ''}{cat.name}
                           </option>
                         ))}
                       </select>
-                      <small className="form-hint">Select a parent category to create a subcategory</small>
+                      <small className="form-hint">{t('categories.parentCategoryHint')}</small>
                     </div>
 
                     {/* Language Tabs */}
                     <div className="language-section">
-                      <div className="language-section-title">Translations (Optional)</div>
+                      <div className="language-section-title">{t('common.translations')}</div>
                       <div className="language-tabs">
                         <button
                           type="button"
                           className={`language-tab ${activeTab === 'en' ? 'active' : ''}`}
                           onClick={() => setActiveTab('en')}
                         >
-                          🇬🇧 English
+                          🇬🇧 {t('common.english')}
                         </button>
                         <button
                           type="button"
                           className={`language-tab ${activeTab === 'ee' ? 'active' : ''}`}
                           onClick={() => setActiveTab('ee')}
                         >
-                          🇪🇪 Estonian
+                          🇪🇪 {t('common.estonian')}
                         </button>
                         <button
                           type="button"
                           className={`language-tab ${activeTab === 'ru' ? 'active' : ''}`}
                           onClick={() => setActiveTab('ru')}
                         >
-                          🇷🇺 Russian
+                          🇷🇺 {t('common.russian')}
                         </button>
                       </div>
 
@@ -570,25 +574,25 @@ const CategoriesPage: React.FC = () => {
                         {activeTab === 'en' && (
                           <>
                             <div className="form-group">
-                              <label className="form-label" htmlFor="category-name-en">Category Name (English)</label>
+                              <label className="form-label" htmlFor="category-name-en">{t('categories.categoryNameEn')}</label>
                               <input
                                 type="text"
                                 id="category-name-en"
                                 className="form-input"
                                 value={formData.name_en}
                                 onChange={(e) => setFormData(prev => ({ ...prev, name_en: e.target.value }))}
-                                placeholder="Enter English name"
+                                placeholder={t('common.enterText')}
                               />
                             </div>
                             <div className="form-group">
-                              <label className="form-label" htmlFor="category-description-en">Description (English)</label>
+                              <label className="form-label" htmlFor="category-description-en">{t('categories.descriptionEn')}</label>
                               <textarea
                                 id="category-description-en"
                                 className="form-textarea"
                                 value={formData.description_en}
                                 onChange={(e) => setFormData(prev => ({ ...prev, description_en: e.target.value }))}
                                 rows={3}
-                                placeholder="Enter English description (optional)"
+                                placeholder={`${t('common.enterText')} ${t('common.optional')}`}
                               />
                             </div>
                           </>
@@ -597,25 +601,25 @@ const CategoriesPage: React.FC = () => {
                         {activeTab === 'ee' && (
                           <>
                             <div className="form-group">
-                              <label className="form-label" htmlFor="category-name-ee">Category Name (Estonian)</label>
+                              <label className="form-label" htmlFor="category-name-ee">{t('categories.categoryNameEe')}</label>
                               <input
                                 type="text"
                                 id="category-name-ee"
                                 className="form-input"
                                 value={formData.name_ee}
                                 onChange={(e) => setFormData(prev => ({ ...prev, name_ee: e.target.value }))}
-                                placeholder="Enter Estonian name"
+                                placeholder={t('common.enterText')}
                               />
                             </div>
                             <div className="form-group">
-                              <label className="form-label" htmlFor="category-description-ee">Description (Estonian)</label>
+                              <label className="form-label" htmlFor="category-description-ee">{t('categories.descriptionEe')}</label>
                               <textarea
                                 id="category-description-ee"
                                 className="form-textarea"
                                 value={formData.description_ee}
                                 onChange={(e) => setFormData(prev => ({ ...prev, description_ee: e.target.value }))}
                                 rows={3}
-                                placeholder="Enter Estonian description (optional)"
+                                placeholder={`${t('common.enterText')} ${t('common.optional')}`}
                               />
                             </div>
                           </>
@@ -624,25 +628,25 @@ const CategoriesPage: React.FC = () => {
                         {activeTab === 'ru' && (
                           <>
                             <div className="form-group">
-                              <label className="form-label" htmlFor="category-name-ru">Category Name (Russian)</label>
+                              <label className="form-label" htmlFor="category-name-ru">{t('categories.categoryNameRu')}</label>
                               <input
                                 type="text"
                                 id="category-name-ru"
                                 className="form-input"
                                 value={formData.name_ru}
                                 onChange={(e) => setFormData(prev => ({ ...prev, name_ru: e.target.value }))}
-                                placeholder="Enter Russian name"
+                                placeholder={t('common.enterText')}
                               />
                             </div>
                             <div className="form-group">
-                              <label className="form-label" htmlFor="category-description-ru">Description (Russian)</label>
+                              <label className="form-label" htmlFor="category-description-ru">{t('categories.descriptionRu')}</label>
                               <textarea
                                 id="category-description-ru"
                                 className="form-textarea"
                                 value={formData.description_ru}
                                 onChange={(e) => setFormData(prev => ({ ...prev, description_ru: e.target.value }))}
                                 rows={3}
-                                placeholder="Enter Russian description (optional)"
+                                placeholder={`${t('common.enterText')} ${t('common.optional')}`}
                               />
                             </div>
                           </>
@@ -652,16 +656,16 @@ const CategoriesPage: React.FC = () => {
 
                     <div className="form-actions">
                       <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                        Cancel
+                        {t('categories.cancel')}
                       </button>
                       <button type="submit" className="btn btn-primary" disabled={saving}>
                         {saving ? (
                           <>
                             <i className="fas fa-spinner fa-spin"></i>
-                            {modalMode === 'add' ? 'Creating...' : 'Updating...'}
+                            {modalMode === 'add' ? t('categories.creating') : t('categories.updating')}
                           </>
                         ) : (
-                          modalMode === 'add' ? 'Save Category' : 'Update Category'
+                          modalMode === 'add' ? t('categories.saveCategory') : t('categories.updateCategory')
                         )}
                       </button>
                     </div>
@@ -683,17 +687,17 @@ const CategoriesPage: React.FC = () => {
             >
               <div className="modal-content">
                 <div className="modal-header">
-                  <h3 className="modal-title">Delete Category</h3>
+                  <h3 className="modal-title">{t('categories.deleteConfirm')}</h3>
                   <button className="modal-close" onClick={() => setShowDeleteModal(false)}>
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
                 <div className="modal-body">
                   <p>
-                    Are you sure you want to delete the category "<strong>{deletingCategory.name}</strong>"?
+                    {t('categories.deleteConfirmText')} "<strong>{deletingCategory.name}</strong>"?
                   </p>
                   <p style={{ color: '#dc2626', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                    This will remove all services in this category. This action cannot be undone.
+                    {t('categories.deleteWarning')}
                   </p>
 
                   <div className="form-actions">
@@ -702,7 +706,7 @@ const CategoriesPage: React.FC = () => {
                       className="btn btn-secondary"
                       onClick={() => setShowDeleteModal(false)}
                     >
-                      Cancel
+                      {t('categories.cancel')}
                     </button>
                     <button
                       type="button"
@@ -713,10 +717,10 @@ const CategoriesPage: React.FC = () => {
                       {deleting ? (
                         <>
                           <i className="fas fa-spinner fa-spin"></i>
-                          Deleting...
+                          {t('categories.deleting')}
                         </>
                       ) : (
-                        'Delete Category'
+                        t('categories.deleteCategory')
                       )}
                     </button>
                   </div>

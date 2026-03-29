@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/online-booking.css';
 
@@ -13,6 +15,7 @@ interface Company {
 
 const OnlineBookingPage: React.FC = () => {
   const { user, loading: userLoading, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [, setCompany] = useState<Company | null>(null);
   const [bookingUrl, setBookingUrl] = useState('');
@@ -90,8 +93,8 @@ const OnlineBookingPage: React.FC = () => {
           <div className="online-booking-page">
             <div className="page-header">
               <div>
-                <h1>Online Booking</h1>
-                <p>You need to create a company first to use online booking.</p>
+                <h1>{t('onlineBooking.title')}</h1>
+                <p>{t('onlineBooking.noCompanyMessage')}</p>
               </div>
               <UserProfile user={user} />
             </div>
@@ -104,12 +107,13 @@ const OnlineBookingPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="online-booking-page">
           <div className="page-header">
             <div>
-              <h1>Online Booking</h1>
-              <p>Share your booking link with customers to let them book appointments directly</p>
+              <h1>{t('onlineBooking.title')}</h1>
+              <p>{t('onlineBooking.subtitle')}</p>
             </div>
             <UserProfile user={user} />
           </div>
@@ -117,11 +121,11 @@ const OnlineBookingPage: React.FC = () => {
           <div className="booking-card">
             <h3>
               <i className="fas fa-calendar-check"></i>
-              Customer Booking URL
+              {t('onlineBooking.customerBookingUrl')}
             </h3>
 
             <p className="booking-description">
-              Share this URL with your customers so they can book appointments directly with your business.
+              {t('onlineBooking.shareUrlDescription')}
             </p>
 
             {bookingUrl ? (
@@ -138,15 +142,15 @@ const OnlineBookingPage: React.FC = () => {
                     onClick={handleCopyUrl}
                   >
                     <i className={`fas ${copied ? 'fa-check' : 'fa-copy'}`}></i>
-                    <span>{copied ? 'Copied!' : 'Copy'}</span>
+                    <span>{copied ? t('onlineBooking.copied') : t('onlineBooking.copyUrl')}</span>
                   </button>
                 </div>
 
                 <div className="info-box">
-                  <p><strong>How to use:</strong></p>
-                  <p>• Share this link on your website, social media, or via email</p>
-                  <p>• Customers can view available services and book appointments</p>
-                  <p>• Bookings appear automatically in your dashboard</p>
+                  <p><strong>{t('onlineBooking.howToUse')}</strong></p>
+                  <p>• {t('onlineBooking.shareOnWebsite')}</p>
+                  <p>• {t('onlineBooking.customersViewServices')}</p>
+                  <p>• {t('onlineBooking.bookingsAppear')}</p>
                 </div>
 
                 <div className="qr-code-container">
@@ -154,14 +158,14 @@ const OnlineBookingPage: React.FC = () => {
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(bookingUrl)}`}
                     alt="Booking QR Code"
                   />
-                  <p>Customers can scan this QR code to book appointments</p>
+                  <p>{t('onlineBooking.qrCodeDescription')}</p>
                 </div>
               </>
             ) : (
               <div className="info-box">
-                <p><strong>Setup Required:</strong></p>
-                <p>• Your company needs a unique booking URL (slug) to enable online booking</p>
-                <p>• Please contact support or update your company settings</p>
+                <p><strong>{t('onlineBooking.setupRequired')}</strong></p>
+                <p>• {t('onlineBooking.companyNeedsSlug')}</p>
+                <p>• {t('onlineBooking.contactSupport')}</p>
               </div>
             )}
           </div>

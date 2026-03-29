@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/company-settings.css';
 
@@ -70,6 +72,7 @@ const TIMEZONES = [
 const CompanySettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading: userLoading, refreshUser, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('company-details');
@@ -179,13 +182,13 @@ const CompanySettingsPage: React.FC = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      showMessage('error', 'Please select a valid image file');
+      showMessage('error', t('companySettings.selectImageFile'));
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      showMessage('error', 'Image size should be less than 5MB');
+      showMessage('error', t('companySettings.imageSizeTooLarge'));
       return;
     }
 
@@ -201,7 +204,7 @@ const CompanySettingsPage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Company logo uploaded successfully!');
+        showMessage('success', t('companySettings.logoUploadedSuccessfully'));
 
         // Update the logo URL and preview
         if (data.data && data.data.logo_url) {
@@ -214,11 +217,11 @@ const CompanySettingsPage: React.FC = () => {
           }
         }
       } else {
-        showMessage('error', data.message || 'Failed to upload logo');
+        showMessage('error', data.message || t('companySettings.failedToUploadLogo'));
       }
     } catch (error) {
       console.error('Error uploading logo:', error);
-      showMessage('error', 'Error uploading logo');
+      showMessage('error', t('companySettings.errorUploadingLogo'));
     } finally {
       setUploadingLogo(false);
       // Reset file input
@@ -233,7 +236,7 @@ const CompanySettingsPage: React.FC = () => {
   };
 
   const handleRemoveLogo = async () => {
-    if (!confirm('Are you sure you want to remove the company logo?')) {
+    if (!confirm(t('companySettings.removeLogoConfirm'))) {
       return;
     }
 
@@ -254,18 +257,18 @@ const CompanySettingsPage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Company logo removed successfully!');
+        showMessage('success', t('companySettings.logoRemovedSuccessfully'));
         setCompanyLogoUrl('');
         setLogoPreview('');
         if (company) {
           setCompany({ ...company, logo_url: '' });
         }
       } else {
-        showMessage('error', data.message || 'Failed to remove logo');
+        showMessage('error', data.message || t('companySettings.failedToRemoveLogo'));
       }
     } catch (error) {
       console.error('Error removing logo:', error);
-      showMessage('error', 'Error removing logo');
+      showMessage('error', t('companySettings.errorRemovingLogo'));
     } finally {
       setUploadingLogo(false);
     }
@@ -288,18 +291,18 @@ const CompanySettingsPage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Company created successfully!');
+        showMessage('success', t('companySettings.companyCreatedSuccessfully'));
         // Refresh user data to get the new company_id
         await refreshUser();
         setTimeout(() => {
           window.location.reload();
         }, 1500);
       } else {
-        showMessage('error', data.message || 'Failed to create company');
+        showMessage('error', data.message || t('companySettings.failedToCreateCompany'));
       }
     } catch (error) {
       console.error('Error creating company:', error);
-      showMessage('error', 'Error creating company');
+      showMessage('error', t('companySettings.errorCreatingCompany'));
     } finally {
       setSaving(false);
     }
@@ -323,17 +326,17 @@ const CompanySettingsPage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Company details updated successfully!');
+        showMessage('success', t('companySettings.companyDetailsUpdatedSuccessfully'));
         // Update company state with the response data if available
         if (data.data) {
           setCompany(data.data);
         }
       } else {
-        showMessage('error', data.message || 'Failed to update company');
+        showMessage('error', data.message || t('companySettings.failedToUpdateDetails'));
       }
     } catch (error) {
       console.error('Error updating company:', error);
-      showMessage('error', 'Error updating company');
+      showMessage('error', t('companySettings.errorUpdatingDetails'));
     } finally {
       setSaving(false);
     }
@@ -359,17 +362,17 @@ const CompanySettingsPage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Company emails saved successfully!');
+        showMessage('success', t('companySettings.emailsSavedSuccessfully'));
         // Update emails state if the response includes the saved data
         if (data.data && data.data.length > 0) {
           setEmails(data.data);
         }
       } else {
-        showMessage('error', data.message || 'Failed to save emails');
+        showMessage('error', data.message || t('companySettings.failedToSaveEmails'));
       }
     } catch (error) {
       console.error('Error saving emails:', error);
-      showMessage('error', 'Error saving emails');
+      showMessage('error', t('companySettings.errorSavingEmails'));
     } finally {
       setSaving(false);
     }
@@ -394,17 +397,17 @@ const CompanySettingsPage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Company phone numbers saved successfully!');
+        showMessage('success', t('companySettings.phonesSavedSuccessfully'));
         // Update phones state if the response includes the saved data
         if (data.data && data.data.length > 0) {
           setPhones(data.data);
         }
       } else {
-        showMessage('error', data.message || 'Failed to save phones');
+        showMessage('error', data.message || t('companySettings.failedToSavePhones'));
       }
     } catch (error) {
       console.error('Error saving phones:', error);
-      showMessage('error', 'Error saving phones');
+      showMessage('error', t('companySettings.errorSavingPhones'));
     } finally {
       setSaving(false);
     }
@@ -429,14 +432,14 @@ const CompanySettingsPage: React.FC = () => {
       const data = response.data;
 
       if (data?.success !== false) {
-        showMessage('success', 'Company address saved successfully!');
+        showMessage('success', t('companySettings.addressSavedSuccessfully'));
         // Address state is already updated, no need to reload
       } else {
-        showMessage('error', data.message || 'Failed to save address');
+        showMessage('error', data.message || t('companySettings.failedToSaveAddress'));
       }
     } catch (error) {
       console.error('Error saving address:', error);
-      showMessage('error', 'Error saving address');
+      showMessage('error', t('companySettings.errorSavingAddress'));
     } finally {
       setSaving(false);
     }
@@ -456,7 +459,7 @@ const CompanySettingsPage: React.FC = () => {
 
     // If the email has an ID, call the DELETE API
     if (emailToRemove.id) {
-      if (!confirm('Are you sure you want to delete this email?')) {
+      if (!confirm(t('companySettings.deleteEmailConfirm'))) {
         return;
       }
 
@@ -465,14 +468,14 @@ const CompanySettingsPage: React.FC = () => {
         const data = response.data;
 
         if (data?.success !== false) {
-          showMessage('success', 'Email deleted successfully!');
+          showMessage('success', t('companySettings.emailDeletedSuccessfully'));
           setEmails(emails.filter((_, i) => i !== index));
         } else {
-          showMessage('error', data.message || 'Failed to delete email');
+          showMessage('error', data.message || t('companySettings.failedToDeleteEmail'));
         }
       } catch (error) {
         console.error('Error deleting email:', error);
-        showMessage('error', 'Error deleting email');
+        showMessage('error', t('companySettings.errorDeletingEmail'));
       }
     } else {
       // If no ID, just remove from local state (it's a new email that hasn't been saved)
@@ -500,7 +503,7 @@ const CompanySettingsPage: React.FC = () => {
 
     // If the phone has an ID, call the DELETE API
     if (phoneToRemove.id) {
-      if (!confirm('Are you sure you want to delete this phone number?')) {
+      if (!confirm(t('companySettings.deletePhoneConfirm'))) {
         return;
       }
 
@@ -509,14 +512,14 @@ const CompanySettingsPage: React.FC = () => {
         const data = response.data;
 
         if (data?.success !== false) {
-          showMessage('success', 'Phone number deleted successfully!');
+          showMessage('success', t('companySettings.phoneDeletedSuccessfully'));
           setPhones(phones.filter((_, i) => i !== index));
         } else {
-          showMessage('error', data.message || 'Failed to delete phone number');
+          showMessage('error', data.message || t('companySettings.failedToDeletePhone'));
         }
       } catch (error) {
         console.error('Error deleting phone:', error);
-        showMessage('error', 'Error deleting phone number');
+        showMessage('error', t('companySettings.errorDeletingPhone'));
       }
     } else {
       // If no ID, just remove from local state (it's a new phone that hasn't been saved)
@@ -537,7 +540,7 @@ const CompanySettingsPage: React.FC = () => {
         <div className="page-with-sidebar">
           <div style={{ padding: '2rem', textAlign: 'center' }}>
             <div className="spinner-circle"></div>
-            <p>Loading...</p>
+            <p>{t('companySettings.loading')}</p>
           </div>
         </div>
       </>
@@ -547,6 +550,7 @@ const CompanySettingsPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <main className="company-settings-page">
           <header className="settings-header">
@@ -554,7 +558,7 @@ const CompanySettingsPage: React.FC = () => {
               <button className="back-button" onClick={() => navigate('/dashboard')}>
                 <i className="fas fa-arrow-left"></i>
               </button>
-              <h2 className="page-title">Company Settings</h2>
+              <h2 className="page-title">{t('companySettings.title')}</h2>
             </div>
             <UserProfile user={user} />
           </header>
@@ -571,12 +575,12 @@ const CompanySettingsPage: React.FC = () => {
               // Create Company Form
               <div className="settings-card">
                 <div className="card-header">
-                  <h2>Create Company</h2>
+                  <h2>{t('companySettings.createCompany')}</h2>
                 </div>
                 <div className="card-body">
                   <form onSubmit={handleCreateCompany}>
                     <div className="form-group">
-                      <label htmlFor="company-name">Company Name *</label>
+                      <label htmlFor="company-name">{t('companySettings.companyNameLabel')}</label>
                       <input
                         type="text"
                         id="company-name"
@@ -587,22 +591,22 @@ const CompanySettingsPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="company-type">Business Type</label>
+                      <label htmlFor="company-type">{t('companySettings.businessTypeLabel')}</label>
                       <input
                         type="text"
                         id="company-type"
                         value={companyType}
                         onChange={(e) => setCompanyType(e.target.value)}
-                        placeholder="e.g., Salon, Spa, Barbershop"
+                        placeholder={t('companySettings.businessTypePlaceholder')}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Company Logo</label>
+                      <label>{t('companySettings.companyLogoLabel')}</label>
                       <div className="logo-upload-container">
                         <div className="alert alert-info" style={{ marginBottom: '1rem' }}>
                           <i className="fas fa-info-circle"></i>
-                          <span>Please save your company first before uploading a logo.</span>
+                          <span>{t('companySettings.pleaseUploadLogo')}</span>
                         </div>
                         <button
                           type="button"
@@ -611,36 +615,36 @@ const CompanySettingsPage: React.FC = () => {
                           style={{ opacity: 0.6, cursor: 'not-allowed' }}
                         >
                           <i className="fas fa-cloud-upload-alt"></i>
-                          <span>Upload Company Logo</span>
-                          <small>Available after company creation</small>
+                          <span>{t('companySettings.uploadCompanyLogo')}</span>
+                          <small>{t('companySettings.availableAfterCreation')}</small>
                         </button>
                       </div>
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="company-website">Website</label>
+                      <label htmlFor="company-website">{t('companySettings.websiteLabel')}</label>
                       <input
                         type="url"
                         id="company-website"
                         value={companyWebsite}
                         onChange={(e) => setCompanyWebsite(e.target.value)}
-                        placeholder="https://example.com"
+                        placeholder={t('companySettings.websitePlaceholder')}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="company-description">Description</label>
+                      <label htmlFor="company-description">{t('companySettings.descriptionLabel')}</label>
                       <textarea
                         id="company-description"
                         value={companyDescription}
                         onChange={(e) => setCompanyDescription(e.target.value)}
                         rows={3}
-                        placeholder="Tell us about your business..."
+                        placeholder={t('companySettings.descriptionPlaceholder')}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="company-team-size">Team Size</label>
+                      <label htmlFor="company-team-size">{t('companySettings.teamSizeLabel')}</label>
                       <input
                         type="number"
                         id="company-team-size"
@@ -651,7 +655,7 @@ const CompanySettingsPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="company-timezone">Timezone</label>
+                      <label htmlFor="company-timezone">{t('companySettings.timezoneLabel')}</label>
                       <select
                         id="company-timezone"
                         value={companyTimezone}
@@ -669,10 +673,10 @@ const CompanySettingsPage: React.FC = () => {
                       <button type="submit" className="btn-primary" disabled={saving}>
                         {saving ? (
                           <>
-                            <i className="fas fa-spinner fa-spin"></i> Creating...
+                            <i className="fas fa-spinner fa-spin"></i> {t('companySettings.creating')}
                           </>
                         ) : (
-                          'Save Company'
+                          t('companySettings.saveCompany')
                         )}
                       </button>
                     </div>
@@ -689,28 +693,28 @@ const CompanySettingsPage: React.FC = () => {
                       onClick={() => setActiveTab('company-details')}
                     >
                       <i className="fas fa-building"></i>
-                      <span>Company Details</span>
+                      <span>{t('companySettings.companyDetailsTab')}</span>
                     </button>
                     <button
                       className={`tab-button ${activeTab === 'company-emails' ? 'active' : ''}`}
                       onClick={() => setActiveTab('company-emails')}
                     >
                       <i className="fas fa-envelope"></i>
-                      <span>Company Emails</span>
+                      <span>{t('companySettings.companyEmailsTab')}</span>
                     </button>
                     <button
                       className={`tab-button ${activeTab === 'company-phones' ? 'active' : ''}`}
                       onClick={() => setActiveTab('company-phones')}
                     >
                       <i className="fas fa-phone"></i>
-                      <span>Phone Numbers</span>
+                      <span>{t('companySettings.phoneNumbersTab')}</span>
                     </button>
                     <button
                       className={`tab-button ${activeTab === 'company-address' ? 'active' : ''}`}
                       onClick={() => setActiveTab('company-address')}
                     >
                       <i className="fas fa-map-marker-alt"></i>
-                      <span>Company Address</span>
+                      <span>{t('companySettings.companyAddressTab')}</span>
                     </button>
                   </div>
 
@@ -720,7 +724,7 @@ const CompanySettingsPage: React.FC = () => {
                       <div className="tab-panel active">
                         <form onSubmit={handleUpdateCompanyDetails}>
                           <div className="form-group">
-                            <label htmlFor="details-company-name">Company Name *</label>
+                            <label htmlFor="details-company-name">{t('companySettings.companyNameLabel')}</label>
                             <input
                               type="text"
                               id="details-company-name"
@@ -731,7 +735,7 @@ const CompanySettingsPage: React.FC = () => {
                           </div>
 
                           <div className="form-group">
-                            <label>Company Logo</label>
+                            <label>{t('companySettings.companyLogoLabel')}</label>
                             <div className="logo-upload-container">
                               <input
                                 ref={fileInputRef}
@@ -751,7 +755,7 @@ const CompanySettingsPage: React.FC = () => {
                                       onClick={handleLogoClick}
                                       disabled={uploadingLogo}
                                     >
-                                      <i className="fas fa-sync-alt"></i> Change
+                                      <i className="fas fa-sync-alt"></i> {t('companySettings.changeLogo')}
                                     </button>
                                     <button
                                       type="button"
@@ -759,7 +763,7 @@ const CompanySettingsPage: React.FC = () => {
                                       onClick={handleRemoveLogo}
                                       disabled={uploadingLogo}
                                     >
-                                      <i className="fas fa-trash-alt"></i> Remove
+                                      <i className="fas fa-trash-alt"></i> {t('companySettings.removeLogo')}
                                     </button>
                                   </div>
                                 </div>
@@ -773,13 +777,13 @@ const CompanySettingsPage: React.FC = () => {
                                   {uploadingLogo ? (
                                     <>
                                       <i className="fas fa-spinner fa-spin"></i>
-                                      <span>Uploading...</span>
+                                      <span>{t('companySettings.uploading')}</span>
                                     </>
                                   ) : (
                                     <>
                                       <i className="fas fa-cloud-upload-alt"></i>
-                                      <span>Upload Company Logo</span>
-                                      <small>PNG, JPG or WEBP (Max 5MB)</small>
+                                      <span>{t('companySettings.uploadCompanyLogo')}</span>
+                                      <small>{t('companySettings.logoFileTypes')}</small>
                                     </>
                                   )}
                                 </button>
@@ -788,7 +792,7 @@ const CompanySettingsPage: React.FC = () => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="details-company-website">Website</label>
+                            <label htmlFor="details-company-website">{t('companySettings.websiteLabel')}</label>
                             <input
                               type="url"
                               id="details-company-website"
@@ -798,7 +802,7 @@ const CompanySettingsPage: React.FC = () => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="details-company-description">Description</label>
+                            <label htmlFor="details-company-description">{t('companySettings.descriptionLabel')}</label>
                             <textarea
                               id="details-company-description"
                               value={companyDescription}
@@ -808,7 +812,7 @@ const CompanySettingsPage: React.FC = () => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="details-company-team-size">Team Size</label>
+                            <label htmlFor="details-company-team-size">{t('companySettings.teamSizeLabel')}</label>
                             <input
                               type="number"
                               id="details-company-team-size"
@@ -819,7 +823,7 @@ const CompanySettingsPage: React.FC = () => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="details-company-type">Business Type</label>
+                            <label htmlFor="details-company-type">{t('companySettings.businessTypeLabel')}</label>
                             <input
                               type="text"
                               id="details-company-type"
@@ -829,7 +833,7 @@ const CompanySettingsPage: React.FC = () => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="details-company-timezone">Timezone</label>
+                            <label htmlFor="details-company-timezone">{t('companySettings.timezoneLabel')}</label>
                             <select
                               id="details-company-timezone"
                               value={companyTimezone}
@@ -847,10 +851,10 @@ const CompanySettingsPage: React.FC = () => {
                             <button type="submit" className="btn-primary" disabled={saving}>
                               {saving ? (
                                 <>
-                                  <i className="fas fa-spinner fa-spin"></i> Saving...
+                                  <i className="fas fa-spinner fa-spin"></i> {t('companySettings.saving')}
                                 </>
                               ) : (
-                                'Save Details'
+                                t('companySettings.saveDetails')
                               )}
                             </button>
                           </div>
@@ -863,7 +867,7 @@ const CompanySettingsPage: React.FC = () => {
                       <div className="tab-panel active">
                         <div className="tab-panel-header">
                           <button className="btn-primary" onClick={addEmail} type="button">
-                            <i className="fas fa-plus"></i> Add Email
+                            <i className="fas fa-plus"></i> {t('companySettings.addEmail')}
                           </button>
                         </div>
                         <form onSubmit={handleSaveEmails}>
@@ -872,7 +876,7 @@ const CompanySettingsPage: React.FC = () => {
                               <div key={index} className="email-entry">
                                 <div className="form-row">
                                   <div className="form-group flex-grow">
-                                    <label>Email</label>
+                                    <label>{t('companySettings.emailLabel')}</label>
                                     <input
                                       type="email"
                                       value={email.email}
@@ -881,15 +885,15 @@ const CompanySettingsPage: React.FC = () => {
                                     />
                                   </div>
                                   <div className="form-group">
-                                    <label>Type</label>
+                                    <label>{t('companySettings.typeLabel')}</label>
                                     <select
                                       value={email.type}
                                       onChange={(e) => updateEmail(index, 'type', e.target.value)}
                                     >
-                                      <option value="primary">Primary</option>
-                                      <option value="billing">Billing</option>
-                                      <option value="support">Support</option>
-                                      <option value="other">Other</option>
+                                      <option value="primary">{t('companySettings.primaryType')}</option>
+                                      <option value="billing">{t('companySettings.billingType')}</option>
+                                      <option value="support">{t('companySettings.supportType')}</option>
+                                      <option value="other">{t('companySettings.otherType')}</option>
                                     </select>
                                   </div>
                                   <div className="form-group delete-btn-group">
@@ -911,10 +915,10 @@ const CompanySettingsPage: React.FC = () => {
                             <button type="submit" className="btn-primary" disabled={saving}>
                               {saving ? (
                                 <>
-                                  <i className="fas fa-spinner fa-spin"></i> Saving...
+                                  <i className="fas fa-spinner fa-spin"></i> {t('companySettings.saving')}
                                 </>
                               ) : (
-                                'Save Emails'
+                                t('companySettings.saveEmails')
                               )}
                             </button>
                           </div>
@@ -927,7 +931,7 @@ const CompanySettingsPage: React.FC = () => {
                       <div className="tab-panel active">
                         <div className="tab-panel-header">
                           <button className="btn-primary" onClick={addPhone} type="button">
-                            <i className="fas fa-plus"></i> Add Phone
+                            <i className="fas fa-plus"></i> {t('companySettings.addPhone')}
                           </button>
                         </div>
                         <form onSubmit={handleSavePhones}>
@@ -936,7 +940,7 @@ const CompanySettingsPage: React.FC = () => {
                               <div key={index} className="phone-entry">
                                 <div className="form-row">
                                   <div className="form-group flex-grow">
-                                    <label>Phone Number</label>
+                                    <label>{t('companySettings.phoneNumberLabel')}</label>
                                     <input
                                       type="tel"
                                       value={phone.phone}
@@ -945,16 +949,16 @@ const CompanySettingsPage: React.FC = () => {
                                     />
                                   </div>
                                   <div className="form-group">
-                                    <label>Type</label>
+                                    <label>{t('companySettings.typeLabel')}</label>
                                     <select
                                       value={phone.type}
                                       onChange={(e) => updatePhone(index, 'type', e.target.value)}
                                     >
-                                      <option value="primary">Primary</option>
-                                      <option value="business">Business</option>
-                                      <option value="mobile">Mobile</option>
-                                      <option value="fax">Fax</option>
-                                      <option value="other">Other</option>
+                                      <option value="primary">{t('companySettings.primaryType')}</option>
+                                      <option value="business">{t('companySettings.businessType')}</option>
+                                      <option value="mobile">{t('companySettings.mobileType')}</option>
+                                      <option value="fax">{t('companySettings.faxType')}</option>
+                                      <option value="other">{t('companySettings.otherType')}</option>
                                     </select>
                                   </div>
                                   <div className="form-group delete-btn-group">
@@ -976,10 +980,10 @@ const CompanySettingsPage: React.FC = () => {
                             <button type="submit" className="btn-primary" disabled={saving}>
                               {saving ? (
                                 <>
-                                  <i className="fas fa-spinner fa-spin"></i> Saving...
+                                  <i className="fas fa-spinner fa-spin"></i> {t('companySettings.saving')}
                                 </>
                               ) : (
-                                'Save Phone Numbers'
+                                t('companySettings.savePhones')
                               )}
                             </button>
                           </div>

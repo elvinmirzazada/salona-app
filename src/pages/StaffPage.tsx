@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/staff.css';
 
@@ -58,6 +60,7 @@ interface StaffFormData {
 const StaffPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -343,22 +346,22 @@ const StaffPage: React.FC = () => {
 
   const getRoleDisplayName = (role: string) => {
     const roleMap: { [key: string]: string } = {
-      'staff': 'Staff',
-      'admin': 'Admin',
-      'owner': 'Owner',
-      'manager': 'Manager'
+      'staff': t('staff.roleStaff'),
+      'admin': t('staff.roleAdmin'),
+      'owner': t('staff.roleOwner'),
+      'manager': t('staff.roleManager')
     };
     return roleMap[role] || role;
   };
 
   const getStatusDisplayName = (status: string) => {
     const statusMap: { [key: string]: string } = {
-      'active': 'Active',
-      'inactive': 'Inactive',
-      'pending': 'Pending',
-      'accepted': 'Accepted',
-      'declined': 'Declined',
-      'expired': 'Expired'
+      'active': t('staff.statusActive'),
+      'inactive': t('staff.statusInactive'),
+      'pending': t('staff.statusPending'),
+      'accepted': t('staff.statusAccepted'),
+      'declined': t('staff.statusDeclined'),
+      'expired': t('staff.statusExpired')
     };
     return statusMap[status] || status;
   };
@@ -366,6 +369,7 @@ const StaffPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         {/* Message Display */}
         {message && (
@@ -386,10 +390,10 @@ const StaffPage: React.FC = () => {
               <div className="card-body">
                 <div className="empty-state">
                   <i className="fas fa-building"></i>
-                  <h3>No Company Found</h3>
-                  <p>You need to create a company first to manage staff members.</p>
+                  <h3>{t('staff.noCompanyFound')}</h3>
+                  <p>{t('staff.noCompanyMessage')}</p>
                   <button className="btn btn-primary" onClick={() => navigate('/company-settings')}>
-                    Create Company
+                    {t('staff.createCompany')}
                   </button>
                 </div>
               </div>
@@ -403,16 +407,16 @@ const StaffPage: React.FC = () => {
                     <div className="header-text">
                       <h2 className="services-title">
                         <i className="fas fa-users services-icon"></i>
-                        Manage Staff
+                        {t('staff.title')}
                       </h2>
-                      <p className="services-subtitle">Create, edit, and organize your staff members</p>
+                      <p className="services-subtitle">{t('staff.subtitle')}</p>
                     </div>
                     <div className="header-right">
                       <div className="header-actions">
                         {isAdmin && (
                           <button className="add-service-btn" onClick={handleAddStaff}>
                             <i className="fas fa-plus-circle"></i>
-                            <span>Invite team member</span>
+                            <span>{t('staff.inviteTeamMember')}</span>
                           </button>
                         )}
                       </div>
@@ -426,12 +430,12 @@ const StaffPage: React.FC = () => {
                     <div className="loading-container">
                       <div className="spinner"></div>
                     </div>
-                  ) : staff.length === 0 ? (
+                    ) : staff.length === 0 ? (
                     <div className="empty-state">
                       {isAdmin ? (
-                        <p>No staff members found. Click "Invite team member" to add your first staff member.</p>
+                        <p>{t('staff.noStaffFound')}</p>
                       ) : (
-                        <p>Insufficient privileges. Please contact your administrator.</p>
+                        <p>{t('staff.insufficientPrivileges')}</p>
                       )}
                     </div>
                   ) : (
@@ -439,13 +443,13 @@ const StaffPage: React.FC = () => {
                       <table className="services-table">
                         <thead>
                           <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Position</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>{t('staff.name')}</th>
+                            <th>{t('staff.email')}</th>
+                            <th>{t('staff.phone')}</th>
+                            <th>{t('staff.position')}</th>
+                            <th>{t('staff.role')}</th>
+                            <th>{t('staff.status')}</th>
+                            <th>{t('staff.actions')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -522,9 +526,9 @@ const StaffPage: React.FC = () => {
                     <div className="header-text">
                       <h2 className="services-title">
                         <i className="fas fa-envelope services-icon"></i>
-                        Pending Invitations
+                        {t('staff.pendingInvitations')}
                       </h2>
-                      <p className="services-subtitle">Manage pending team member invitations</p>
+                      <p className="services-subtitle">{t('staff.managePendingInvitations')}</p>
                     </div>
                   </div>
                 </div>
@@ -538,23 +542,23 @@ const StaffPage: React.FC = () => {
                     <div className="empty-state">
                       <p style={{ color: '#dc2626' }}>{invitationsError}</p>
                       <button className="btn btn-primary" onClick={fetchInvitations}>
-                        <i className="fas fa-redo"></i> Try Again
+                        <i className="fas fa-redo"></i> {t('staff.tryAgain')}
                       </button>
                     </div>
                   ) : invitations.length === 0 ? (
                     <div className="empty-state">
-                      <p>No pending invitations. All team members have accepted or invitations have expired.</p>
+                      <p>{t('staff.noPendingInvitations')}</p>
                     </div>
                   ) : (
                     <div className="table-responsive">
                       <table className="services-table">
                         <thead>
                           <tr>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Sent Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>{t('staff.email')}</th>
+                            <th>{t('staff.role')}</th>
+                            <th>{t('staff.sentDate')}</th>
+                            <th>{t('staff.status')}</th>
+                            <th>{t('staff.actions')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -611,7 +615,7 @@ const StaffPage: React.FC = () => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h3 className="modal-title">
-                    {modalMode === 'add' ? 'Invite team member' : 'Edit Staff Member'}
+                    {modalMode === 'add' ? t('staff.invitationModal') : t('staff.editModal')}
                   </h3>
                   <button className="modal-close" onClick={() => setShowModal(false)}>
                     <i className="fas fa-times"></i>
@@ -620,7 +624,7 @@ const StaffPage: React.FC = () => {
                 <div className="modal-body">
                   <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                      <label className="form-label" htmlFor="email">Email</label>
+                      <label className="form-label" htmlFor="email">{t('staff.emailLabel')}</label>
                       <input
                         type="email"
                         id="email"
@@ -633,25 +637,25 @@ const StaffPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label" htmlFor="role">Role</label>
+                      <label className="form-label" htmlFor="role">{t('staff.roleLabel')}</label>
                       <select
                         id="role"
                         className="form-select"
                         value={formData.role}
                         onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
                       >
-                        <option value="staff">Staff</option>
-                        <option value="admin">Admin</option>
-                        <option value="owner">Owner</option>
+                        <option value="staff">{t('staff.roleStaff')}</option>
+                        <option value="admin">{t('staff.roleAdmin')}</option>
+                        <option value="owner">{t('staff.roleOwner')}</option>
                       </select>
                     </div>
 
                     {/* Weekly Availability Section */}
                     <div className="availability-section">
                       <label className="form-label">
-                        <i className="fas fa-calendar-alt"></i> Weekly Availability
+                        <i className="fas fa-calendar-alt"></i> {t('staff.weeklyAvailability')}
                       </label>
-                      <p className="availability-subtitle">Set the working hours for this staff member</p>
+                      <p className="availability-subtitle">{t('staff.weeklyAvailabilitySubtitle')}</p>
 
                       <div className="availability-list">
                         {Object.keys(formData.availability).map((dayKey) => {
@@ -699,16 +703,16 @@ const StaffPage: React.FC = () => {
 
                     <div className="form-actions">
                       <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                        Cancel
+                        {t('staff.cancel')}
                       </button>
                       <button type="submit" className="btn btn-primary" disabled={saving}>
                         {saving ? (
                           <>
                             <i className="fas fa-spinner fa-spin"></i>
-                            {modalMode === 'add' ? ' Sending...' : ' Saving...'}
+                            {modalMode === 'add' ? ` ${t('staff.sending')}...` : ` ${t('staff.saving')}...`}
                           </>
                         ) : (
-                          modalMode === 'add' ? 'Send Invitation' : 'Update Staff Member'
+                          modalMode === 'add' ? t('staff.sendInvitation') : t('staff.updateStaffMember')
                         )}
                       </button>
                     </div>

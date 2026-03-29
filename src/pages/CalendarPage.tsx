@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -23,6 +25,7 @@ import {
 
 const CalendarPage: React.FC = () => {
   const { user, unreadNotificationsCount, companyTimezone } = useUser();
+  const { t } = useTranslation();
   const calendarRef = useRef<FullCalendar>(null);
   const initialLoadDone = useRef(false);
   const isLoadingData = useRef(false);
@@ -1243,6 +1246,7 @@ const CalendarPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         {/* Messages */}
         {success && (
@@ -1279,7 +1283,7 @@ const CalendarPage: React.FC = () => {
 
         <main className="calendar-page">
           <header className="calendar-header">
-            <h2 className="page-title">Calendar</h2>
+            <h2 className="page-title">{t('calendar.title')}</h2>
             <UserProfile user={user} />
           </header>
 
@@ -1291,7 +1295,7 @@ const CalendarPage: React.FC = () => {
               style={{ cursor: 'pointer' }}
             >
               <span className="legend-color" style={{ background: 'rgba(34, 197, 94, 0.15)', borderColor: '#22C55E' }}></span>
-              <span className="legend-label">Confirmed</span>
+              <span className="legend-label">{t('calendar.confirmed')}</span>
             </div>
             <div
               className={`legend-item ${statusFilter.includes('completed') ? 'selected' : ''}`}
@@ -1299,7 +1303,7 @@ const CalendarPage: React.FC = () => {
               style={{ cursor: 'pointer' }}
             >
               <span className="legend-color" style={{ background: 'rgba(59, 130, 246, 0.15)', borderColor: '#3B82F6' }}></span>
-              <span className="legend-label">Completed</span>
+              <span className="legend-label">{t('calendar.completed')}</span>
             </div>
             <div
               className={`legend-item ${statusFilter.includes('cancelled') ? 'selected' : ''}`}
@@ -1307,7 +1311,7 @@ const CalendarPage: React.FC = () => {
               style={{ cursor: 'pointer' }}
             >
               <span className="legend-color" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: '#EF4444' }}></span>
-              <span className="legend-label">Cancelled</span>
+              <span className="legend-label">{t('calendar.cancelled')}</span>
             </div>
             <div
               className={`legend-item ${statusFilter.includes('no_show') ? 'selected' : ''}`}
@@ -1315,7 +1319,7 @@ const CalendarPage: React.FC = () => {
               style={{ cursor: 'pointer' }}
             >
               <span className="legend-color" style={{ background: 'rgba(168, 85, 247, 0.15)', borderColor: '#A855F7' }}></span>
-              <span className="legend-label">No Show</span>
+              <span className="legend-label">{t('calendar.noShow')}</span>
             </div>
             <div
               className={`legend-item ${statusFilter.includes('timeoff') ? 'selected' : ''}`}
@@ -1323,7 +1327,7 @@ const CalendarPage: React.FC = () => {
               style={{ cursor: 'pointer' }}
             >
               <span className="legend-color" style={{ background: '#95a5a6', borderColor: '#7f8c8d' }}></span>
-              <span className="legend-label">Time Off</span>
+              <span className="legend-label">{t('calendar.timeOff')}</span>
             </div>
           </div>
 
@@ -1332,7 +1336,7 @@ const CalendarPage: React.FC = () => {
             {dataLoading && (
               <div className="calendar-loading-overlay">
                 <div className="spinner"></div>
-                <p>Loading calendar data...</p>
+                <p>{t('calendar.loadingCalendarData')}</p>
               </div>
             )}
             <FullCalendar
@@ -1385,18 +1389,18 @@ const CalendarPage: React.FC = () => {
                 }}
                 customButtons={{
                     datePicker: {
-                        text: 'Select Date',
+                        text: t('calendar.selectDate'),
                         click: function() {
                             // This will be handled by custom HTML injection
                         }
                     }
                 }}
                 buttonText={{
-                    today: 'Today',
-                    month: 'Month',
-                    week: 'Week',
-                    day: 'Day',
-                    listWeek: 'List of bookings'
+                    today: t('calendar.today'),
+                    month: t('calendar.month'),
+                    week: t('calendar.week'),
+                    day: t('calendar.day'),
+                    listWeek: t('calendar.listOfBookings')
                 }}
               />
           </div>
@@ -1426,7 +1430,7 @@ const CalendarPage: React.FC = () => {
                   })}
                   {isSelectedSlotPast && (
                     <span style={{ marginLeft: '8px', fontSize: '12px', opacity: 0.8 }}>
-                      (Past Date)
+                      ({t('calendar.pastDateWarning')})
                     </span>
                   )}
                 </span>
@@ -1436,19 +1440,19 @@ const CalendarPage: React.FC = () => {
                   className={`slot-action-button ${isSelectedSlotPast ? 'disabled' : ''}`}
                   onClick={handleAddBooking}
                   disabled={isSelectedSlotPast}
-                  title={isSelectedSlotPast ? 'Cannot create bookings for past dates' : 'Add Booking'}
+                  title={isSelectedSlotPast ? t('calendar.cannotCreatePastBookings') : t('calendar.addBooking')}
                 >
                   <i className="fas fa-calendar-plus"></i>
-                  <span>Add Booking</span>
+                  <span>{t('calendar.addBooking')}</span>
                 </button>
                 <button
                   className={`slot-action-button ${isSelectedSlotPast ? 'disabled' : ''}`}
                   onClick={handleAddTimeOff}
                   disabled={isSelectedSlotPast}
-                  title={isSelectedSlotPast ? 'Cannot schedule time-off for past dates' : 'Add Time Off'}
+                  title={isSelectedSlotPast ? t('calendar.cannotSchedulePastTimeOff') : t('calendar.addTimeOff')}
                 >
                   <i className="fas fa-coffee"></i>
-                  <span>Add Time Off</span>
+                  <span>{t('calendar.addTimeOff')}</span>
                 </button>
               </div>
               {isSelectedSlotPast && (

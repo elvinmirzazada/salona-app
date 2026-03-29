@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/notifications.css';
 
@@ -16,6 +18,7 @@ interface Notification {
 
 const NotificationsPage: React.FC = () => {
   const { user, loading: userLoading, unreadNotificationsCount, refreshNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
@@ -108,7 +111,7 @@ const NotificationsPage: React.FC = () => {
       setNotifications(notifications.map(n =>
         n.id === notificationId ? { ...n, status: 'read' } : n
       ));
-      showSuccessMessage('Notification marked as read');
+      showSuccessMessage(t('notifications.notificationMarkedAsRead'));
       // Refresh notification count in UserContext
       await refreshNotificationsCount();
       // Reload notifications to get updated data
@@ -122,14 +125,14 @@ const NotificationsPage: React.FC = () => {
 
   const handleMarkAllRead = () => {
     if (unreadNotificationsCount === 0) {
-      showSuccessMessage('No unread notifications to mark as read');
+      showSuccessMessage(t('notifications.noUnreadNotifications'));
       return;
     }
 
     setConfirmDialog({
       show: true,
-      title: 'Mark All as Read',
-      message: 'Are you sure you want to mark all unread notifications as read?',
+      title: t('notifications.markAllReadConfirmTitle'),
+      message: t('notifications.markAllReadConfirmMessage'),
       onConfirm: markAllAsRead
     });
   };
@@ -138,7 +141,7 @@ const NotificationsPage: React.FC = () => {
     try {
       setMarkingAllAsRead(true);
       await apiClient.patch('/v1/notifications/mark-all/as-read');
-      showSuccessMessage('All notifications marked as read');
+      showSuccessMessage(t('notifications.allNotificationsMarkedAsRead'));
       // Refresh notification count in UserContext
       await refreshNotificationsCount();
       // Reload notifications to get updated data
@@ -153,8 +156,8 @@ const NotificationsPage: React.FC = () => {
   const handleDeleteNotification = (notificationId: string) => {
     setConfirmDialog({
       show: true,
-      title: 'Delete Notification',
-      message: 'Are you sure you want to delete this notification? This action cannot be undone.',
+      title: t('notifications.deleteConfirmTitle'),
+      message: t('notifications.confirmDeleteMessage'),
       onConfirm: () => deleteNotification(notificationId)
     });
   };
@@ -163,7 +166,7 @@ const NotificationsPage: React.FC = () => {
     try {
       await apiClient.delete(`/v1/notifications/${notificationId}`);
       {
-        showSuccessMessage('Notification deleted successfully');
+        showSuccessMessage(t('notifications.notificationDeletedSuccessfully'));
         // Refresh notification count in UserContext
         await refreshNotificationsCount();
         // Reload total count and notifications
@@ -256,13 +259,13 @@ const NotificationsPage: React.FC = () => {
 
   const getNotificationTitle = (type: string): string => {
     const titleMap: { [key: string]: string } = {
-      general: 'General Notification',
-      booking: 'Booking Update',
-      booking_created: 'Booking Created',
-      payment: 'Payment Notification',
-      reminder: 'Reminder',
-      alert: 'Alert',
-      system: 'System Notification'
+      general: t('notifications.generalNotification'),
+      booking: t('notifications.bookingUpdate'),
+      booking_created: t('notifications.bookingCreated'),
+      payment: t('notifications.paymentNotification'),
+      reminder: t('notifications.reminder'),
+      alert: t('notifications.alert'),
+      system: t('notifications.systemNotification')
     };
     return titleMap[type] || 'Notification';
   };
@@ -445,7 +448,7 @@ const NotificationsPage: React.FC = () => {
           <div className="notifications-page">
             <div className="loading-container">
               <div className="loading-spinner"></div>
-              <p>Loading notifications...</p>
+              <p>{t('notifications.loadingNotifications')}</p>
             </div>
           </div>
         </div>
@@ -456,12 +459,13 @@ const NotificationsPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="notifications-page">
           <div className="page-header">
             <div>
-              <h1>Notifications</h1>
-              <p>View and manage your notifications</p>
+              <h1>{t('notifications.title')}</h1>
+              <p>{t('notifications.subtitle')}</p>
             </div>
             <UserProfile user={user} />
           </div>
@@ -487,7 +491,7 @@ const NotificationsPage: React.FC = () => {
                     className="action-button secondary"
                     onClick={() => setConfirmDialog(null)}
                   >
-                    Cancel
+                    {t('notifications.cancel')}
                   </button>
                   <button
                     className="action-button danger"
@@ -496,7 +500,7 @@ const NotificationsPage: React.FC = () => {
                       setConfirmDialog(null);
                     }}
                   >
-                    Confirm
+                    {t('notifications.confirm')}
                   </button>
                 </div>
               </div>
@@ -524,12 +528,12 @@ const NotificationsPage: React.FC = () => {
                     {markingAllAsRead ? (
                       <>
                         <i className="fas fa-spinner fa-spin"></i>
-                        Marking as Read...
+                        {t('notifications.marking')}
                       </>
                     ) : (
                       <>
                         <i className="fas fa-check-double"></i>
-                        Mark All Read
+                        {t('notifications.markAllRead')}
                       </>
                     )}
                   </button>
@@ -538,7 +542,7 @@ const NotificationsPage: React.FC = () => {
                     onClick={loadNotifications}
                   >
                     <i className="fas fa-sync-alt"></i>
-                    Refresh
+                    {t('notifications.refresh')}
                   </button>
                 </div>
               </div>
@@ -550,12 +554,12 @@ const NotificationsPage: React.FC = () => {
                 <div className="stat-item">
                   <i className="fas fa-inbox"></i>
                   <span className="stat-value">{totalCount}</span>
-                  <span className="stat-label">Total</span>
+                  <span className="stat-label">{t('notifications.total')}</span>
                 </div>
                 <div className="stat-item">
                   <i className="fas fa-envelope"></i>
-                    <span className="stat-value">{unreadNotificationsCount}</span>
-                  <span className="stat-label">Unread</span>
+                  <span className="stat-value">{unreadNotificationsCount}</span>
+                  <span className="stat-label">{t('notifications.unread')}</span>
                 </div>
               </div>
 
@@ -567,35 +571,35 @@ const NotificationsPage: React.FC = () => {
                     onClick={() => setCurrentFilter('all')}
                   >
                     <i className="fas fa-inbox"></i>
-                    All
+                    {t('notifications.allNotifications')}
                   </button>
                   <button
                     className={`filter-tab ${currentFilter === 'unread' ? 'active' : ''}`}
                     onClick={() => setCurrentFilter('unread')}
                   >
                     <i className="fas fa-envelope"></i>
-                    Unread
+                    {t('notifications.unreadNotifications')}
                   </button>
                   <button
                     className={`filter-tab ${currentFilter === 'general' ? 'active' : ''}`}
                     onClick={() => setCurrentFilter('general')}
                   >
                     <i className="fas fa-info-circle"></i>
-                    General
+                    {t('notifications.general')}
                   </button>
                   <button
                     className={`filter-tab ${currentFilter === 'booking' ? 'active' : ''}`}
                     onClick={() => setCurrentFilter('booking')}
                   >
                     <i className="fas fa-calendar"></i>
-                    Booking
+                    {t('notifications.booking')}
                   </button>
                   <button
                     className={`filter-tab ${currentFilter === 'payment' ? 'active' : ''}`}
                     onClick={() => setCurrentFilter('payment')}
                   >
                     <i className="fas fa-credit-card"></i>
-                    Payment
+                    {t('notifications.payment')}
                   </button>
                 </div>
               </div>
@@ -604,7 +608,7 @@ const NotificationsPage: React.FC = () => {
               {filteredNotifications.length === 0 ? (
                 <div className="empty-state">
                   <i className="fas fa-bell-slash"></i>
-                  <p>No notifications found. You're all caught up!</p>
+                  <p>{t('notifications.noNotificationsFound')}</p>
                 </div>
               ) : (
                 <>
@@ -679,7 +683,7 @@ const NotificationsPage: React.FC = () => {
                   {/* Items per page selector and info */}
                   <div className="pagination-info">
                     <div className="items-per-page">
-                      <label>Show:</label>
+                      <label>{t('notifications.show')}</label>
                       <select
                         value={itemsPerPage}
                         onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
@@ -690,10 +694,10 @@ const NotificationsPage: React.FC = () => {
                         <option value={25}>25</option>
                         <option value={50}>50</option>
                       </select>
-                      <span>entries</span>
+                      <span>{t('notifications.entries')}</span>
                     </div>
                     <div className="showing-info">
-                      Showing {startIndex + 1} to {endIndex} of {totalCount} notifications
+                      {t('notifications.showing')} {startIndex + 1} {t('notifications.to')} {endIndex} {t('notifications.of')} {totalCount} {t('notifications.entries')}
                     </div>
                   </div>
 
@@ -730,7 +734,7 @@ const NotificationsPage: React.FC = () => {
                             <button
                               className="action-btn"
                               onClick={() => markAsRead(notification.id)}
-                              title="Mark as read"
+                              title={t('notifications.markAsRead')}
                               disabled={markingAsRead === notification.id}
                             >
                               {markingAsRead === notification.id ? (
@@ -743,7 +747,7 @@ const NotificationsPage: React.FC = () => {
                           <button
                             className="action-btn delete-btn"
                             onClick={() => handleDeleteNotification(notification.id)}
-                            title="Delete notification"
+                            title={t('notifications.deleteNotification')}
                           >
                             <i className="fas fa-trash"></i>
                           </button>
@@ -864,7 +868,7 @@ const NotificationsPage: React.FC = () => {
                         <div className="booking-details-loading">
                           <div className="loading-container">
                             <div className="loading-spinner"></div>
-                            <p>Loading booking details...</p>
+                            <p>{t('notifications.loadingBookingDetails')}</p>
                           </div>
                         </div>
                       );
@@ -874,7 +878,7 @@ const NotificationsPage: React.FC = () => {
                       return (
                         <div className="booking-details-section">
                           <h4 className="section-title">
-                            <i className="fas fa-calendar-alt"></i> Booking Details
+                            <i className="fas fa-calendar-alt"></i> {t('notifications.bookingDetails')}
                           </h4>
 
                           {/* Two Column Layout */}
@@ -882,15 +886,15 @@ const NotificationsPage: React.FC = () => {
                             {/* Left Column - Date & Time */}
                             <div className="detail-card">
                               <div className="detail-header">
-                                <i className="fas fa-clock"></i> Date & Time
+                                <i className="fas fa-clock"></i> {t('notifications.dateTime')}
                               </div>
                               <div className="detail-content">
                                 <div className="detail-row">
-                                  <span className="detail-label">Date:</span>
+                                  <span className="detail-label">{t('notifications.date')}:</span>
                                   <span className="detail-value">{bookingDetails.date}</span>
                                 </div>
                                 <div className="detail-row">
-                                  <span className="detail-label">Time:</span>
+                                  <span className="detail-label">{t('notifications.time')}:</span>
                                   <span className="detail-value">{bookingDetails.startTime} - {bookingDetails.endTime}</span>
                                 </div>
                               </div>
@@ -899,16 +903,16 @@ const NotificationsPage: React.FC = () => {
                             {/* Right Column - Staff Member */}
                             <div className="detail-card">
                               <div className="detail-header">
-                                <i className="fas fa-user-tie"></i> Staff Member
+                                <i className="fas fa-user-tie"></i> {t('notifications.staffMember')}
                               </div>
                               <div className="detail-content">
                                 <div className="detail-row">
-                                  <span className="detail-label">Name:</span>
+                                  <span className="detail-label">{t('notifications.name')}:</span>
                                   <span className="detail-value">{bookingDetails.staffName}</span>
                                 </div>
                                 {bookingDetails.staffEmail && (
                                   <div className="detail-row">
-                                    <span className="detail-label">Email:</span>
+                                    <span className="detail-label">{t('notifications.email')}:</span>
                                     <span className="detail-value">{bookingDetails.staffEmail}</span>
                                   </div>
                                 )}
@@ -919,7 +923,7 @@ const NotificationsPage: React.FC = () => {
                             {bookingDetails.services.length > 0 && (
                               <div className="detail-card">
                                 <div className="detail-header">
-                                  <i className="fas fa-concierge-bell"></i> Services
+                                  <i className="fas fa-concierge-bell"></i> {t('notifications.services')}
                                 </div>
                                 <div className="detail-content">
                                   <ul className="services-list">
@@ -927,7 +931,7 @@ const NotificationsPage: React.FC = () => {
                                       <li key={index} className="service-item">
                                         <div className="service-info">
                                           <span className="service-name">{service.name}</span>
-                                          <span className="service-duration">{service.duration}min</span>
+                                          <span className="service-duration">{service.duration}{t('notifications.duration')}</span>
                                         </div>
                                         <div className="service-pricing">
                                           {service.discountPrice && service.discountPrice < service.price ? (
@@ -943,7 +947,7 @@ const NotificationsPage: React.FC = () => {
                                     ))}
                                   </ul>
                                   <div className="total-price">
-                                    <span className="total-label">Total:</span>
+                                    <span className="total-label">{t('notifications.total')}:</span>
                                     <span className="total-value">${bookingDetails.totalPrice.toFixed(2)}</span>
                                   </div>
                                 </div>
@@ -953,22 +957,22 @@ const NotificationsPage: React.FC = () => {
                             {/* Right Column - Customer */}
                             <div className="detail-card">
                               <div className="detail-header">
-                                <i className="fas fa-user"></i> Customer
+                                <i className="fas fa-user"></i> {t('notifications.customer')}
                               </div>
                               <div className="detail-content">
                                 <div className="detail-row">
-                                  <span className="detail-label">Name:</span>
+                                  <span className="detail-label">{t('notifications.name')}:</span>
                                   <span className="detail-value">{bookingDetails.customerName}</span>
                                 </div>
                                 {bookingDetails.customerEmail && (
                                   <div className="detail-row">
-                                    <span className="detail-label">Email:</span>
+                                    <span className="detail-label">{t('notifications.email')}:</span>
                                     <span className="detail-value">{bookingDetails.customerEmail}</span>
                                   </div>
                                 )}
                                 {bookingDetails.customerPhone && (
                                   <div className="detail-row">
-                                    <span className="detail-label">Phone:</span>
+                                    <span className="detail-label">{t('notifications.phone')}:</span>
                                     <span className="detail-value">{bookingDetails.customerPhone}</span>
                                   </div>
                                 )}
@@ -980,7 +984,7 @@ const NotificationsPage: React.FC = () => {
                           {bookingDetails.notes && (
                             <div className="detail-card detail-card-full">
                               <div className="detail-header">
-                                <i className="fas fa-sticky-note"></i> Notes
+                                <i className="fas fa-sticky-note"></i> {t('notifications.notes')}
                               </div>
                               <div className="detail-content">
                                 <p className="notes-text">{bookingDetails.notes}</p>
@@ -1004,10 +1008,10 @@ const NotificationsPage: React.FC = () => {
                     }}
                   >
                     <i className="fas fa-trash"></i>
-                    Delete
+                    {t('common.delete')}
                   </button>
                   <button className="action-button primary" onClick={closeNotificationDetail}>
-                    Close
+                    {t('common.close')}
                   </button>
                 </div>
               </div>

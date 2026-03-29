@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/membership.css';
 
@@ -27,6 +29,7 @@ interface ActiveSubscription {
 
 const MembershipPage: React.FC = () => {
   const { user, loading: userLoading, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [activePlan, setActivePlan] = useState<ActiveSubscription | null>(null);
@@ -135,7 +138,7 @@ const MembershipPage: React.FC = () => {
           <div className="membership-page">
             <div className="loading-container">
               <div className="loading-spinner"></div>
-              <p>Loading membership plans...</p>
+              <p>{t('membership.loading')}</p>
             </div>
           </div>
         </div>
@@ -151,9 +154,9 @@ const MembershipPage: React.FC = () => {
           <div className="membership-page">
             <div className="error-state">
               <i className="fas fa-exclamation-circle"></i>
-              <p>Failed to load membership plans. Please try again later.</p>
+              <p>{t('common.errorLoadingData')}</p>
               <button className="btn-primary" onClick={loadMembershipData}>
-                <i className="fas fa-refresh"></i> Retry
+                <i className="fas fa-refresh"></i> {t('common.retry')}
               </button>
             </div>
           </div>
@@ -165,12 +168,13 @@ const MembershipPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="membership-page">
           <div className="page-header">
             <div>
-              <h1>Membership Plans</h1>
-              <p>Manage your subscription and billing</p>
+              <h1>{t('membership.title')}</h1>
+              <p>{t('membership.subtitle')}</p>
             </div>
             <UserProfile user={user} />
           </div>
@@ -195,35 +199,35 @@ const MembershipPage: React.FC = () => {
                   <div className="active-plan-details">
                     <div className="active-plan-info">
                       <div className="active-plan-item">
-                        <label>Plan Name</label>
+                        <label>{t('membership.name')}</label>
                         <strong>{activePlan.membership_plan.name}</strong>
                       </div>
                       <div className="active-plan-item">
-                        <label>Plan Type</label>
+                        <label>{t('common.type')}</label>
                         <strong>{activePlan.membership_plan.plan_type.toUpperCase()}</strong>
                       </div>
                       <div className="active-plan-item">
-                        <label>Price</label>
+                        <label>{t('common.price')}</label>
                         <strong>
                           €{formatPrice(activePlan.membership_plan.price)} / {formatDuration(activePlan.membership_plan.duration_days)}
                         </strong>
                       </div>
                       <div className="active-plan-item">
-                        <label>Status</label>
+                        <label>{t('membership.status')}</label>
                         <strong>{activePlan.status.toUpperCase()}</strong>
                       </div>
                       <div className="active-plan-item">
-                        <label>Start Date</label>
+                        <label>{t('common.startDate')}</label>
                         <strong>{formatDate(activePlan.start_date)}</strong>
                       </div>
                       <div className="active-plan-item">
-                        <label>End Date</label>
+                        <label>{t('common.endDate')}</label>
                         <strong>{formatDate(activePlan.end_date)}</strong>
                       </div>
                       <div className="active-plan-item">
-                        <label>Auto Renew</label>
+                        <label>{t('common.autoRenew')}</label>
                         <strong style={{ color: activePlan.auto_renew ? '#ffffff' : '#ef4444' }}>
-                          {activePlan.auto_renew ? 'YES' : 'NO'}
+                          {activePlan.auto_renew ? t('membership.yes') : t('membership.no')}
                         </strong>
                       </div>
                     </div>
@@ -232,7 +236,7 @@ const MembershipPage: React.FC = () => {
               </div>
 
               <div className="section-divider">
-                <span>Available Plans</span>
+                <span>{t('common.availablePlans')}</span>
               </div>
             </>
           )}
@@ -241,7 +245,7 @@ const MembershipPage: React.FC = () => {
           {plans.length === 0 ? (
             <div className="empty-state">
               <i className="fas fa-inbox"></i>
-              <p>No membership plans available at this time.</p>
+              <p>{t('membership.noMembershipsFound')}</p>
             </div>
           ) : (
             <div className="plans-grid">

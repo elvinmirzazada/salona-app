@@ -1,22 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '../contexts/UserContext';
 import '../styles/language-switcher.css';
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
-  const { user } = useUser();
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
-
-    // Save to general app storage for unauthenticated users
-    localStorage.setItem('appLanguage', lng);
-
-    // If user is logged in, also save user-specific language preference
-    if (user) {
-      localStorage.setItem(`userLanguage_${user.id}`, lng);
-    }
+    localStorage.setItem('bookingLanguage', lng);
   };
 
   return (

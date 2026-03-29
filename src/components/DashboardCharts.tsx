@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -38,6 +39,8 @@ interface DashboardChartsProps {
 }
 
 const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
+  const { t } = useTranslation();
+
   // Chart options
   const lineChartOptions = {
     responsive: true,
@@ -109,7 +112,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
     labels: data.bookings_by_day ? Object.keys(data.bookings_by_day) : [],
     datasets: [
       {
-        label: 'Bookings',
+        label: t('dashboard.charts.bookingsLabel'),
         data: data.bookings_by_day ? Object.values(data.bookings_by_day) : [],
         borderColor: 'rgb(99, 102, 241)',
         backgroundColor: 'rgba(99, 102, 241, 0.2)',
@@ -124,7 +127,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
     labels: data.revenue_by_day ? Object.keys(data.revenue_by_day) : [],
     datasets: [
       {
-        label: 'Revenue ($)',
+        label: t('dashboard.charts.revenueLabel'),
         data: data.revenue_by_day ? Object.values(data.revenue_by_day) : [],
         borderColor: 'rgb(244, 63, 94)',
         backgroundColor: 'rgba(244, 63, 94, 0.2)',
@@ -157,7 +160,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
     labels: data.bookings_by_service ? Object.keys(data.bookings_by_service) : [],
     datasets: [
       {
-        label: 'Bookings',
+        label: t('dashboard.charts.bookingsLabel'),
         data: data.bookings_by_service
           ? Object.values(data.bookings_by_service).map(service => service.count)
           : [],
@@ -178,8 +181,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
       {/* Bookings Over Time Chart */}
       <div className="chart-card">
         <div className="chart-header">
-          <h3 className="chart-title">Bookings Over Time</h3>
-          <p className="chart-subtitle">Daily booking trends</p>
+          <h3 className="chart-title">{t('dashboard.charts.bookingsOverTime')}</h3>
+          <p className="chart-subtitle">{t('dashboard.charts.dailyBookingTrends')}</p>
         </div>
         <div className="chart-container">
           <Line data={bookingsData} options={lineChartOptions} />
@@ -189,8 +192,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
       {/* Revenue Over Time Chart */}
       <div className="chart-card">
         <div className="chart-header">
-          <h3 className="chart-title">Revenue Over Time</h3>
-          <p className="chart-subtitle">Daily revenue trends</p>
+          <h3 className="chart-title">{t('dashboard.charts.revenueOverTime')}</h3>
+          <p className="chart-subtitle">{t('dashboard.charts.dailyRevenueTrends')}</p>
         </div>
         <div className="chart-container">
           <Line data={revenueData} options={lineChartOptions} />
@@ -200,8 +203,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
       {/* Booking Status Distribution */}
       <div className="chart-card">
         <div className="chart-header">
-          <h3 className="chart-title">Booking Status Distribution</h3>
-          <p className="chart-subtitle">Breakdown by status</p>
+          <h3 className="chart-title">{t('dashboard.charts.bookingStatusDistribution')}</h3>
+          <p className="chart-subtitle">{t('dashboard.charts.breakdownByStatus')}</p>
         </div>
         <div className="chart-container">
           <Doughnut data={statusData} options={doughnutOptions} />
@@ -211,8 +214,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ data }) => {
       {/* Top Services Chart */}
       <div className="chart-card">
         <div className="chart-header">
-          <h3 className="chart-title">Top Services</h3>
-          <p className="chart-subtitle">Most popular services</p>
+          <h3 className="chart-title">{t('dashboard.charts.topServices')}</h3>
+          <p className="chart-subtitle">{t('dashboard.charts.mostPopularServices')}</p>
         </div>
         <div className="chart-container">
           <Bar data={servicesData} options={barChartOptions} />

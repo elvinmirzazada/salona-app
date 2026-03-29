@@ -86,6 +86,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('UserContext - Extracted user data:', fullUserData);
       setUser(fullUserData);
 
+      // Save language preference to localStorage with user ID prefix on login
+      const savedLanguage = localStorage.getItem('appLanguage') || 'ee';
+      localStorage.setItem(`userLanguage_${fullUserData.id}`, savedLanguage);
+
       // Fetch notifications count if user is authenticated
       if (fullUserData) {
         void fetchNotificationsCount();
@@ -191,6 +195,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearUser = () => {
     console.log('UserContext - Clearing user data');
+
+    // Remove language preference from localStorage on logout
+    // if (user) {
+    //   localStorage.removeItem(`userLanguage_${user.id}`);
+    // }
+
     setUser(null);
     setError(null);
     setLoading(false);

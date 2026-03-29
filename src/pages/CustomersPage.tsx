@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../utils/api';
 import '../styles/customers.css';
 
@@ -23,6 +25,7 @@ interface Customer {
 const CustomersPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, unreadNotificationsCount } = useUser();
+  const { t } = useTranslation();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -222,12 +225,13 @@ const CustomersPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="customers-page">
           {/* Header */}
           <div className="customers-header">
             <div className="customers-header-left">
-              <h1 className="page-title">Customers</h1>
+              <h1 className="page-title">{t('customers.title')}</h1>
             </div>
             <UserProfile user={user} />
           </div>
@@ -235,10 +239,10 @@ const CustomersPage: React.FC = () => {
           {!user?.company_id ? (
             <div className="empty-state">
               <i className="fas fa-building"></i>
-              <h3>No Company Found</h3>
-              <p>You need to create a company first to manage customers.</p>
+              <h3>{t('customers.noCompanyFound')}</h3>
+              <p>{t('customers.noCompanyMessage')}</p>
               <button className="btn btn-primary" onClick={() => navigate('/company-settings')}>
-                Create Company
+                {t('customers.createCompany')}
               </button>
             </div>
           ) : (
@@ -249,9 +253,9 @@ const CustomersPage: React.FC = () => {
                   <div className="header-text">
                     <h2 className="customers-title">
                       <i className="fas fa-users customers-icon"></i>
-                      Company Customers
+                      {t('customers.title')}
                     </h2>
-                    <p className="customers-subtitle">View and manage your business customers</p>
+                    <p className="customers-subtitle">{t('customers.subtitle')}</p>
                   </div>
                 </div>
               </div>
@@ -260,7 +264,7 @@ const CustomersPage: React.FC = () => {
                 {loading ? (
                   <div className="loading-container">
                     <div className="loading-spinner"></div>
-                    <p>Loading customers...</p>
+                    <p>{t('customers.loading')}</p>
                   </div>
                 ) : (
                   <>
@@ -271,14 +275,14 @@ const CustomersPage: React.FC = () => {
                         <input
                           type="text"
                           className="search-input"
-                          placeholder="Search customers..."
+                          placeholder={t('customers.searchPlaceholder')}
                           value={searchTerm}
                           onChange={handleSearch}
                         />
                       </div>
                       <div className="control-group">
                         <div className="page-size-selector">
-                          <label htmlFor="page-size">Show:</label>
+                          <label htmlFor="page-size">{t('customers.rowsPerPage')}:</label>
                           <select
                             id="page-size"
                             value={customersPerPage}
@@ -321,12 +325,13 @@ const CustomersPage: React.FC = () => {
                         <table className="customers-table">
                           <thead>
                             <tr>
-                              <th>Name</th>
-                              <th>Email</th>
-                              <th>Phone</th>
-                              <th>Total Bookings</th>
-                              <th>Total Spent</th>
-                              <th>Last Visit</th>
+                              <th>{t('customers.name')}</th>
+                              <th>{t('customers.email')}</th>
+                              <th>{t('customers.phone')}</th>
+                              <th>{t('customers.totalBookings')}</th>
+                              <th>{t('customers.totalSpent')}</th>
+                              <th>{t('customers.lastVisit')}</th>
+                              <th>{t('customers.joinDate')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -367,6 +372,9 @@ const CustomersPage: React.FC = () => {
                                     {customer.last_visit ? formatDate(customer.last_visit) : 'Never'}
                                   </span>
                                 </td>
+                                <td>
+                                  {formatDate(customer.created_at)}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -376,7 +384,7 @@ const CustomersPage: React.FC = () => {
                         {totalPages > 1 && (
                           <div className="pagination-container">
                             <div className="pagination-info">
-                              Showing {indexOfFirstCustomer + 1} to {Math.min(indexOfLastCustomer, filteredCustomers.length)} of {filteredCustomers.length} customers
+                              Showing {indexOfFirstCustomer + 1} to {Math.min(indexOfLastCustomer, filteredCustomers.length)} {t('customers.of')} {filteredCustomers.length}
                             </div>
                             <div className="pagination-controls">
                               <button

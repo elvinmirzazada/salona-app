@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import DashboardCharts from '../components/DashboardCharts';
 import { useUser } from '../contexts/UserContext';
@@ -11,6 +13,7 @@ import '../styles/dashboard.css';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, loading: userLoading, unreadNotificationsCount } = useUser();
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const [dateRange, setDateRange] = useState('');
@@ -122,7 +125,7 @@ const DashboardPage: React.FC = () => {
           <div className="dashboard-page">
             <div className="loading-container">
               <div className="loading-spinner"></div>
-              <p>Loading dashboard...</p>
+              <p>{t('dashboard.loadingDashboard')}</p>
             </div>
           </div>
         </div>
@@ -133,6 +136,7 @@ const DashboardPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
+      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="dashboard-page">
           {!user?.company_id && (user?.role === 'admin' || user?.role === 'owner') ? (
@@ -148,10 +152,10 @@ const DashboardPage: React.FC = () => {
             }}>
               <i className="fas fa-building" style={{ fontSize: '4rem', color: '#8B5CF6', marginBottom: '1.5rem' }}></i>
               <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#6B21A8', marginBottom: '1rem' }}>
-                Welcome to Salona!
+                {t('dashboard.welcome')}
               </h2>
               <p style={{ color: '#7C3AED', marginBottom: '2rem', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto 2rem' }}>
-                To get started, create your company profile. This will allow you to manage your business, staff, and customers.
+                {t('dashboard.welcomeDescription')}
               </p>
               <button
                 onClick={() => navigate('/company-settings')}
@@ -180,7 +184,7 @@ const DashboardPage: React.FC = () => {
                 }}
               >
                 <i className="fas fa-plus-circle"></i>
-                Create Your Company
+                {t('dashboard.createCompany')}
               </button>
             </div>
           ) : (
@@ -189,8 +193,8 @@ const DashboardPage: React.FC = () => {
               {/* Dashboard Header */}
               <div className="dashboard-header">
                 <div>
-                  <h1 className="dashboard-title">Dashboard</h1>
-                  <p className="dashboard-subtitle">Welcome back! Here's what's happening with your business.</p>
+                  <h1 className="dashboard-title">{t('dashboard.title')}</h1>
+                  <p className="dashboard-subtitle">{t('dashboard.subtitle')}</p>
                 </div>
                 <UserProfile user={user} />
               </div>
@@ -228,28 +232,28 @@ const DashboardPage: React.FC = () => {
                     onClick={() => handlePeriodChange('week')}
                   >
                     <i className="fas fa-calendar-week"></i>
-                    This Week
+                    {t('dashboard.thisWeek')}
                   </button>
                   <button
                     className={`period-btn ${selectedPeriod === 'month' ? 'active' : ''}`}
                     onClick={() => handlePeriodChange('month')}
                   >
                     <i className="fas fa-calendar-alt"></i>
-                    This Month
+                    {t('dashboard.thisMonth')}
                   </button>
                   <button
                     className={`period-btn ${selectedPeriod === 'year' ? 'active' : ''}`}
                     onClick={() => handlePeriodChange('year')}
                   >
                     <i className="fas fa-calendar"></i>
-                    This Year
+                    {t('dashboard.thisYear')}
                   </button>
                   <button
                     className={`period-btn ${selectedPeriod === 'custom' ? 'active' : ''}`}
                     onClick={handleCustomDateChange}
                   >
                     <i className="fas fa-calendar-range"></i>
-                    Custom Dates
+                    {t('dashboard.customDates')}
                   </button>
                 </div>
 
@@ -267,10 +271,10 @@ const DashboardPage: React.FC = () => {
                       }
                     }}
                   >
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="year">This Year</option>
-                    <option value="custom">Custom Dates</option>
+                    <option value="week">{t('dashboard.thisWeek')}</option>
+                    <option value="month">{t('dashboard.thisMonth')}</option>
+                    <option value="year">{t('dashboard.thisYear')}</option>
+                    <option value="custom">{t('dashboard.customDates')}</option>
                   </select>
                 </div>
 
@@ -281,15 +285,15 @@ const DashboardPage: React.FC = () => {
                     disabled={isFetching}
                   >
                     <i className={`fas ${isFetching ? 'fa-spinner fa-spin' : 'fa-sync-alt'}`}></i>
-                    Refresh
+                    {t('dashboard.refresh')}
                   </button>
                   <button className="export-btn" onClick={handleExportPDF} disabled={!metrics}>
                     <i className="fas fa-file-pdf"></i>
-                    Export PDF
+                    {t('dashboard.exportPDF')}
                   </button>
                   <button className="export-btn" onClick={handleExportCSV} disabled={!metrics}>
                     <i className="fas fa-file-excel"></i>
-                    Export CSV
+                    {t('dashboard.exportCSV')}
                   </button>
                 </div>
               </div>
@@ -300,7 +304,7 @@ const DashboardPage: React.FC = () => {
                   <div className="date-picker-header">
                     <h3>
                       <i className="fas fa-calendar-range"></i>
-                      Select Custom Date Range
+                      {t('dashboard.selectCustomDateRange')}
                     </h3>
                     <button
                       className="date-picker-close"
@@ -313,7 +317,7 @@ const DashboardPage: React.FC = () => {
                     <div className="date-input-group">
                       <label htmlFor="start-date">
                         <i className="fas fa-calendar"></i>
-                        Start Date
+                        {t('dashboard.startDate')}
                       </label>
                       <input
                         id="start-date"
@@ -326,7 +330,7 @@ const DashboardPage: React.FC = () => {
                     <div className="date-input-group">
                       <label htmlFor="end-date">
                         <i className="fas fa-calendar"></i>
-                        End Date
+                        {t('dashboard.endDate')}
                       </label>
                       <input
                         id="end-date"
@@ -343,14 +347,14 @@ const DashboardPage: React.FC = () => {
                       className="date-picker-btn secondary"
                       onClick={resetToCurrentWeek}
                     >
-                      Reset to Current Week
+                      {t('dashboard.resetToCurrentWeek')}
                     </button>
                     <button
                       className="date-picker-btn primary"
                       onClick={applyCustomDateRange}
                       disabled={!customStartDate || !customEndDate}
                     >
-                      Apply Date Range
+                      {t('dashboard.applyDateRange')}
                     </button>
                   </div>
                 </div>
@@ -373,12 +377,12 @@ const DashboardPage: React.FC = () => {
                       <i className="fas fa-calendar-check"></i>
                     </div>
                     <div className="metric-content">
-                      <h3 className="metric-title">Total Bookings</h3>
+                      <h3 className="metric-title">{t('dashboard.totalBookings')}</h3>
                       <p className="metric-value">{metrics.total_bookings}</p>
                       {metrics.comparison && (
                         <div className={`metric-change ${metrics.comparison.bookings_change >= 0 ? 'positive' : 'negative'}`}>
                           <i className={`fas fa-arrow-${metrics.comparison.bookings_change >= 0 ? 'up' : 'down'}`}></i>
-                          <span>{formatChangePercent(metrics.comparison.bookings_change)}</span> vs last period
+                          <span>{formatChangePercent(metrics.comparison.bookings_change)}</span> {t('dashboard.vsLastPeriod')}
                         </div>
                       )}
                     </div>
@@ -390,12 +394,12 @@ const DashboardPage: React.FC = () => {
                       <i className="fas fa-dollar-sign"></i>
                     </div>
                     <div className="metric-content">
-                      <h3 className="metric-title">Total Revenue</h3>
+                      <h3 className="metric-title">{t('dashboard.totalRevenue')}</h3>
                       <p className="metric-value">{formatCurrency(metrics.total_revenue)}</p>
                       {metrics.comparison && (
                         <div className={`metric-change ${metrics.comparison.revenue_change >= 0 ? 'positive' : 'negative'}`}>
                           <i className={`fas fa-arrow-${metrics.comparison.revenue_change >= 0 ? 'up' : 'down'}`}></i>
-                          <span>{formatChangePercent(metrics.comparison.revenue_change)}</span> vs last period
+                          <span>{formatChangePercent(metrics.comparison.revenue_change)}</span> {t('dashboard.vsLastPeriod')}
                         </div>
                       )}
                     </div>
@@ -407,9 +411,9 @@ const DashboardPage: React.FC = () => {
                       <i className="fas fa-check-circle"></i>
                     </div>
                     <div className="metric-content">
-                      <h3 className="metric-title">Completed</h3>
+                      <h3 className="metric-title">{t('dashboard.completed')}</h3>
                       <p className="metric-value">{metrics.completed_bookings}</p>
-                      <p className="metric-subtitle">{metrics.completion_rate.toFixed(1)}% completion rate</p>
+                      <p className="metric-subtitle">{metrics.completion_rate.toFixed(1)}% {t('dashboard.completionRate')}</p>
                     </div>
                   </div>
 
@@ -419,7 +423,7 @@ const DashboardPage: React.FC = () => {
                       <i className="fas fa-chart-line"></i>
                     </div>
                     <div className="metric-content">
-                      <h3 className="metric-title">Avg. Booking Value</h3>
+                      <h3 className="metric-title">{t('dashboard.avgBookingValue')}</h3>
                       <p className="metric-value">{formatCurrency(metrics.average_booking_value)}</p>
                     </div>
                   </div>
@@ -427,8 +431,8 @@ const DashboardPage: React.FC = () => {
               ) : (
                 <div className="empty-state">
                   <i className="fas fa-chart-line"></i>
-                  <h3>No Data Available</h3>
-                  <p>Start booking appointments to see your dashboard metrics.</p>
+                  <h3>{t('dashboard.noDataAvailable')}</h3>
+                  <p>{t('dashboard.startBooking')}</p>
                 </div>
               )}
 
@@ -443,18 +447,18 @@ const DashboardPage: React.FC = () => {
                   <div className="table-header">
                     <h3 className="table-title">
                       <i className="fas fa-users"></i>
-                      Staff Performance
+                      {t('dashboard.staffPerformance')}
                     </h3>
-                    <p className="table-subtitle">Bookings and revenue by staff member</p>
+                    <p className="table-subtitle">{t('dashboard.bookingsAndRevenueByStaff')}</p>
                   </div>
                   <div className="table-responsive">
                     <table className="performance-table">
                       <thead>
                         <tr>
-                          <th>Staff Member</th>
-                          <th>Bookings</th>
-                          <th>Revenue</th>
-                          <th>Avg. per Booking</th>
+                          <th>{t('dashboard.staffMember')}</th>
+                          <th>{t('dashboard.bookings')}</th>
+                          <th>{t('dashboard.revenue')}</th>
+                          <th>{t('dashboard.avgPerBooking')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -478,9 +482,9 @@ const DashboardPage: React.FC = () => {
                   <div className="insights-header">
                     <h3 className="insights-title">
                       <i className="fas fa-lightbulb"></i>
-                      Business Insights
+                      {t('dashboard.businessInsights')}
                     </h3>
-                    <p className="insights-subtitle">Data-driven recommendations for your business</p>
+                    <p className="insights-subtitle">{t('dashboard.dataRecommendations')}</p>
                   </div>
 
                   <div className="insights-grid">
@@ -491,13 +495,13 @@ const DashboardPage: React.FC = () => {
                           <i className={`fas fa-${metrics.comparison.revenue_change > 0 ? 'trending-up' : 'exclamation-triangle'}`}></i>
                         </div>
                         <div className="insight-content">
-                          <h4>Revenue Trend</h4>
+                          <h4>{t('dashboard.revenueTrend')}</h4>
                           <p>
-                            Your revenue has {metrics.comparison.revenue_change > 0 ? 'increased' : 'decreased'} by{' '}
-                            <strong>{Math.abs(metrics.comparison.revenue_change).toFixed(1)}%</strong> compared to last period.
+                            {metrics.comparison.revenue_change > 0 ? t('dashboard.incByPercent') : t('dashboard.decByPercent')}{' '}
+                            <strong>{Math.abs(metrics.comparison.revenue_change).toFixed(1)}%</strong> {t('dashboard.vsLastPeriod')}.
                             {metrics.comparison.revenue_change > 0
-                              ? ' Great job! Keep up the excellent work.'
-                              : ' Consider reviewing your pricing strategy or marketing efforts.'
+                              ? ` ${t('dashboard.keepUpExcellent')}`
+                              : ` ${t('dashboard.reviewPricing')}`
                             }
                           </p>
                         </div>
@@ -510,14 +514,14 @@ const DashboardPage: React.FC = () => {
                         <i className="fas fa-check-circle"></i>
                       </div>
                       <div className="insight-content">
-                        <h4>Completion Rate</h4>
+                        <h4>{t('dashboard.completionRateInsight')}</h4>
                         <p>
-                          Your booking completion rate is <strong>{metrics.completion_rate.toFixed(1)}%</strong>.
+                          {t('dashboard.completionRateIs')} <strong>{metrics.completion_rate.toFixed(1)}%</strong>.
                           {metrics.completion_rate > 90
-                            ? ' Excellent! Your customers are very satisfied.'
+                            ? ` ${t('dashboard.excellentCompletion')}`
                             : metrics.completion_rate > 80
-                            ? ' Good performance! Consider following up with cancelled bookings.'
-                            : ' There\'s room for improvement. Review your booking process and customer communication.'
+                            ? ` ${t('dashboard.goodCompletion')}`
+                            : ` ${t('dashboard.needImprovement')}`
                           }
                         </p>
                       </div>
@@ -529,12 +533,12 @@ const DashboardPage: React.FC = () => {
                         <i className="fas fa-dollar-sign"></i>
                       </div>
                       <div className="insight-content">
-                        <h4>Average Booking Value</h4>
+                        <h4>{t('dashboard.avgValueInsight')}</h4>
                         <p>
-                          Your average booking value is <strong>{formatCurrency(metrics.average_booking_value)}</strong>.
+                          {t('dashboard.avgValueIs')} <strong>{formatCurrency(metrics.average_booking_value)}</strong>.
                           {metrics.average_booking_value > 100
-                            ? ' Great! Consider promoting premium services to maintain high-value bookings.'
-                            : ' Consider upselling additional services or creating service packages to increase revenue per booking.'
+                            ? ` ${t('dashboard.highValueMaintain')}`
+                            : ` ${t('dashboard.lowValueUpsell')}`
                           }
                         </p>
                       </div>
