@@ -1513,22 +1513,22 @@ const PublicBookingPage: React.FC = () => {
                       </div>
                     </div>
 
-                      {/* Birthday (full width with hint) */}
-                     <div className="form-group full-width">
-                       <label className="form-label" htmlFor="birthday">{t('booking.step4.birthday')}</label>
-                       <input
-                         type="date"
-                         className="form-input"
-                         id="birthday"
-                         value={bookingState.customerInfo.birthday}
-                         onChange={(e) => setBookingState(prev => ({
-                           ...prev,
-                           customerInfo: { ...prev.customerInfo, birthday: e.target.value }
-                         }))}
-                         max={new Date().toISOString().split('T')[0]}
-                       />
-                       <div className="form-hint">{t('booking.step4.birthdayHint')}</div>
-                     </div>
+                     {/* /!* Birthday (full width with hint) *!/*/}
+                     {/*<div className="form-group full-width">*/}
+                     {/*  <label className="form-label" htmlFor="birthday">{t('booking.step4.birthday')}</label>*/}
+                     {/*  <input*/}
+                     {/*    type="date"*/}
+                     {/*    className="form-input"*/}
+                     {/*    id="birthday"*/}
+                     {/*    value={bookingState.customerInfo.birthday}*/}
+                     {/*    onChange={(e) => setBookingState(prev => ({*/}
+                     {/*      ...prev,*/}
+                     {/*      customerInfo: { ...prev.customerInfo, birthday: e.target.value }*/}
+                     {/*    }))}*/}
+                     {/*    max={new Date().toISOString().split('T')[0]}*/}
+                     {/*  />*/}
+                     {/*  <div className="form-hint">{t('booking.step4.birthdayHint')}</div>*/}
+                     {/*</div>*/}
 
                     {/* Notes textarea (full width) */}
                     <div className="form-group full-width">
