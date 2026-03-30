@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useUser } from '../contexts/UserContext';
 import { useTranslation } from 'react-i18next';
 import FullCalendar from '@fullcalendar/react';
@@ -1256,7 +1255,6 @@ const CalendarPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
-      <LanguageSwitcher />
       <div className="page-with-sidebar">
         {/* Messages */}
         {success && (

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { useTranslation } from 'react-i18next';
@@ -762,7 +761,6 @@ const ServicesPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
-      <LanguageSwitcher />
       <div className="page-with-sidebar">
         {/* Messages */}
         {success && (

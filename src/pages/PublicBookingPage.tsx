@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../components/LanguageSwitcher';
+import PublicLanguageSwitcher from '../components/PublicLanguageSwitcher';
 import '../styles/public-booking.css';
 
 interface Service {
@@ -832,7 +832,7 @@ const PublicBookingPage: React.FC = () => {
   if (loading) {
     return (
       <div className="public-booking-loading-overlay">
-        <LanguageSwitcher />
+        <PublicLanguageSwitcher />
         <div className="public-booking-loading-spinner">
           <div className="public-booking-spinner-ring"></div>
           <div className="public-booking-spinner-ring"></div>
@@ -846,7 +846,7 @@ const PublicBookingPage: React.FC = () => {
   return (
     <div className="public-booking-page">
       {/* Language Switcher */}
-      <LanguageSwitcher />
+      <PublicLanguageSwitcher />
 
       {/* Animated Background */}
       <div className="background-animation">

@@ -292,7 +292,8 @@ const resources = {
         "companySettings": "Ettevõtte seadistused",
         "fullscreen": "Täisekraan",
         "logout": "Logi välja",
-        "managementSystem": "Juhtimissüsteem"
+        "managementSystem": "Juhtimissüsteem",
+        "language": "Keel"
       },
       "membership": {
         "title": "Liikmelisus",
@@ -960,7 +961,8 @@ const resources = {
         "companySettings": "Company Settings",
         "fullscreen": "Fullscreen",
         "logout": "Logout",
-        "managementSystem": "Management System"
+        "managementSystem": "Management System",
+        "language": "Language"
       },
       "membership": {
         "title": "Memberships",
@@ -1628,7 +1630,8 @@ const resources = {
         "companySettings": "Параметры компании",
         "fullscreen": "Полноэкранный режим",
         "logout": "Выход",
-        "managementSystem": "Система управления"
+        "managementSystem": "Система управления",
+        "language": "Язык"
       },
       "membership": {
         "title": "Членство",

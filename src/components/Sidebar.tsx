@@ -13,6 +13,7 @@ interface User {
   role?: string;
   role_status?: string;
   company_id?: string;
+  id: string;
 }
 
 interface SidebarProps {
@@ -23,7 +24,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 }) => {
   const location = useLocation();
   const { clearUser, setCompanyTimezone } = useUser();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { clearAllCache } = useClearCache();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [servicesSubmenuOpen, setServicesSubmenuOpen] = useState(false);
@@ -407,6 +408,59 @@ const Sidebar: React.FC<SidebarProps> = ({ user, unreadNotificationsCount = 0 })
 
           {/* Footer Section */}
           <ul className="sidebar-footer">
+            {/* Language Switcher */}
+            <li>
+              <div className="sidebar-lang-switcher">
+                <div className="sidebar-lang-header">
+                  <svg className="sidebar-nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M7.5 4a3.5 3.5 0 0 1 7 0 3.5 3.5 0 0 1 7 0v2a1 1 0 0 1-1 1H1.5a1 1 0 0 1-1-1v-2a3.5 3.5 0 0 1 7 0zM0 13.5a1.5 1.5 0 0 1 1.5-1.5h17a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H1.5A1.5 1.5 0 0 1 0 16.5v-3z" />
+                  </svg>
+                  <span className="sidebar-lang-label">{t('sidebar.language')}</span>
+                </div>
+                <div className="sidebar-lang-buttons">
+                  <button
+                    className={`sidebar-lang-btn ${i18n.language === 'ee' ? 'active' : ''}`}
+                    onClick={() => {
+                      i18n.changeLanguage('ee');
+                      localStorage.setItem('appLanguage', 'ee');
+                      if (user) {
+                        localStorage.setItem(`userLanguage_${user.id}`, 'ee');
+                      }
+                    }}
+                    title="Eesti"
+                  >
+                    🇪🇪
+                  </button>
+                  <button
+                    className={`sidebar-lang-btn ${i18n.language === 'en' ? 'active' : ''}`}
+                    onClick={() => {
+                      i18n.changeLanguage('en');
+                      localStorage.setItem('appLanguage', 'en');
+                      if (user) {
+                        localStorage.setItem(`userLanguage_${user.id}`, 'en');
+                      }
+                    }}
+                    title="English"
+                  >
+                    🇬🇧
+                  </button>
+                  <button
+                    className={`sidebar-lang-btn ${i18n.language === 'ru' ? 'active' : ''}`}
+                    onClick={() => {
+                      i18n.changeLanguage('ru');
+                      localStorage.setItem('appLanguage', 'ru');
+                      if (user) {
+                        localStorage.setItem(`userLanguage_${user.id}`, 'ru');
+                      }
+                    }}
+                    title="Русский"
+                  >
+                    🇷🇺
+                  </button>
+                </div>
+              </div>
+            </li>
+
             {/* Settings with Submenu */}
             <li>
               <button

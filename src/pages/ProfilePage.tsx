@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { useTranslation } from 'react-i18next';
@@ -238,7 +237,6 @@ const ProfilePage: React.FC = () => {
   return (
     <>
       <Sidebar user={globalUser} unreadNotificationsCount={unreadNotificationsCount} />
-      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <main className="profile-page">
           <header className="profile-header">

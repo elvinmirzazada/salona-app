@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { useTranslation } from 'react-i18next';
@@ -550,7 +549,6 @@ const CompanySettingsPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
-      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <main className="company-settings-page">
           <header className="settings-header">

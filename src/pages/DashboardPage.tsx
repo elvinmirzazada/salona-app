@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '../components/Sidebar';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import DashboardCharts from '../components/DashboardCharts';
 import { useUser } from '../contexts/UserContext';
@@ -136,7 +135,6 @@ const DashboardPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
-      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="dashboard-page">
           {!user?.company_id && (user?.role === 'admin' || user?.role === 'owner') ? (

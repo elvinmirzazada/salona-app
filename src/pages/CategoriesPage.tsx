@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import UserProfile from '../components/UserProfile';
 import { useUser } from '../contexts/UserContext';
 import { useTranslation } from 'react-i18next';
@@ -399,7 +398,6 @@ const CategoriesPage: React.FC = () => {
   return (
     <>
       <Sidebar user={user} unreadNotificationsCount={unreadNotificationsCount} />
-      <LanguageSwitcher />
       <div className="page-with-sidebar">
         <div className="categories-page">
           {/* Header */}
