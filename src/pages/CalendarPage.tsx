@@ -49,7 +49,7 @@ const CalendarPage: React.FC = () => {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showTimeOffForm, setShowTimeOffForm] = useState(false);
   const [showSlotActionPopup, setShowSlotActionPopup] = useState(false);
-  const [slotActionPosition, setSlotActionPosition] = useState<{ x: number; y: number; openAbove?: boolean }>({ x: 0, y: 0 });
+  const [_slotActionPosition, setSlotActionPosition] = useState<{ x: number; y: number; openAbove?: boolean }>({ x: 0, y: 0 });
   const [bookingStep, setBookingStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [isEditingBooking, setIsEditingBooking] = useState(false);
@@ -101,7 +101,6 @@ const CalendarPage: React.FC = () => {
   // Refresh events when status filter changes (client-side filtering only)
   useEffect(() => {
     if (initialLoadDone.current && _bookings.length > 0) {
-      console.log('Status filter changed, re-filtering events client-side');
       // Just re-convert events with the new filter applied
       const calendarEvents = convertToCalendarEvents(_bookings, _timeOffs);
       setEvents(calendarEvents);
@@ -166,7 +165,6 @@ const CalendarPage: React.FC = () => {
   const loadAllData = async (startDate?: string, endDate?: string, loadOnlyBookings: boolean = false) => {
     // Prevent concurrent calls
     if (isLoadingData.current) {
-      console.log('Already loading data, skipping duplicate call');
       return;
     }
 
@@ -204,9 +202,6 @@ const CalendarPage: React.FC = () => {
 
         const bookingsData = bookingsRes.data || [];
         const timeOffsData = timeOffsRes.data || [];
-
-        console.log('Bookings Data:', bookingsData);
-        console.log('Time Offs Data:', timeOffsData);
 
         setBookings(bookingsData);
         setTimeOffs(timeOffsData);
@@ -259,9 +254,6 @@ const CalendarPage: React.FC = () => {
 
         const bookingsData = bookingsRes.data || [];
         const timeOffsData = timeOffsRes.data || [];
-
-        console.log('Bookings Data:', bookingsData);
-        console.log('Time Offs Data:', timeOffsData);
 
         setBookings(bookingsData);
         setTimeOffs(timeOffsData);
@@ -319,8 +311,6 @@ const CalendarPage: React.FC = () => {
           });
         }
 
-        console.log('Total services extracted:', servicesData.length);
-        console.log('Total categories (flat):', flatCategoriesData.length);
         setServices(servicesData);
         setFlatCategories(flatCategoriesData);
 
@@ -348,12 +338,6 @@ const CalendarPage: React.FC = () => {
 
   // Handle calendar view change (prev/next week)
   const handleDatesSet = (dateInfo: any) => {
-    console.log('Calendar dates changed:', dateInfo);
-    console.log('View type:', dateInfo.view.type);
-    console.log('Start:', dateInfo.start);
-    console.log('End:', dateInfo.end);
-    console.log('Initial load done:', initialLoadDone.current);
-
     // Get the actual visible date range based on view type
     let startDate: Date;
     let endDate: Date;
@@ -392,8 +376,6 @@ const CalendarPage: React.FC = () => {
 
     const startDateStr = formatDate(startDate);
     const endDateStr = formatDate(endDate);
-
-    console.log(`Loading bookings for: ${startDateStr} to ${endDateStr}`);
 
     // Load data for the new date range
     const isInitialLoad = !initialLoadDone.current;
@@ -468,8 +450,6 @@ const CalendarPage: React.FC = () => {
 
       // API returns UTC times - pass them directly to FullCalendar
       // FullCalendar will convert them to company timezone based on timeZone prop
-      console.log(booking.start_at);
-      console.log(booking.end_at);
       events.push({
         id: `booking-${booking.id}`,
         title: title,
@@ -509,8 +489,6 @@ const CalendarPage: React.FC = () => {
       });
     });
 
-    console.log('Total calendar events created:', events.length);
-    console.log('Calendar events:', events);
 
     return events;
   };
@@ -555,17 +533,38 @@ const CalendarPage: React.FC = () => {
 
     // Calculate popup position based on the click event
     const jsEvent = selectInfo.jsEvent as MouseEvent;
-    const clickY = jsEvent.clientY;
-    const clickX = jsEvent.clientX;
 
-    // Estimate popup height (approximate based on content)
+    // Get click coordinates with fallback to center if undefined
+    let clickY = jsEvent?.clientY ?? window.innerHeight / 2;
+    let clickX = jsEvent?.clientX ?? window.innerWidth / 2;
+
+    // Estimate popup dimensions
     const popupHeight = isPast ? 200 : 150; // Larger if past date due to message
+    const popupWidth = 250;
     const windowHeight = window.innerHeight;
-    const spaceBelow = windowHeight - clickY;
-    const spaceAbove = clickY;
+    const windowWidth = window.innerWidth;
+    const padding = 20; // Viewport padding
 
     // Determine if popup should open above or below
-    const shouldOpenAbove = spaceBelow < popupHeight && spaceAbove > spaceBelow;
+    const shouldOpenAbove = (windowHeight - clickY) < popupHeight && clickY > (windowHeight - clickY);
+
+    // Adjust positioning to keep popup within viewport
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+      // Center the popup horizontally on mobile
+      clickX = windowWidth / 2;
+
+      // Center vertically on mobile for better UX
+      clickY = windowHeight / 2;
+    } else {
+      // On desktop, adjust if too close to edges
+      if ((windowWidth - clickX) < popupWidth / 2) {
+        clickX = Math.max(popupWidth / 2, windowWidth - popupWidth / 2 - padding);
+      } else if (clickX < popupWidth / 2) {
+        clickX = Math.max(popupWidth / 2 + padding, clickX);
+      }
+    }
 
     setSlotActionPosition({
       x: clickX,
@@ -635,9 +634,6 @@ const CalendarPage: React.FC = () => {
         },
       };
 
-      console.log('Booking data being sent to API:');
-      console.log('  Local time:', bookingStartDate, bookingStartTime);
-      console.log('  UTC time:', startTimeUTC);
 
       // Add customer id if existing customer selected
       if (selectedCustomerId !== 'new') {
@@ -977,11 +973,6 @@ const CalendarPage: React.FC = () => {
         reason: timeOffReason,
       };
 
-      console.log('Time-off data being sent to API:');
-      console.log('  Local start:', timeOffStartDate, timeOffStartTime);
-      console.log('  UTC start:', startDateTimeUTC);
-      console.log('  Local end:', timeOffEndDate, timeOffEndTime);
-      console.log('  UTC end:', endDateTimeUTC);
 
       if (isEditingTimeOff && editingTimeOffId) {
         // Update existing time-off
@@ -1355,6 +1346,8 @@ const CalendarPage: React.FC = () => {
               editable={true}
               selectable={true}
               selectMirror={true}
+              selectLongPressDelay={0}
+              selectOverlap={true}
               unselectAuto={true}
               unselectCancel=".fc-event,.event-popup,.booking-form-panel,.slot-action-popup"
               eventAllow={() => true}
@@ -1414,10 +1407,9 @@ const CalendarPage: React.FC = () => {
               className="slot-action-popup"
               style={{
                 position: 'fixed',
-                top: slotActionPosition.openAbove ? 'auto' : `${slotActionPosition.y}px`,
-                bottom: slotActionPosition.openAbove ? `${window.innerHeight - slotActionPosition.y}px` : 'auto',
-                left: `${slotActionPosition.x}px`,
-                transform: slotActionPosition.openAbove ? 'translate(-50%, -10px)' : 'translate(-50%, 10px)',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
               }}
             >
               <div className="slot-action-popup-title">

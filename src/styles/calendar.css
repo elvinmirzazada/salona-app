@@ -1061,4 +1061,64 @@
     flex-direction: column;
     gap: 12px;
   }
+
+  /* Mobile time slot improvements */
+  .fc .fc-timegrid-slot {
+    height: 3em !important;
+  }
+
+  .fc .fc-col-time,
+  .fc .fc-timegrid-slot {
+    font-size: 12px;
+  }
+
+  .fc .fc-daygrid-day-frame {
+    min-height: 100px;
+  }
+
+  /* Ensure slots and days are selectable on touch */
+  .fc .fc-daygrid-day,
+  .fc .fc-timegrid-slot,
+  .fc .fc-daygrid-day-bg {
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* Mobile slot action popup styling */
+  .slot-action-popup {
+    min-width: calc(100vw - 40px);
+    max-width: calc(100vw - 40px);
+    position: fixed !important;
+    max-height: 80vh;
+    min-height: auto;
+    overflow-y: auto;
+    z-index: 1000;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .slot-action-popup-title,
+  .slot-action-buttons,
+  .slot-action-message {
+    width: 100%;
+  }
+
+  .slot-action-button {
+    padding: 14px 16px;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .slot-action-button span {
+    display: inline-block;
+  }
+
+  /* Ensure popup is never cut off */
+  .event-popup-overlay {
+    z-index: 999;
+  }
 }
