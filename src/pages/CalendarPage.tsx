@@ -1080,7 +1080,7 @@ const CalendarPage: React.FC = () => {
       const service = services.find((s) => s.id === selected.serviceId);
       if (service) {
         totalDuration += service.duration;
-        totalPrice += (service.discount_price || service.price) / 100; // Convert from cents to euros
+        totalPrice += (service.discount_price || service.price); // Convert from cents to euros
       }
     });
 
@@ -1776,7 +1776,7 @@ const CalendarPage: React.FC = () => {
                                 <div className="service-info">
                                   <div className="service-option-name">{service.name}</div>
                                   <div className="service-option-details">
-                                    {service.duration} min • € {((service.discount_price || service.price) / 100).toFixed(2)}
+                                    {service.duration} min • € {((service.discount_price || service.price)).toFixed(2)}
                                   </div>
                                 </div>
                               </div>
@@ -1801,7 +1801,7 @@ const CalendarPage: React.FC = () => {
                           return (
                             <div key={index} className="selected-service-item">
                               <span>{service?.name}</span>
-                              <span>€ {((service?.discount_price || service?.price || 0) / 100).toFixed(2)}</span>
+                              <span>€ {((service?.discount_price || service?.price || 0)).toFixed(2)}</span>
                             </div>
                           );
                         })
