@@ -2094,9 +2094,9 @@
   .public-booking-page .mobile-summary-tab {
     position: fixed;
     right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 48px;
+    bottom: 5%;
+    /*transform: translateY(-50%);*/
+    width: 25px;
     background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%);
     cursor: pointer;
     z-index: 100;

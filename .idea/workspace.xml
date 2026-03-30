@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0ae7db63-5d47-4190-b72e-06830539325b" name="Changes" comment="fixed issue on adding booking on mobile view in calendar page">
+    <list default="true" id="0ae7db63-5d47-4190-b72e-06830539325b" name="Changes" comment="added translations into admin">
       <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/CalendarPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/CalendarPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/styles/calendar.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/styles/calendar.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/PublicLanguageSwitcher.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/PublicLanguageSwitcher.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/styles/language-switcher.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/styles/language-switcher.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/styles/public-booking.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/styles/public-booking.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -60,7 +61,7 @@
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "ts.external.directory.path": "/home/elvin/Salona/salona-app/node_modules/typescript/lib",
+    "ts.external.directory.path": "/home/elvin/Projects/salona-app/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -231,7 +232,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774860888548</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="added translations into admin">
+      <option name="closed" value="true" />
+      <created>1774883744232</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1774883744232</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -254,7 +263,8 @@
     <MESSAGE value="Redesigned public booking page" />
     <MESSAGE value="fixed price issue in calendar view booking add popup" />
     <MESSAGE value="fixed issue on adding booking on mobile view in calendar page" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed issue on adding booking on mobile view in calendar page" />
+    <MESSAGE value="added translations into admin" />
+    <option name="LAST_COMMIT_MESSAGE" value="added translations into admin" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
