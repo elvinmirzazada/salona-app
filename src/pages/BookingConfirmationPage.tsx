@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import PublicLanguageSwitcher from '../components/PublicLanguageSwitcher';
 import { API_BASE_URL } from '../config/api';
 import '../styles/booking-confirmation.css';
 
@@ -51,6 +53,7 @@ const BookingConfirmationPage: React.FC = () => {
   const { companySlug } = useParams<{ companySlug: string }>();
   const [searchParams] = useSearchParams();
   const bookingId = searchParams.get('booking_id');
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -172,8 +175,8 @@ const BookingConfirmationPage: React.FC = () => {
             <div className="confirmation-loading-spinner">
               <i className="fas fa-spinner fa-spin" style={{ fontSize: '3rem', color: '#667eea' }}></i>
             </div>
-            <h2 style={{ marginTop: '1.5rem', color: '#4a5568' }}>Loading your booking...</h2>
-            <p style={{ color: '#718096', marginTop: '0.5rem' }}>Please wait while we retrieve your confirmation details</p>
+            <h2 style={{ marginTop: '1.5rem', color: '#4a5568' }}>{t('booking.confirmation.loading')}</h2>
+            <p style={{ color: '#718096', marginTop: '0.5rem' }}>{t('booking.confirmation.loadingMessage')}</p>
           </div>
         </div>
       </div>
@@ -185,12 +188,12 @@ const BookingConfirmationPage: React.FC = () => {
       <div className="confirmation-container">
         <div className="confirmation-card">
           <div className="confirmation-error-icon">⚠️</div>
-          <h1>Unable to Load Confirmation</h1>
-          <p>{error || 'Booking details not found'}</p>
+          <h1>{t('booking.confirmation.error')}</h1>
+          <p>{error || t('booking.confirmation.unableToLoad')}</p>
           <div className="action-buttons">
             <a href={`/booking/${companySlug}`} className="confirmation-btn confirmation-btn-primary">
               <span>🏠</span>
-              <span>Back to Booking</span>
+              <span>{t('booking.confirmation.backToBooking')}</span>
             </a>
           </div>
         </div>
@@ -203,6 +206,9 @@ const BookingConfirmationPage: React.FC = () => {
 
   return (
     <div className="confirmation-page">
+      {/* Language Switcher */}
+      <PublicLanguageSwitcher />
+
       <div className="confetti-container" id="confetti-container"></div>
 
       <div className="confirmation-container">
@@ -217,13 +223,13 @@ const BookingConfirmationPage: React.FC = () => {
             </div>
           </div>
 
-          <h1 className="confirmation-title">🎉 Booking Confirmed!</h1>
+          <h1 className="confirmation-title">🎉 {t('booking.confirmation.title')}</h1>
           <p className="confirmation-subtitle">
-            Thank you for choosing us! We're excited to see you soon.
+            {t('booking.confirmation.subtitle')}
           </p>
 
           <div className="confirmation-id">
-            Booking ID: <span>{bookingData.id}</span>
+            {t('booking.confirmation.bookingId')}: <span>{bookingData.id}</span>
           </div>
         </div>
 
@@ -232,14 +238,14 @@ const BookingConfirmationPage: React.FC = () => {
           {/* Left Column - Booking Details */}
           <div className="confirmation-card booking-details-card">
             <div className="card-header">
-              <h2>📋 Booking Details</h2>
+              <h2>📋 {t('booking.confirmation.bookingDetails')}</h2>
             </div>
 
             <div className="booking-summary">
               <div className="summary-item">
                 <div className="summary-label">
                   <i className="fas fa-user"></i>
-                  Customer
+                  {t('booking.confirmation.customer')}
                 </div>
                 <div className="summary-value">
                   {bookingData.customer.first_name} {bookingData.customer.last_name}
@@ -249,7 +255,7 @@ const BookingConfirmationPage: React.FC = () => {
               <div className="summary-item">
                 <div className="summary-label">
                   <i className="fas fa-envelope"></i>
-                  Email
+                  {t('booking.confirmation.email')}
                 </div>
                 <div className="summary-value">
                   {bookingData.customer.email}
@@ -259,7 +265,7 @@ const BookingConfirmationPage: React.FC = () => {
               <div className="summary-item">
                 <div className="summary-label">
                   <i className="fas fa-calendar"></i>
-                  Date & Time
+                  {t('booking.confirmation.dateTime')}
                 </div>
                 <div className="summary-value">
                   <div className="datetime-display">
@@ -273,7 +279,7 @@ const BookingConfirmationPage: React.FC = () => {
                 <div className="summary-item">
                   <div className="summary-label">
                     <i className="fas fa-user-tie"></i>
-                    Professional{professionals.length > 1 ? 's' : ''}
+                    {professionals.length > 1 ? t('booking.confirmation.professionals') : t('booking.confirmation.professional')}
                   </div>
                   <div className="summary-value">
                     {professionals.map((prof, index) => (
@@ -287,7 +293,7 @@ const BookingConfirmationPage: React.FC = () => {
             </div>
 
             <div className="services-section">
-              <h3>Services Booked</h3>
+              <h3>{t('booking.confirmation.servicesBooked')}</h3>
               <div className="services-list">
                 {bookingData.booking_services.map((service, index) => (
                   <div key={index} className="service-card">
@@ -296,11 +302,11 @@ const BookingConfirmationPage: React.FC = () => {
                       <div className="service-meta">
                         <span className="service-duration">
                           <i className="fas fa-clock"></i>
-                          {service.category_service.duration} min
+                          {service.category_service.duration} {t('booking.confirmation.serviceDuration')}
                         </span>
                         {service.assigned_staff && (
                           <span className="service-staff">
-                            with {service.assigned_staff.first_name} {service.assigned_staff.last_name}
+                            {t('booking.confirmation.with')} {service.assigned_staff.first_name} {service.assigned_staff.last_name}
                           </span>
                         )}
                       </div>
@@ -317,7 +323,7 @@ const BookingConfirmationPage: React.FC = () => {
 
               <div className="total-section">
                 <div className="total-row">
-                  <span className="total-label">Total Amount</span>
+                  <span className="total-label">{t('booking.confirmation.totalAmount')}</span>
                   <span className="total-value">€{formatPrice(bookingData.total_price)}</span>
                 </div>
               </div>
@@ -327,7 +333,7 @@ const BookingConfirmationPage: React.FC = () => {
           {/* Right Column - Location & Map */}
           <div className="confirmation-card location-card">
             <div className="card-header">
-              <h2>📍 Location</h2>
+              <h2>📍 {t('booking.confirmation.location')}</h2>
             </div>
 
             {company && (
@@ -375,7 +381,7 @@ const BookingConfirmationPage: React.FC = () => {
             {address?.address && (
               <div className="map-container">
                 <div className="map-header">
-                  <h4>Find us here</h4>
+                  <h4>{t('booking.confirmation.findUsHere')}</h4>
                 </div>
                 <div className="map-wrapper">
                   <iframe
@@ -401,7 +407,7 @@ const BookingConfirmationPage: React.FC = () => {
                     className="directions-btn"
                   >
                     <i className="fas fa-directions"></i>
-                    Get Directions
+                    {t('booking.confirmation.getDirections')}
                   </a>
                 </div>
               </div>
@@ -411,20 +417,20 @@ const BookingConfirmationPage: React.FC = () => {
             <div className="info-section">
               <h4>
                 <i className="fas fa-info-circle"></i>
-                Important Notes
+                {t('booking.confirmation.importantNotes')}
               </h4>
               <ul className="info-list">
                 <li>
                   <i className="fas fa-clock"></i>
-                  Please arrive 5-10 minutes before your appointment
+                  {t('booking.confirmation.arriveEarly')}
                 </li>
                 <li>
                   <i className="fas fa-calendar-times"></i>
-                  Cancel or reschedule at least 24 hours in advance
+                  {t('booking.confirmation.cancelPolicy')}
                 </li>
                 <li>
                   <i className="fas fa-envelope-check"></i>
-                  Confirmation email sent to {bookingData.customer.email}
+                  {t('booking.confirmation.confirmationEmail')} {bookingData.customer.email}
                 </li>
               </ul>
             </div>
@@ -438,14 +444,14 @@ const BookingConfirmationPage: React.FC = () => {
             className="confirmation-btn confirmation-btn-secondary"
           >
             <i className="fas fa-print"></i>
-            Print Details
+            {t('booking.confirmation.printDetails')}
           </button>
           <a
             href={`/booking/${companySlug}`}
             className="confirmation-btn confirmation-btn-primary"
           >
             <i className="fas fa-home"></i>
-            Book Again
+            {t('booking.confirmation.bookAgain')}
           </a>
         </div>
       </div>
