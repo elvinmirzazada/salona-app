@@ -170,7 +170,7 @@ const PublicBookingPage: React.FC = () => {
     }
   }, [currentMonth]);
 
-  // Collapse all categories when they are first loaded
+  // Collapse all categories when they are first loaded, unless there's only a single category
   useEffect(() => {
     if (categories.length > 0 && collapsedCategories.size === 0) {
       const allCategoryIds = new Set<string>();
@@ -183,7 +183,14 @@ const PublicBookingPage: React.FC = () => {
         });
       };
       collectCategoryIds(categories);
-      setCollapsedCategories(allCategoryIds);
+
+      // If there's only a single top-level category, expand it by default (don't add to collapsed set)
+      if (categories.length === 1) {
+        // Don't add the single category to collapsed set, so it will be expanded
+        setCollapsedCategories(new Set());
+      } else {
+        setCollapsedCategories(allCategoryIds);
+      }
     }
   }, [categories]);
 
@@ -814,6 +821,14 @@ const PublicBookingPage: React.FC = () => {
     return service.additional_info_en || service.additional_info_ee || service.additional_info_ru || null;
   };
 
+  // Helper function to get the correct locale string for date formatting
+  const getLocaleString = (): string => {
+    const lang = i18n.language;
+    if (lang === 'et' || lang === 'ee') return 'et-EE';
+    if (lang === 'ru') return 'ru-RU';
+    return 'en-US'; // default to English
+  };
+
   // Toggle collapse state for a category
   const toggleCategoryCollapse = (categoryId: string) => {
     setCollapsedCategories(prev => {
@@ -1245,7 +1260,7 @@ const PublicBookingPage: React.FC = () => {
                       <div className="date-picker">
                         <div className="calendar-header">
                           <div className="calendar-month">
-                            {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            {currentMonth.toLocaleDateString(getLocaleString(), { month: 'long', year: 'numeric' })}
                           </div>
                           <div className="calendar-nav">
                             <button
@@ -1693,7 +1708,7 @@ const PublicBookingPage: React.FC = () => {
                ) : (
                  <div className="datetime-item">
                    <div className="datetime-value">
-                     {new Date(bookingState.selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {bookingState.selectedTime}
+                     {new Date(bookingState.selectedDate).toLocaleDateString(getLocaleString(), { weekday: 'short', month: 'short', day: 'numeric' })} {t('booking.summary.at')} {bookingState.selectedTime}
                    </div>
                    <div className="datetime-duration">{t('booking.summary.totalDuration')}: {getTotalDuration()} min</div>
                  </div>
@@ -1843,7 +1858,7 @@ const PublicBookingPage: React.FC = () => {
                   ) : (
                     <div className="datetime-item">
                       <div className="datetime-value">
-                        {new Date(bookingState.selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {bookingState.selectedTime}
+                        {new Date(bookingState.selectedDate).toLocaleDateString(getLocaleString(), { weekday: 'short', month: 'short', day: 'numeric' })} {t('booking.summary.at')} {bookingState.selectedTime}
                       </div>
                       <div className="datetime-duration">{t('booking.summary.totalDuration')}: {getTotalDuration()} min</div>
                     </div>

@@ -642,7 +642,7 @@
 }
 
 .public-booking-page .categories-panel {
-  width: 180px;
+  width: 150px;
   background: #f9f9f9;
   border-right: 0.5px solid #e5e5e5;
   overflow-y: auto;
@@ -1507,7 +1507,7 @@
   border-radius: var(--radius-md);
   font-size: 13px;
   background: white;
-  width: 85px;
+  width: 100px;
   flex-shrink: 0;
   cursor: pointer;
   transition: all 0.2s ease;

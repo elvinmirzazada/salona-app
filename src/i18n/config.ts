@@ -681,6 +681,7 @@ const resources = {
           "notEntered": "Pole sisestatud",
           "noServices": "Teenuseid pole valitud",
           "edit": "muuda",
+          "at": "kell",
           "totalDuration": "Kogukestus"
         },
         "success": {
@@ -1350,6 +1351,7 @@ const resources = {
           "notEntered": "Not entered",
           "noServices": "No services selected",
           "edit": "edit",
+          "at": "at",
           "totalDuration": "Total duration"
         },
         "success": {
@@ -2019,6 +2021,7 @@ const resources = {
           "notEntered": "Не введено",
           "noServices": "Услуги не выбраны",
           "edit": "изменить",
+          "at": "в",
           "totalDuration": "Общая продолжительность"
         },
         "success": {
