@@ -128,6 +128,7 @@ const PublicBookingPage: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [gdprAccepted, setGdprAccepted] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
@@ -432,6 +433,15 @@ const PublicBookingPage: React.FC = () => {
     if (newSelected.has(serviceId)) {
       newSelected.delete(serviceId);
     } else {
+      // Limit to maximum 2 services
+      if (newSelected.size >= 2) {
+        setWarning(t('booking.errors.maxServicesReached'));
+        // Auto-hide warning after 5 seconds
+        setTimeout(() => {
+          setWarning(null);
+        }, 5000);
+        return;
+      }
       newSelected.add(serviceId);
     }
 
@@ -862,6 +872,16 @@ const PublicBookingPage: React.FC = () => {
     <div className="public-booking-page">
       {/* Language Switcher */}
       <PublicLanguageSwitcher />
+
+      {/* Warning Message */}
+      {warning && (
+        <div className="booking-warning-message" style={{
+          animation: 'slideDown 0.3s ease-out'
+        }}>
+          <i className="fas fa-exclamation-circle"></i>
+          <span>{warning}</span>
+        </div>
+      )}
 
       {/* Animated Background */}
       <div className="background-animation">

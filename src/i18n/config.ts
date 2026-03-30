@@ -694,7 +694,8 @@ const resources = {
         "errors": {
           "termsRequired": "Palun nõustu tingimustega",
           "loadingFailed": "Broneerimise andmete laadimine ebaõnnestus",
-          "bookingFailed": "Broneeringu loomine ebaõnnestus. Palun proovi uuesti."
+          "bookingFailed": "Broneeringu loomine ebaõnnestus. Palun proovi uuesti.",
+          "maxServicesReached": "Saate valida maksimaalselt 2 teenust korraga"
         }
       }
     }
@@ -1364,7 +1365,8 @@ const resources = {
         "errors": {
           "termsRequired": "Please agree to the terms and conditions",
           "loadingFailed": "Failed to load booking data",
-          "bookingFailed": "Failed to create booking. Please try again."
+          "bookingFailed": "Failed to create booking. Please try again.",
+          "maxServicesReached": "You can select maximum 2 services at the same time"
         }
       }
     }
@@ -2034,7 +2036,8 @@ const resources = {
         "errors": {
           "termsRequired": "Пожалуйста, согласитесь с условиями",
           "loadingFailed": "Не удалось загрузить данные бронирования",
-          "bookingFailed": "Не удалось создать бронирование. Пожалуйста, попробуйте снова."
+          "bookingFailed": "Не удалось создать бронирование. Пожалуйста, попробуйте снова.",
+          "maxServicesReached": "Вы можете выбрать максимум 2 услуги одновременно"
         }
       }
     }
