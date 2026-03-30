@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, {DateClickArg} from '@fullcalendar/interaction';
 import luxon3Plugin from '@fullcalendar/luxon3';
 import UserProfile from '../components/UserProfile';
 import listPlugin from '@fullcalendar/list';
@@ -495,6 +495,7 @@ const CalendarPage: React.FC = () => {
 
   // Event click handler
   const handleEventClick = (clickInfo: EventClickArg) => {
+    console.log('Event clicked:', clickInfo.event);
     // Prevent the slot action popup from showing
     setShowSlotActionPopup(false);
 
@@ -511,15 +512,19 @@ const CalendarPage: React.FC = () => {
     const eventId = clickInfo.event.id;
     const calendarEvent = events.find((e) => e.id === eventId);
 
+    console.log('calendar clicked:', calendarEvent);
     if (calendarEvent) {
       setSelectedEvent(calendarEvent);
       setShowEventPopup(true);
+    } else {
+      setShowSlotActionPopup(true)
     }
   };
 
   // Date select handler (for creating new bookings)
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     // Check if selected date is in the past
+    console.log('Date selected:', selectInfo);
     const now = new Date();
     const selectedDate = new Date(selectInfo.start);
     const isPast = selectedDate < now;
@@ -571,7 +576,21 @@ const CalendarPage: React.FC = () => {
       y: clickY,
       openAbove: shouldOpenAbove,
     });
+    setShowSlotActionPopup(true);
+  };
 
+  const handleDateClick = (clickInfo: DateClickArg) => {
+    // Check if selected date is in the past
+    const now = new Date();
+    const selectedDate = clickInfo.date;
+    const isPast = selectedDate.getTime() < now.getTime();
+
+    setSelectedSlot({
+      start: selectedDate,
+      end: selectedDate,
+    });
+
+    setIsSelectedSlotPast(isPast);
     setShowSlotActionPopup(true);
   };
 
@@ -1346,10 +1365,9 @@ const CalendarPage: React.FC = () => {
               editable={true}
               selectable={true}
               selectMirror={true}
-              selectLongPressDelay={0}
               selectOverlap={true}
               unselectAuto={true}
-              unselectCancel=".fc-event,.event-popup,.booking-form-panel,.slot-action-popup"
+              // unselectCancel=".fc-event,.event-popup,.booking-form-panel,.slot-action-popup,.event-popup-overlay"
               eventAllow={() => true}
               eventStartEditable={false}
               eventDurationEditable={false}
@@ -1360,6 +1378,7 @@ const CalendarPage: React.FC = () => {
               events={events}
               eventClick={handleEventClick}
               select={handleDateSelect}
+              dateClick={handleDateClick}
               datesSet={handleDatesSet}
               height="auto"
                 businessHours={{
@@ -1402,9 +1421,16 @@ const CalendarPage: React.FC = () => {
         {/* Slot Action Popup */}
         {showSlotActionPopup && (
           <>
-            <div className="event-popup-overlay" onClick={() => setShowSlotActionPopup(false)}></div>
+            <div
+              className="event-popup-overlay"
+              onClick={() => {
+                // Add small delay to prevent rapid close on quick taps
+                setTimeout(() => setShowSlotActionPopup(false), 100);
+              }}
+            ></div>
             <div
               className="slot-action-popup"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 position: 'fixed',
                 left: '50%',
@@ -1430,7 +1456,10 @@ const CalendarPage: React.FC = () => {
               <div className="slot-action-buttons">
                 <button
                   className={`slot-action-button ${isSelectedSlotPast ? 'disabled' : ''}`}
-                  onClick={handleAddBooking}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddBooking();
+                  }}
                   disabled={isSelectedSlotPast}
                   title={isSelectedSlotPast ? t('calendar.cannotCreatePastBookings') : t('calendar.addBooking')}
                 >
@@ -1439,7 +1468,10 @@ const CalendarPage: React.FC = () => {
                 </button>
                 <button
                   className={`slot-action-button ${isSelectedSlotPast ? 'disabled' : ''}`}
-                  onClick={handleAddTimeOff}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddTimeOff();
+                  }}
                   disabled={isSelectedSlotPast}
                   title={isSelectedSlotPast ? t('calendar.cannotSchedulePastTimeOff') : t('calendar.addTimeOff')}
                 >
