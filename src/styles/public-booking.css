@@ -1971,6 +1971,14 @@
   color: #3c3;
 }
 
+.public-booking-page .mobile-summary-drawer {
+  display: none;
+}
+
+.public-booking-page .mobile-summary-tab {
+  display: none;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .public-booking-page .booking-container {
