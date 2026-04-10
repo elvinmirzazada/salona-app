@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0ae7db63-5d47-4190-b72e-06830539325b" name="Changes" comment="minor fixes">
+    <list default="true" id="0ae7db63-5d47-4190-b72e-06830539325b" name="Changes" comment="added buffer to services">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/ServicesPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/ServicesPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hooks/useCompanySettings.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/hooks/useCompanySettings.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/i18n/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/i18n/config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/CompanySettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/CompanySettingsPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,7 +90,7 @@
       <workItem from="1774856930464" duration="6443000" />
       <workItem from="1774969261248" duration="598000" />
       <workItem from="1775482038869" duration="3191000" />
-      <workItem from="1775843812434" duration="1556000" />
+      <workItem from="1775843812434" duration="3240000" />
     </task>
     <task id="LOCAL-00001" summary="refactor">
       <option name="closed" value="true" />
@@ -282,7 +284,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774901427930</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="added buffer to services">
+      <option name="closed" value="true" />
+      <created>1775849427745</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1775849427745</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -307,7 +317,8 @@
     <MESSAGE value="fixed issue on adding booking on mobile view in calendar page" />
     <MESSAGE value="added translations into admin" />
     <MESSAGE value="minor fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="minor fixes" />
+    <MESSAGE value="added buffer to services" />
+    <option name="LAST_COMMIT_MESSAGE" value="added buffer to services" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
