@@ -11,10 +11,16 @@
 
 .public-booking-page {
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+/* .public-booking-page {
+  min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   position: relative;
   overflow-x: hidden;
-}
+} */
 
 /* Animated Background */
 .public-booking-page .background-animation {
@@ -2284,6 +2290,46 @@
     padding-top: 12px;
     gap: 8px;
   }
+html, body {
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.public-booking-page {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.public-booking-page .background-animation,
+.public-booking-loading-overlay,
+.public-booking-page .mobile-summary-overlay {
+  position: fixed;
+  inset: 0;
+}
+
+.public-booking-page .booking-summary {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
 }
 
 
