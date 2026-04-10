@@ -329,6 +329,9 @@ const ServicesPage: React.FC = () => {
       ? Math.round(parseFloat(discountPriceValue) * 100)
       : undefined;
 
+    const bufferBefore = Math.max(0, parseInt((formData.get('service-buffer-before') as string) || '0', 10) || 0);
+    const bufferAfter = Math.max(0, parseInt((formData.get('service-buffer-after') as string) || '0', 10) || 0);
+
     const serviceData: CreateServiceData = {
       name: formData.get('service-name') as string,
       name_en: languageFormValues.name_en,
@@ -341,8 +344,8 @@ const ServicesPage: React.FC = () => {
       additional_info_ee: languageFormValues.description_ee,
       additional_info_ru: languageFormValues.description_ru,
       status: 'active',
-      buffer_before: 0,
-      buffer_after: 0,
+      buffer_before: bufferBefore,
+      buffer_after: bufferAfter,
       category_id: selectedCategoryId,
       staff_ids: selectedStaff,
       ...(serviceModal.isEditing && imageRemoved && { remove_image: true }),
@@ -571,7 +574,7 @@ const ServicesPage: React.FC = () => {
       name: editingServiceData.name!,
       duration: editingServiceData.duration!,
       price: editingServiceData.price!,
-      discount_price: (editingServiceData?.discount_price || 0),
+      discount_price: editingServiceData?.discount_price || 0,
       category_id: editingServiceData.category_id!,
     };
     const imageToSave = editingImageFile;
@@ -1246,6 +1249,31 @@ const ServicesPage: React.FC = () => {
                         min="0"
                         step="0.01"
                         defaultValue={serviceModal.service?.discount_price ? serviceModal.service.discount_price : ''}
+                      />
+                    </div>
+                  </div>
+
+                                    <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="service-buffer-before">Buffer before (min)</label>
+                      <input
+                        type="number"
+                        id="service-buffer-before"
+                        name="service-buffer-before"
+                        min="0"
+                        step="1"
+                        defaultValue={serviceModal.service?.buffer_before ?? 0}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="service-buffer-after">Buffer after (min)</label>
+                      <input
+                        type="number"
+                        id="service-buffer-after"
+                        name="service-buffer-after"
+                        min="0"
+                        step="1"
+                        defaultValue={serviceModal.service?.buffer_after ?? 0}
                       />
                     </div>
                   </div>
