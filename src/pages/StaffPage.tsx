@@ -26,10 +26,17 @@ interface StaffMember {
     status: string;
     position?: string;
     languages?: string;
+    availabilities?: StaffAvailabilityRow[];
   };
-  availability?: WeeklyAvailability;
   max_daily_booking_count?: number;
   enforce_sequential_bookings?: number | boolean;
+}
+
+interface StaffAvailabilityRow {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
 }
 
 interface Invitation {
@@ -60,7 +67,7 @@ interface StaffFormData {
   enforceSequentialBookings: boolean;
 }
 
-const DEFAULT_AVAILABILITY: WeeklyAvailability = {
+const createDefaultAvailability = (): WeeklyAvailability => ({
   0: { enabled: true, start_time: '09:00', end_time: '17:00' },
   1: { enabled: true, start_time: '09:00', end_time: '17:00' },
   2: { enabled: true, start_time: '09:00', end_time: '17:00' },
@@ -68,6 +75,31 @@ const DEFAULT_AVAILABILITY: WeeklyAvailability = {
   4: { enabled: true, start_time: '09:00', end_time: '17:00' },
   5: { enabled: false, start_time: '10:00', end_time: '14:00' },
   6: { enabled: false, start_time: '10:00', end_time: '14:00' },
+});
+
+const toHHMM = (time: string | undefined): string => {
+  if (!time) return '09:00';
+  return time.slice(0, 5);
+};
+
+const normalizeWeeklyAvailability = (
+  availabilities?: StaffAvailabilityRow[]
+): WeeklyAvailability => {
+  if (availabilities && availabilities.length > 0) {
+    const normalized = createDefaultAvailability();
+    availabilities.forEach((row) => {
+      if (row.day_of_week >= 0 && row.day_of_week <= 6) {
+        normalized[row.day_of_week] = {
+          enabled: !!row.is_available,
+          start_time: toHHMM(row.start_time),
+          end_time: toHHMM(row.end_time),
+        };
+      }
+    });
+    return normalized;
+  }
+
+  return createDefaultAvailability();
 };
 
 const normalizeMaxDailyBookingCount = (value: unknown): number => {
@@ -94,7 +126,7 @@ const StaffPage: React.FC = () => {
   const [formData, setFormData] = useState<StaffFormData>({
     email: '',
     role: 'staff',
-    availability: DEFAULT_AVAILABILITY,
+    availability: createDefaultAvailability(),
     maxDailyBookingCount: 0,
     enforceSequentialBookings: false,
   });
@@ -184,7 +216,7 @@ const StaffPage: React.FC = () => {
     setFormData({
       email: '',
       role: 'staff',
-      availability: DEFAULT_AVAILABILITY,
+      availability: createDefaultAvailability(),
       maxDailyBookingCount: 0,
       enforceSequentialBookings: false,
     });
@@ -197,7 +229,7 @@ const StaffPage: React.FC = () => {
     setFormData({
       email: staffMember.user.email,
       role: staffMember.role,
-      availability: staffMember.availability || DEFAULT_AVAILABILITY,
+      availability: normalizeWeeklyAvailability(staffMember.user.availabilities),
       maxDailyBookingCount: normalizeMaxDailyBookingCount(
         staffMember.max_daily_booking_count ?? (staffMember.user as any).max_daily_booking_count
       ),
@@ -668,7 +700,6 @@ const StaffPage: React.FC = () => {
                         id="max-daily-booking-count"
                         className="form-input"
                         value={formData.maxDailyBookingCount}
-                        min="0"
                         onChange={(e) => setFormData(prev => ({
                           ...prev,
                           maxDailyBookingCount: Math.max(0, parseInt(e.target.value, 10) || 0)
