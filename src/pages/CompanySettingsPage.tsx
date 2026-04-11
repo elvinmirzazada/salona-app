@@ -16,8 +16,6 @@ interface Company {
   description?: string;
   team_size?: number;
   timezone?: string;
-  max_daily_booking_count?: number;
-  enforce_sequential_bookings?: number | boolean;
 }
 
 interface Email {
@@ -70,15 +68,6 @@ const TIMEZONES = [
   { value: 'Europe/Vilnius', label: '(UTC+02:00) Vilnius' },
 ];
 
-const normalizeMaxDailyBookingCount = (value: unknown): number => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-};
-
-const normalizeEnforceSequentialBookings = (value: unknown): boolean => {
-  return value === true || value === 1 || value === '1';
-};
-
 const CompanySettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading: userLoading, refreshUser, unreadNotificationsCount } = useUser();
@@ -106,8 +95,6 @@ const CompanySettingsPage: React.FC = () => {
   const [companyDescription, setCompanyDescription] = useState('');
   const [companyTeamSize, setCompanyTeamSize] = useState(1);
   const [companyTimezone, setCompanyTimezone] = useState('UTC');
-  const [maxDailyBookingCount, setMaxDailyBookingCount] = useState(0);
-  const [enforceSequentialBookings, setEnforceSequentialBookings] = useState(false);
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -132,10 +119,6 @@ const CompanySettingsPage: React.FC = () => {
         setCompanyDescription(companyData.data.description || '');
         setCompanyTeamSize(companyData.data.team_size || 1);
         setCompanyTimezone(companyData.data.timezone || 'UTC');
-        setMaxDailyBookingCount(normalizeMaxDailyBookingCount(companyData.data.max_daily_booking_count));
-        setEnforceSequentialBookings(
-          normalizeEnforceSequentialBookings(companyData.data.enforce_sequential_bookings)
-        );
       }
 
       // Load emails
@@ -268,9 +251,7 @@ const CompanySettingsPage: React.FC = () => {
           website: companyWebsite,
           description: companyDescription,
           team_size: companyTeamSize,
-          timezone: companyTimezone,
-          max_daily_booking_count: maxDailyBookingCount,
-          enforce_sequential_bookings: enforceSequentialBookings ? 1 : 0
+          timezone: companyTimezone
         }
       });
       const data = response.data;
@@ -305,9 +286,7 @@ const CompanySettingsPage: React.FC = () => {
         website: companyWebsite,
         description: companyDescription,
         team_size: companyTeamSize,
-        timezone: companyTimezone,
-        max_daily_booking_count: maxDailyBookingCount,
-        enforce_sequential_bookings: enforceSequentialBookings ? 1 : 0
+        timezone: companyTimezone
       });
       const data = response.data;
 
@@ -342,9 +321,7 @@ const CompanySettingsPage: React.FC = () => {
         website: companyWebsite,
         description: companyDescription,
         team_size: companyTeamSize,
-        timezone: companyTimezone,
-        max_daily_booking_count: maxDailyBookingCount,
-        enforce_sequential_bookings: enforceSequentialBookings ? 1 : 0
+        timezone: companyTimezone
       });
       const data = response.data;
 
@@ -691,29 +668,6 @@ const CompanySettingsPage: React.FC = () => {
                       </select>
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="company-max-daily-booking-count">{t('companySettings.maxDailyBookingCountLabel')}</label>
-                      <input
-                        type="number"
-                        id="company-max-daily-booking-count"
-                        value={maxDailyBookingCount}
-                        onChange={(e) => setMaxDailyBookingCount(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                        min="0"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="company-enforce-sequential-bookings">
-                        {t('companySettings.enforceSequentialBookingsLabel')}
-                      </label>
-                      <input
-                        type="checkbox"
-                        id="company-enforce-sequential-bookings"
-                        checked={enforceSequentialBookings}
-                        onChange={(e) => setEnforceSequentialBookings(e.target.checked)}
-                      />
-                    </div>
-
                     <div className="form-actions">
                       <button type="submit" className="btn-primary" disabled={saving}>
                         {saving ? (
@@ -890,31 +844,6 @@ const CompanySettingsPage: React.FC = () => {
                                 </option>
                               ))}
                             </select>
-                          </div>
-
-                          <div className="form-group">
-                            <label htmlFor="details-company-max-daily-booking-count">
-                              {t('companySettings.maxDailyBookingCountLabel')}
-                            </label>
-                            <input
-                              type="number"
-                              id="details-company-max-daily-booking-count"
-                              value={maxDailyBookingCount}
-                              onChange={(e) => setMaxDailyBookingCount(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                              min="0"
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label htmlFor="details-company-enforce-sequential-bookings">
-                              {t('companySettings.enforceSequentialBookingsLabel')}
-                            </label>
-                            <input
-                              type="checkbox"
-                              id="details-company-enforce-sequential-bookings"
-                              checked={enforceSequentialBookings}
-                              onChange={(e) => setEnforceSequentialBookings(e.target.checked)}
-                            />
                           </div>
 
                           <div className="form-actions">

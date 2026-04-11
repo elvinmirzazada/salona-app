@@ -28,6 +28,8 @@ interface StaffMember {
     languages?: string;
   };
   availability?: WeeklyAvailability;
+  max_daily_booking_count?: number;
+  enforce_sequential_bookings?: number | boolean;
 }
 
 interface Invitation {
@@ -54,7 +56,28 @@ interface StaffFormData {
   email: string;
   role: string;
   availability: WeeklyAvailability;
+  maxDailyBookingCount: number;
+  enforceSequentialBookings: boolean;
 }
+
+const DEFAULT_AVAILABILITY: WeeklyAvailability = {
+  0: { enabled: true, start_time: '09:00', end_time: '17:00' },
+  1: { enabled: true, start_time: '09:00', end_time: '17:00' },
+  2: { enabled: true, start_time: '09:00', end_time: '17:00' },
+  3: { enabled: true, start_time: '09:00', end_time: '17:00' },
+  4: { enabled: true, start_time: '09:00', end_time: '17:00' },
+  5: { enabled: false, start_time: '10:00', end_time: '14:00' },
+  6: { enabled: false, start_time: '10:00', end_time: '14:00' },
+};
+
+const normalizeMaxDailyBookingCount = (value: unknown): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+};
+
+const normalizeEnforceSequentialBookings = (value: unknown): boolean => {
+  return value === true || value === 1 || value === '1';
+};
 
 const StaffPage: React.FC = () => {
   const navigate = useNavigate();
@@ -71,15 +94,9 @@ const StaffPage: React.FC = () => {
   const [formData, setFormData] = useState<StaffFormData>({
     email: '',
     role: 'staff',
-    availability: {
-      0: { enabled: true, start_time: '09:00', end_time: '17:00' }, // Monday
-      1: { enabled: true, start_time: '09:00', end_time: '17:00' }, // Tuesday
-      2: { enabled: true, start_time: '09:00', end_time: '17:00' }, // Wednesday
-      3: { enabled: true, start_time: '09:00', end_time: '17:00' }, // Thursday
-      4: { enabled: true, start_time: '09:00', end_time: '17:00' }, // Friday
-      5: { enabled: false, start_time: '10:00', end_time: '14:00' }, // Saturday
-      6: { enabled: false, start_time: '10:00', end_time: '14:00' }, // Sunday
-    }
+    availability: DEFAULT_AVAILABILITY,
+    maxDailyBookingCount: 0,
+    enforceSequentialBookings: false,
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -167,15 +184,9 @@ const StaffPage: React.FC = () => {
     setFormData({
       email: '',
       role: 'staff',
-      availability: {
-        0: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        1: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        2: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        3: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        4: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        5: { enabled: false, start_time: '10:00', end_time: '14:00' },
-        6: { enabled: false, start_time: '10:00', end_time: '14:00' },
-      }
+      availability: DEFAULT_AVAILABILITY,
+      maxDailyBookingCount: 0,
+      enforceSequentialBookings: false,
     });
     setShowModal(true);
   };
@@ -186,15 +197,13 @@ const StaffPage: React.FC = () => {
     setFormData({
       email: staffMember.user.email,
       role: staffMember.role,
-      availability: staffMember.availability || {
-        0: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        1: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        2: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        3: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        4: { enabled: true, start_time: '09:00', end_time: '17:00' },
-        5: { enabled: false, start_time: '10:00', end_time: '14:00' },
-        6: { enabled: false, start_time: '10:00', end_time: '14:00' },
-      }
+      availability: staffMember.availability || DEFAULT_AVAILABILITY,
+      maxDailyBookingCount: normalizeMaxDailyBookingCount(
+        staffMember.max_daily_booking_count ?? (staffMember.user as any).max_daily_booking_count
+      ),
+      enforceSequentialBookings: normalizeEnforceSequentialBookings(
+        staffMember.enforce_sequential_bookings ?? (staffMember.user as any).enforce_sequential_bookings
+      ),
     });
     setShowModal(true);
   };
@@ -276,7 +285,9 @@ const StaffPage: React.FC = () => {
         data: {
           email: formData.email,
           role: formData.role,
-          availabilities: availabilitiesList
+          availabilities: availabilitiesList,
+          max_daily_booking_count: formData.maxDailyBookingCount,
+          enforce_sequential_bookings: formData.enforceSequentialBookings ? 1 : 0,
         }
       });
 
@@ -646,6 +657,38 @@ const StaffPage: React.FC = () => {
                         <option value="admin">{t('staff.roleAdmin')}</option>
                         <option value="owner">{t('staff.roleOwner')}</option>
                       </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="max-daily-booking-count">
+                        {t('staff.maxDailyBookingCountLabel')}
+                      </label>
+                      <input
+                        type="number"
+                        id="max-daily-booking-count"
+                        className="form-input"
+                        value={formData.maxDailyBookingCount}
+                        min="0"
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          maxDailyBookingCount: Math.max(0, parseInt(e.target.value, 10) || 0)
+                        }))}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="enforce-sequential-bookings">
+                        {t('staff.enforceSequentialBookingsLabel')}
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="enforce-sequential-bookings"
+                        checked={formData.enforceSequentialBookings}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          enforceSequentialBookings: e.target.checked
+                        }))}
+                      />
                     </div>
 
                     {/* Weekly Availability Section */}

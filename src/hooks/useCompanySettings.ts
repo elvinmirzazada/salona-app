@@ -10,8 +10,6 @@ interface Company {
   email?: string;
   description?: string;
   timezone?: string;
-  max_daily_booking_count?: number;
-  enforce_sequential_bookings?: number | boolean;
   address?: {
     address?: string;
     city?: string;
