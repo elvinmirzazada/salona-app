@@ -2285,10 +2285,391 @@
     padding: 12px 16px 16px;
   }
 
-  .public-booking-page .subcategories-accordion-list {
-    margin-top: 12px;
-    padding-top: 12px;
+   .public-booking-page .subcategories-accordion-list {
+     margin-top: 12px;
+     padding-top: 12px;
+     gap: 8px;
+   }
+
+   /* Mobile datetime layout */
+   .public-booking-page .datetime-container {
+     grid-template-columns: 1fr;
+     gap: 16px;
+   }
+
+   .public-booking-page .date-picker {
+     width: 100%;
+   }
+
+   .public-booking-page .time-slots-container {
+     width: 100%;
+   }
+
+   /* Calendar adjustments for mobile */
+   .public-booking-page .calendar-grid {
+     gap: 4px;
+   }
+
+   .public-booking-page .calendar-day {
+     font-size: 0.7rem;
+     padding: 0;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+   }
+
+   .public-booking-page .date-picker {
+     padding: 12px;
+   }
+
+   .public-booking-page .calendar-header {
+     margin-bottom: 12px;
+   }
+
+   .public-booking-page .calendar-month {
+     font-size: 0.875rem;
+   }
+
+   .public-booking-page .nav-btn {
+     width: 26px;
+     height: 26px;
+     font-size: 0.75rem;
+   }
+}
+
+/* Safari-specific fixes for iOS */
+@supports (-webkit-touch-callout: none) {
+  /* Fixes for Safari on iOS */
+  .public-booking-page {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .public-booking-page input,
+  .public-booking-page textarea,
+  .public-booking-page select {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Fix for input zoom on iOS Safari */
+  .public-booking-page .form-input,
+  .public-booking-page .service-search-input,
+  .public-booking-page .country-code-select {
+    font-size: 16px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+  }
+
+  /* Prevent zoom on button click */
+  .public-booking-page button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Fix for safe area on notch devices */
+  .public-booking-page .progress-container {
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+
+  .public-booking-page .booking-container {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(120px, calc(120px + env(safe-area-inset-bottom)));
+  }
+
+  /* Fix calendar alignment for Safari */
+  .public-booking-page .calendar-day {
+    display: grid;
+    place-items: center;
+  }
+
+  /* Improve time slot touch targets for mobile */
+  .public-booking-page .time-slot {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Improve button touch targets */
+  .public-booking-page .booking-nav-button {
+    min-height: 48px;
+  }
+
+  /* Fix scrolling on iOS */
+  .public-booking-page .step-content {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+}
+
+/* Extra small devices (iPhone 17 Pro, iPhone SE, etc.) */
+@media (max-width: 430px) {
+  .public-booking-page .progress-inner {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .public-booking-page .company-badge {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .public-booking-page .company-badge-icon,
+  .public-booking-page .company-logo-img {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .public-booking-page .company-badge-name {
+    font-size: 1rem;
+  }
+
+  .public-booking-page .company-badge-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .public-booking-page .progress-step {
+    flex: 1;
+  }
+
+  .public-booking-page .progress-step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+    margin: 0 auto 4px;
+  }
+
+  .public-booking-page .progress-step-label {
+    font-size: 8px;
+    line-height: 1.1;
+  }
+
+  /* Tighter spacing for small screens */
+  .public-booking-page .booking-section {
+    padding: 16px 12px;
+  }
+
+  .public-booking-page .section-header {
     gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .public-booking-page .section-number {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .public-booking-page .section-title {
+    font-size: 1.125rem;
+  }
+
+  .public-booking-page .section-subtitle {
+    font-size: 0.75rem;
+    margin-left: 44px;
+  }
+
+  /* Improve calendar for small screens */
+  .public-booking-page .calendar-grid {
+    gap: 3px;
+  }
+
+  .public-booking-page .calendar-day {
+    aspect-ratio: 1;
+    font-size: 0.65rem;
+    border-radius: 3px;
+  }
+
+  .public-booking-page .calendar-day-header {
+    font-size: 0.6rem;
+    padding: 4px 0;
+  }
+
+  .public-booking-page .calendar-month {
+    font-size: 0.813rem;
+  }
+
+  .public-booking-page .nav-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+    padding: 4px;
+  }
+
+  .public-booking-page .date-picker {
+    padding: 10px;
+  }
+
+  /* Time slots for small screens */
+  .public-booking-page .time-slot {
+    padding: 8px 6px;
+    font-size: 12px;
+    min-height: 40px;
+    min-width: 40px;
+    flex: 0 1 calc(33.333% - 3px);
+  }
+
+  .public-booking-page .time-slots-container {
+    padding: 12px;
+  }
+
+  .public-booking-page .time-section-label {
+    font-size: 9px;
+    padding: 4px 6px;
+  }
+
+  /* Staff grid adjustment */
+  .public-booking-page .staff-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .public-booking-page .staff-card {
+    padding: 12px;
+  }
+
+  .public-booking-page .staff-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .public-booking-page .staff-name {
+    font-size: 12px;
+  }
+
+  .public-booking-page .staff-position {
+    font-size: 11px;
+  }
+
+  /* Service list for small screens */
+  .public-booking-page .services-split-panel {
+    flex-direction: column;
+  }
+
+  .public-booking-page .categories-panel {
+    width: 100%;
+    margin-bottom: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+  }
+
+  .public-booking-page .services-panel {
+    width: 100%;
+  }
+
+  /* Form adjustments */
+  .public-booking-page .customer-form {
+    gap: 12px;
+  }
+
+  .public-booking-page .form-input,
+  .public-booking-page .service-search-input,
+  .public-booking-page .country-code-select {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .public-booking-page .form-label {
+    font-size: 12px;
+  }
+
+  .public-booking-page .country-code-select {
+    width: 80px;
+  }
+
+  /* Navigation buttons */
+  .public-booking-page .step-navigation {
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 12px 12px;
+  }
+
+  .public-booking-page .booking-nav-button {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    min-width: unset;
+  }
+
+  .public-booking-page .booking-nav-button-icon {
+    font-size: 14px;
+  }
+
+  /* Alert and messages */
+  .public-booking-page .alert {
+    margin: 12px 16px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  /* Improve touch targets for all interactive elements */
+  .public-booking-page .service-list-row,
+  .public-booking-page .category-row {
+    padding: 12px 12px;
+    min-height: 44px;
+  }
+
+  /* Search input improvement */
+  .public-booking-page .service-search-input {
+    min-height: 44px;
+  }
+
+  /* GDPR checkbox improvement */
+  .public-booking-page .gdpr-consent-container input[type="checkbox"],
+  .public-booking-page .booking-checkbox-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Ultra small devices (iPhone 12 mini, SE) */
+@media (max-width: 380px) {
+  .public-booking-page .progress-steps {
+    gap: 0;
+  }
+
+  .public-booking-page .progress-step-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+    margin: 0 auto 2px;
+  }
+
+  .public-booking-page .progress-step-label {
+    font-size: 7px;
+  }
+
+  .public-booking-page .section-title {
+    font-size: 1rem;
+  }
+
+  .public-booking-page .calendar-day {
+    font-size: 0.6rem;
+  }
+
+  .public-booking-page .time-slot {
+    padding: 6px 4px;
+    font-size: 11px;
+    flex: 0 1 calc(33.333% - 2px);
+  }
+
+  .public-booking-page .booking-section {
+    padding: 12px 10px;
+  }
+
+  .public-booking-page .section-subtitle {
+    margin-left: 42px;
   }
 }
 
